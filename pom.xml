@@ -1,0 +1,65 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.dyno.core</groupId>
+	<artifactId>dynoslicer</artifactId>
+	<version>1.0-SNAPSHOT</version>
+	<packaging>jar</packaging>
+	<description>Dynamic slicer for JavaScript.</description>
+
+	<name>DynoSlicer</name>
+	<url>http://maven.apache.org</url>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<developers>
+		<developer>
+			<id>sequeirashel</id>
+			<name>Sheldon Sequeira</name>
+			<email>sheldon@ece.ubc.ca</email>
+			<organization>SALTLab, UBC</organization>
+			<organizationUrl>http://salt.ece.ubc.ca</organizationUrl>
+			<timezone>-8</timezone>
+		</developer>
+	</developers>
+
+	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>3.8.1</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.crawljax</groupId>
+			<artifactId>crawljax</artifactId>
+			<version>2.2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.mozilla</groupId>
+			<artifactId>rhino</artifactId>
+			<version>1.7R4</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.owasp.webscarab</groupId>
+			<artifactId>WebScarab</artifactId>
+			<version>[1.0.0-20131701,)</version>
+		</dependency>
+	</dependencies>
+
+	<repositories>
+		<repository>
+			<id>crawljax.mvn.repo</id>
+			<url>https://github.com/crawljax/crawljax-mvn-repo/raw/master</url>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>always</updatePolicy>
+			</snapshots>
+		</repository>
+	</repositories>
+</project>
