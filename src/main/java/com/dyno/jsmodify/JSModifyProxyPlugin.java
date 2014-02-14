@@ -1,13 +1,9 @@
 package com.dyno.jsmodify;
 
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.Writer;
-import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -16,7 +12,6 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.ast.AstRoot;
-import org.openqa.selenium.JavascriptExecutor;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -27,7 +22,7 @@ import org.owasp.webscarab.model.Response;
 import org.owasp.webscarab.plugin.proxy.ProxyPlugin;
 
 import com.crawljax.util.Helper;
-import com.google.common.base.Charsets;
+import com.dyno.instrument.AstInstrumenter;
 import com.google.common.io.Resources;
 
 /**
@@ -37,13 +32,11 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 
 	private List<String> excludeFilenamePatterns;
 
-	public static List<String> visitedBaseUrls; // /// todo todo todo todo **********
-	public static String scopeNameForExternalUse; // //// todo ********** change this later
+	public static List<String> visitedBaseUrls; 
+	public static String scopeNameForExternalUse;
 
 	private final JSASTModifier modifier;
 	
-	private boolean areWeRecording = false;
-
 	private static String outputFolder = "";
 	private static String jsFilename = "";
 
@@ -301,19 +294,9 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 		String type = response.getHeader("Content-Type");
 
 		// Communication with client in regards to recording
-		if (request.getURL().toString().contains("?beginrecord")) {
-			areWeRecording = true;
-			JSExecutionTracer.preCrawling();
-			return response;
-		}
-		if (request.getURL().toString().contains("?stoprecord")) {
-			areWeRecording = false;
-			JSExecutionTracer.postCrawling();
-			return response;
-		}
 		if (request.getURL().toString().contains("?thisisafunctiontracingcall")) {
 			String rawResponse = new String(request.getContent());
-			JSExecutionTracer.addPoint(rawResponse);
+			JSExecutionTracer.parseReadWrites(rawResponse);
 			return response;
 		}
 
@@ -389,18 +372,6 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 					}
 					// Insert our scripts in the <head> right after the <meta> tags (before all applications scripts)
 					if (dom.getElementsByTagName("meta").getLength() != 0 && dom.getElementsByTagName("meta").item(0).getParentNode() == dom.getElementsByTagName("head").item(0)) {
-						dom.getElementsByTagName("head").item(0).insertBefore(newNodeToAdd, dom.getElementsByTagName("meta").item(dom.getElementsByTagName("meta").getLength()-1));
-					}
-				}
-				// Inter-page recording (add extra JavaScript to enable recording right away)
-				if (areWeRecording) {
-					// Page probably changed and we were recording on previous page...so start recording immediately
-					newNodeToAdd = dom.createElement("script");					
-					newNodeToAdd.setAttribute("language", "javascript");
-					newNodeToAdd.setAttribute("type", "text/javascript");
-					newNodeToAdd.setTextContent("resumeRecording("+JSExecutionTracer.getCounter()+");");
-					if (dom.getElementsByTagName("meta").getLength() != 0 
-							&& dom.getElementsByTagName("meta").item(0).getParentNode() == dom.getElementsByTagName("head").item(0)) {
 						dom.getElementsByTagName("head").item(0).insertBefore(newNodeToAdd, dom.getElementsByTagName("meta").item(dom.getElementsByTagName("meta").getLength()-1));
 					}
 				}

@@ -66,6 +66,11 @@ public class JSExecutionTracer {
 			e.printStackTrace();
 		}
 	}
+	
+	public static void parseReadWrites (String bunchOfRWs) {
+		
+		
+	}
 
 	/**
 	 * @return Name of the file.
