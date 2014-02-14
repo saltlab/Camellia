@@ -26,8 +26,7 @@ public class JSExecutionTracer {
 
 	private static int counter = 0;
 
-	public JSExecutionTracer(String filename) {
-		traceFilename = filename;
+	public JSExecutionTracer() {
 	}
 
 	/**
