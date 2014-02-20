@@ -6,7 +6,6 @@ import java.util.Properties;
 import org.openqa.selenium.WebDriver;
 
 import com.dyno.jsmodify.JSExecutionTracer;
-import com.crawljax.util.Helper;
 
 public class Main {
     public static final String CHARSET_PREFIX = "encoding";
@@ -15,7 +14,7 @@ public class Main {
     public static final String VERSION_PREFIX1 = "-V";
     public static final String VERSION_PREFIX2 = "--version";
     public static final String LOCAL_PREFIX1 = "-l";
-    public static final String LOCAL_PREFIX2 = "-local";
+    public static final String LOCAL_PREFIX2 = "--local";
     public static final Properties properties = new Properties();
 	
 	private static String outputFolder = "";
@@ -23,7 +22,6 @@ public class Main {
 	private static JSExecutionTracer tracer;
 	
     public void initialize() throws IOException {
-    	outputFolder = Helper.addFolderSlashIfNeeded("instrumented");
     	tracer = new JSExecutionTracer();
     	tracer.setOutputFolder(outputFolder + "js");
     }
@@ -43,6 +41,16 @@ public class Main {
     }
 
     public void runDynoSlicer(String[] args) {
+    	 
+    	
+    	if (isServer) {
+    		// Rename to server example?
+    		SimpleExample.main(args);
+    	} else if (isLocal) {
+    		LocalExample.main(args);
+    	} else {
+    		System.out.println("Unsupported Mode, choose either local or server.");
+    	}
     	
     }
     
@@ -51,7 +59,7 @@ public class Main {
             parse(arg);
         }
         if (!validOptions()) {
-            System.err.println("Invalud options!)");
+            System.err.println("Invalid options!");
             System.exit(1);
         }
         return this;

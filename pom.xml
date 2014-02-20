@@ -50,6 +50,13 @@
 			<artifactId>WebScarab</artifactId>
 			<version>[1.0.0-20131701,)</version>
 		</dependency>
+
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>13.0.1</version>
+		</dependency>
+
 	</dependencies>
 
 	<repositories>

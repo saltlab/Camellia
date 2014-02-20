@@ -124,9 +124,7 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 		System.out.println("<<<<");
 		System.out.println("Scope: " + scopename);
 
-		/***************/
-		scopeNameForExternalUse = scopename; // todo todo todo todo
-		/***************/
+		scopeNameForExternalUse = scopename;
 
 		if (!shouldModify(scopename)) {
 			System.out.println("^^ should not modify");
@@ -140,7 +138,7 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 			setFileName(scopename);
 			PrintStream oldOut = System.out;
 			PrintStream outputVisual =
-					new PrintStream("src/main/webapp/fish-eye-zoom/" + getFilename());
+					new PrintStream("src/main/webapp/" + getFilename());
 			System.setOut(outputVisual);
 			System.out.println(input);
 			System.setOut(oldOut);
