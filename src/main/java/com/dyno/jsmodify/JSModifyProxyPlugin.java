@@ -129,7 +129,7 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 		/***************/
 
 		if (!shouldModify(scopename)) {
-			System.out.println("^ should not modify");
+			System.out.println("^^ should not modify");
 			System.out.println(">>>>");
 			return input;
 		}
