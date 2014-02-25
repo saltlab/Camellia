@@ -17,12 +17,13 @@ import com.google.common.io.Resources;
 import com.crawljax.util.Helper;
 import com.dyno.instrument.AstInstrumenter;
 import com.dyno.instrument.FunctionTrace;
+import com.dyno.instrument.ProxyInstrumenter;
 import com.dyno.jsmodify.JSModifyProxyPlugin;
 
 public class LocalExample {
 	
 	private static String targetFile = "/bunnies.js";
-	private static FunctionTrace ft = new FunctionTrace();
+	private static ProxyInstrumenter ft = new ProxyInstrumenter();
 	
 	public static void main(String[] args) {
 		URL urlOfTarget = AstInstrumenter.class.getResource(targetFile);

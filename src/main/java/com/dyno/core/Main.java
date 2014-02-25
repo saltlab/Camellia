@@ -8,6 +8,8 @@ import org.openqa.selenium.WebDriver;
 import com.dyno.jsmodify.JSExecutionTracer;
 
 public class Main {
+	//--u http://localhost:8888/phormer331/index.php
+	
     public static final String CHARSET_PREFIX = "encoding";
     public static final String SERVER_PREFIX1 = "-s";
     public static final String SERVER_PREFIX2 = "--server";
@@ -42,7 +44,6 @@ public class Main {
 
     public void runDynoSlicer(String[] args) {
     	 
-    	
     	if (isServer) {
     		// Rename to server example?
     		SimpleExample.main(args);
@@ -51,7 +52,6 @@ public class Main {
     	} else {
     		System.out.println("Unsupported Mode, choose either local or server.");
     	}
-    	
     }
     
     public Main parse(String[] args) {
