@@ -110,20 +110,21 @@ public class ProxyInstrumenter extends AstInstrumenter {
 
 	@Override
 	public  boolean visit(AstNode node){
+		boolean continueToChildren = false;
 		int tt = node.getType();
 
 		//System.out.println(node.toSource());
 		//	System.out.println(Token.typeToName(tt));
 
 		if (tt == org.mozilla.javascript.Token.VAR && node instanceof VariableDeclaration) {
-			System.out.println("FIRST_ASSIGN " + node.getLineno());
-			System.out.println(node.toSource());
 			handleVariableDeclaration((VariableDeclaration) node);			
-		} else if (tt == org.mozilla.javascript.Token.VAR) {
-			//System.out.println("What are you?");
+		} else if (tt == org.mozilla.javascript.Token.ASSIGN) { 
+			// 5 primitives: string, number, boolean, null, undefined
+
+			handleAssignmentOperator((Assignment) node);
+		} else {
 			//System.out.println(Token.typeToName(tt));
-		} else if (tt == org.mozilla.javascript.Token.SCRIPT) {
-			System.out.println(node.getEnclosingScope());
+			continueToChildren = true;
 		}
 
 
@@ -135,7 +136,7 @@ public class ProxyInstrumenter extends AstInstrumenter {
 		} else if (tt == org.mozilla.javascript.Token.RETURN) {
 			System.out.println("RETURN");
 		}*/
-		return true;  // process kids
+		return continueToChildren;  // process kids
 	}
 
 	@Override
@@ -174,13 +175,14 @@ public class ProxyInstrumenter extends AstInstrumenter {
 		// Adds necessary instrumentation to the root node src
 		String isc = node.toSource().replaceAll("\\)]\\;+\\n+\\(", ")](")
 				.replaceAll("\\)\\;\\n+\\(", ")(")
-				.replaceAll("\\;\\n+\\;", ";");
-		
-		
-		AstRoot iscNode = rhinoCreateNode(isc);
-		System.out.println(iscNode.toSource());
+				.replaceAll("\\;\\n+\\;", ";")
+				.replaceAll("(\\n\\;\\n)", "\n\n");
 
-		
+
+		AstRoot iscNode = rhinoCreateNode(isc);
+		//System.out.println(iscNode.toSource());
+
+
 		// Return new instrumented node/code
 		return iscNode;
 	}
@@ -218,6 +220,27 @@ public class ProxyInstrumenter extends AstInstrumenter {
 			/* get next scope (upwards) */
 			scope = scope.getEnclosingScope();
 		} while (scope != null);
+
+		/* return the result as a String array */
+		return result.toArray(new String[0]);
+	}
+
+	protected String[] getVariablesNamesInFunction(Scope scope) {
+		TreeSet<String> result = new TreeSet<String>();
+
+		/* get the symboltable for the current scope */
+		Map<String, Symbol> t = scope.getSymbolTable();
+
+		if (t != null) {
+			for (String key : t.keySet()) {
+				/* read the symbol */
+				Symbol symbol = t.get(key);
+				/* only add variables and function parameters */
+				if (symbol.getDeclType() == Token.LP || symbol.getDeclType() == Token.VAR) {
+					result.add(symbol.getName());
+				}
+			}
+		}
 
 		/* return the result as a String array */
 		return result.toArray(new String[0]);
@@ -297,6 +320,37 @@ public class ProxyInstrumenter extends AstInstrumenter {
 		return name;
 	}
 
+	private String getIdentifier(String variableName, AstNode node) {
+		String[] localVariables;
+		boolean found = false;
+		FunctionNode enclosingFunction = node.getEnclosingFunction();
+		ArrayList<String> scopePath = new ArrayList<String>();
+		Iterator<String> scopeIt;
+		String returnMe = "";
+
+		while (enclosingFunction != null) {
+			scopePath.add(getFunctionName(enclosingFunction));
+			localVariables = getVariablesNamesInFunction(enclosingFunction);
+
+			for (int j = 0; j < localVariables.length; j++) {
+				if (localVariables[j].equals(variableName)) {
+					found = true;
+					break;
+				}
+			}
+
+			if (found) {
+				scopeIt = scopePath.iterator();
+				while (scopeIt.hasNext()) {
+					returnMe += scopeIt.next() + "-";
+				}
+				return returnMe + variableName;
+			}
+			enclosingFunction = node.getEnclosingFunction();
+		}  
+		return "global-" + variableName;
+	}
+
 	private void handleVariableDeclaration(VariableDeclaration node) {
 		int lineNo = node.getLineno();
 		List<VariableInitializer> vi = node.getVariables();
@@ -308,40 +362,108 @@ public class ProxyInstrumenter extends AstInstrumenter {
 		AstNode newRightSide;
 		String newBody;
 
+
 		while (varIt.hasNext()) {
 			nextInitializer = varIt.next();
 			leftSide = nextInitializer.getTarget();
 			rightSide = nextInitializer.getInitializer();
 
+			System.out.println(node.toSource() + " ||| "+ node.getLineno());
+			System.out.println(leftSide.toSource());
+			if (leftSide.toSource().indexOf(".") != -1) {
+				System.out.println(getIdentifier(leftSide.toSource().substring(0, leftSide.toSource().indexOf(".")), node));
+			} else {
+				System.out.println(getIdentifier(leftSide.toSource(), node));
+			}
+
 			newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), 
 					"_clematest.write("+leftSide.toSource()+", "+rightSide.toSource()+", "+node.getLineno()+")");//,"+rightSide.toSource());
-			System.out.println("--- NAME: " + newBody);
 			newRightSide = parse(newBody);
 			if (newRightSide != null) {
 				nextInitializer.setInitializer(newRightSide);
 			}
 		}
+		// TOOD: mark left side with scope + variable name (right now its just scope but we are only interested in that
+		//       given variable at the most local level)
+		//ArrayList<String> myClosure = getClosure(node);
+	}
 
 
+
+	private void handleAssignmentOperator(Assignment node) {
+		// Operator
+		int operator = node.getOperator();
+		String operatorAsString = Token.typeToName(operator);
+		// Left & Right side
+		AstNode leftSide = node.getLeft();
+		AstNode rightSide = node.getRight();
+		int rightRightSideType = rightSide.getType();
+		// Replacement holders
+		AstNode newRightSide;
+		String newBody = "";
+		String[] variablesInScope = getVariablesNamesInFunction(node.getEnclosingFunction());
+
+		System.out.println(node.toSource());
+		System.out.println("===============================");
+		System.out.println("All variables in scope:");
 		ArrayList<String> myClosure = getClosure(node);
 		System.out.println("//1//: " + myClosure);
+		for (int i = 0; i < variablesInScope.length; i++) {
+			System.out.println(variablesInScope[i]);
+		}
+		System.out.println("===============================");
 
+		//System.out.println(Token.typeToName(rightSide.getType()));
 
-		/*
+		if (rightRightSideType == org.mozilla.javascript.Token.FUNCTION) {
+			newBody =  "_clematest.write("+leftSide.toSource()+", "
+					+rightSide.toSource()+", \'"
+					+getFunctionName((FunctionNode) rightSide)+"\',"
+					+node.getLineno()+")";//,"+rightSide.toSource());
+		} else if (rightRightSideType == org.mozilla.javascript.Token.STRING 
+				|| rightRightSideType == org.mozilla.javascript.Token.NUMBER
+				|| rightRightSideType == org.mozilla.javascript.Token.NULL
+				// More options
+				|| rightRightSideType == org.mozilla.javascript.Token.GETPROP
+				|| rightRightSideType == org.mozilla.javascript.Token.NAME
+				|| rightRightSideType == org.mozilla.javascript.Token.FALSE
+				|| rightRightSideType == org.mozilla.javascript.Token.TRUE) {
+			newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), 
+					"_clematest.write("+leftSide.toSource()+", "+rightSide.toSource()+", "+node.getLineno()+")");
+		} else if (rightRightSideType == org.mozilla.javascript.Token.ADD) {
+			// Need to iterate through all add items so we can backwards slice from those
+			// These include string concats
+			newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), 
+					"_clematest.write("+leftSide.toSource()+", "+rightSide.toSource()+", "+node.getLineno()+")");	
+		} else if (rightRightSideType == org.mozilla.javascript.Token.SUB) { 
+			// Need to iterate through all items involve din the subtraction
+			newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), 
+					"_clematest.write("+leftSide.toSource()+", "+rightSide.toSource()+", "+node.getLineno()+")");	
+		} else if (rightRightSideType == org.mozilla.javascript.Token.CALL) {
+			// Need to iterate through arguments to get data depends
+			// Function being called may provide the control flow? and return type (therefore include the return statement in the slice?)
+			newBody = "_clematest.write("+leftSide.toSource()+", "
+					+rightSide.toSource()+", "
+					+((FunctionCall) rightSide).getTarget().toSource()+", "
+					+node.getLineno()+")";
+		} else {
+			System.out.println("New right side type:" + Token.typeToName(rightRightSideType));
+		}
 
-		targetBody = target.toSource();
-		String newBody = target.toSource().replaceFirst(targetBody, "FCW("+targetBody+",'"+targetBody+"',"+lineNo+")");
-		System.out.println("--- NAME: " + newBody);
-		newTarget = parse(newBody);
+		//	System.out.println("--- NAME: " + newBody);
+		//	System.out.println("OP: " + operatorAsString);
+		//	System.out.println("LEFt TYpe: " + Token.typeToName(leftSide.getType()));
+		//	System.out.println("Right TYpe: " + Token.typeToName(rightSide.getType()));
+		//	System.out.println("lineno: " + node.getLineno());
 
-
-		 */
-
-
-
+		newRightSide = parse(newBody);
+		if (newRightSide != null) {
+			node.setRight(newRightSide);
+		}
 
 
 	}
+
 
 	private void handleFunction(FunctionNode node) {
 
@@ -436,7 +558,6 @@ public class ProxyInstrumenter extends AstInstrumenter {
 			// E.g. parseInt, print, startClock
 			targetBody = target.toSource();
 			String newBody = target.toSource().replaceFirst(targetBody, "FCW("+targetBody+",'"+targetBody+"',"+lineNo+")");
-			System.out.println("--- NAME: " + newBody);
 			newTarget = parse(newBody);
 
 		} else if (tt == org.mozilla.javascript.Token.GETPROP) {
@@ -447,27 +568,11 @@ public class ProxyInstrumenter extends AstInstrumenter {
 			targetBody = methods[methods.length-1];
 
 			String newBody = target.toSource().replaceFirst("."+targetBody, "[FCW(\""+targetBody+"\", "+lineNo+")]");
-			System.out.println("--- PROP: " + newBody);
 			newTarget = parse(newBody);
-		} else {
-			if (tt == org.mozilla.javascript.Token.GETELEM) {
-				System.out.println("====== " + org.mozilla.javascript.Token.GETELEM + " - " + targetBody);
-			}
-			else if (tt == org.mozilla.javascript.Token.LP) {
-				System.out.println("====== " + org.mozilla.javascript.Token.LP + " - " + targetBody);
-			}
-			else if (tt == org.mozilla.javascript.Token.THIS) {
-				System.out.println("====== " + org.mozilla.javascript.Token.THIS + " - " + targetBody);
-			}
-			else
-				System.out.println("======");
 		}
 		if (newTarget != null) {
 			newTarget.setLineno(node.getTarget().getLineno());
 			node.setTarget(newTarget);
-		}
-		else {
-			System.out.println("NEW TARGET NULL +++ " + node.getTarget());
 		}
 	}
 
