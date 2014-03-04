@@ -128,19 +128,17 @@ public class ProxyInstrumenter extends AstInstrumenter {
 			//		handleName((Name) node);
 		} else if (tt == org.mozilla.javascript.Token.GETPROP/* && !firstonename.getIdentifier().equals("_clematest")*/) {
 
+			System.out.println("~~~~~~~~~~~~");
+			System.out.println(Token.typeToName(tt));
+			System.out.println(node.toSource());
+			System.out.println("~~~~~~~~~~~~");
+			handleProperty((PropertyGet) node);
 
-
-			//			if (node.toSource().split("\\.").length > 2) {
-			System.out.println("~~~~~~~~~");
-			System.out.println("PROP: " + node.getLineno());
-
-		//	node = handleProperty((PropertyGet) node);
-		//	node.removeChild();
-			node.getParent().removeChild(node);
-			//			}
-			//	continueToChildren = false;
 		} else {
-
+			System.out.println("~~~~~~~~~~~~");
+			System.out.println(Token.typeToName(tt));
+			System.out.println(node.toSource());
+			System.out.println("~~~~~~~~~~~~");
 		}
 
 
@@ -193,7 +191,8 @@ public class ProxyInstrumenter extends AstInstrumenter {
 				.replaceAll("\\)\\;\\n+\\(", ")(")
 				.replaceAll("\\;\\n+\\;", ";")
 				.replaceAll("\\;\\n+\\.", ".")
-				.replaceAll("(\\n\\;\\n)", "\n\n");
+				.replaceAll("(\\n\\;\\n)", "\n\n")
+				.replaceAll("\\.\\[", "[");
 
 		System.out.println(isc);
 
@@ -421,54 +420,33 @@ public class ProxyInstrumenter extends AstInstrumenter {
 		if (newTarget != null) {
 			//			node.setIdentifier(newTarget);
 		}
-		System.out.println("~~~~~~~~~");
 
 	}
 
-	private AstNode handleProperty(PropertyGet node) {
-		System.out.println(node.toSource());
-		System.out.println(Token.typeToName(node.getParent().getType()));
-		System.out.println(node.getTarget().toSource());
-		System.out.println(node.getRight().toSource());
+	private void handleProperty(PropertyGet node) {
+
 
 		String targetBody;
 		AstNode newTarget;
 		String[] separate;
 
 
-		String newBody = node.toSource().replaceFirst("."+node.getProperty().toSource(), "[FCW(\""+node.getProperty().toSource()+"\", "+node.getLineno()+")]");
+		String newBody = "[FCW(\""+node.getProperty().toSource()+"\", "+node.getLineno()+")]";
 		newTarget = parse(newBody);
 
 		//	node.removeChild();
 		//	node.replaceChild(node.getRight(), newTarget);
 		//	node.setRight(parse(node.getProperty().toSource()));
 		//	node.setRight();
-		System.out.println(newTarget.toSource());
 	//	node.setTarget(newTarget);
-		node.setRight(newTarget);
-		
+		Name tt = new Name();
+		tt.setIdentifier(newBody);
+		node.setProperty(tt);
 
+		//node.setTarget(parse(""));
+		//node.setOperator(org.mozilla.javascript.Token.EMPTY);
+		//node.setTarget(parse("_clematestRemove"));
 
-	/*	separate = node.toSource().split("\\.");
-		newBody = "";
-		for (int j = 0; j < separate.length-1; j++) {
-			newBody += "." + separate[j];
-		}
-		newBody = newBody.substring(1);
-		newBody += "[FCW(\""+node.getProperty().toSource()+"\", "+node.getLineno()+")]";
-
-		node1.addChild(parse(newBody));
-		System.out.println(node1.toSource());
-
-		
-		NodeTransformer nt = new NodeTransformer();
-*/
-		return newTarget;
-
-		//node1 = parse(newBody);
-		//node.setRight(newTarget);
-		//node = newTarget;
-		//	System.out.println(node.getFirstChild().get`);
 	}
 
 
