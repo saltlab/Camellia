@@ -22,7 +22,7 @@ import com.dyno.jsmodify.JSModifyProxyPlugin;
 
 public class LocalExample {
 	
-	private static String targetFile = "/bunnies.js";
+	private static String targetFile = "/short_bunnies.js";
 	private static ProxyInstrumenter ft = new ProxyInstrumenter();
 	
 	public static void main(String[] args) {

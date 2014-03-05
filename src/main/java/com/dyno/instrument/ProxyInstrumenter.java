@@ -29,6 +29,13 @@ import com.gargoylesoftware.htmlunit.javascript.host.Document;
 
 public class ProxyInstrumenter extends AstInstrumenter {
 
+	private static final String TOOLNAME = "_dyno";
+	private static final String VARREAD = "_dynoRead";
+	private static final String VARWRITE = "_dynoWrite";
+	private static final String VARWRITEFUNCRET = "_dynoWriteReturnValue";
+	private static final String PROPREAD = "_dynoReadProp";
+	private static final String FUNCCALL = "_dynoFunc";
+
 	/**
 	 * This is used by the JavaScript node creation functions that follow.
 	 */
@@ -119,27 +126,34 @@ public class ProxyInstrumenter extends AstInstrumenter {
 		int tt = node.getType();
 
 		if (tt == org.mozilla.javascript.Token.VAR && node instanceof VariableDeclaration) {
-			//	handleVariableDeclaration((VariableDeclaration) node);			
+			handleVariableDeclaration((VariableDeclaration) node);			
 		} else if (tt == org.mozilla.javascript.Token.ASSIGN) { 
 			// 5 primitives: string, number, boolean, null, undefined
-			//	handleAssignmentOperator((Assignment) node);
-		} else if (tt == org.mozilla.javascript.Token.NAME && !((Name) node).getIdentifier().equals("_clematest")) {
+			handleAssignmentOperator((Assignment) node);
+		} else if (tt == org.mozilla.javascript.Token.NAME 
+				&& ((Name) node).getIdentifier().indexOf(TOOLNAME) == -1
+				&& node.getParent().getType() != org.mozilla.javascript.Token.FUNCTION
+				&& !((node.getParent().getType() == org.mozilla.javascript.Token.CALL)
+						&& (((FunctionCall) node.getParent()).getTarget().toSource().equals(FUNCCALL)
+						|| ((FunctionCall) node.getParent()).getTarget().toSource().equals(VARWRITEFUNCRET)))) {
 
-			//		handleName((Name) node);
+
+
+
+			handleName((Name) node);
 		} else if (tt == org.mozilla.javascript.Token.GETPROP/* && !firstonename.getIdentifier().equals("_clematest")*/) {
 
-			System.out.println("~~~~~~~~~~~~");
-			System.out.println(Token.typeToName(tt));
-			System.out.println(node.toSource());
-			System.out.println("~~~~~~~~~~~~");
 			handleProperty((PropertyGet) node);
 
-		} else {
+		} else if (tt == org.mozilla.javascript.Token.CALL ) {
+			handleFunctionCall((FunctionCall) node);
+		}/*else {
+		}
 			System.out.println("~~~~~~~~~~~~");
 			System.out.println(Token.typeToName(tt));
 			System.out.println(node.toSource());
 			System.out.println("~~~~~~~~~~~~");
-		}
+		}*/
 
 
 
@@ -245,6 +259,7 @@ public class ProxyInstrumenter extends AstInstrumenter {
 		TreeSet<String> result = new TreeSet<String>();
 
 		/* get the symboltable for the current scope */
+		System.out.println(scope == null);
 		Map<String, Symbol> t = scope.getSymbolTable();
 
 		if (t != null) {
@@ -385,7 +400,7 @@ public class ProxyInstrumenter extends AstInstrumenter {
 			rightSide = nextInitializer.getInitializer();
 
 			newBody = (//rightSide.toSource().replaceFirst(rightSide.toSource().replaceAll("\"", "\\\""), 
-					"_clematest.write(\""+leftSide.toSource()+"\", "+rightSide.toSource()+", "+node.getLineno()+")");//,"+rightSide.toSource());
+					VARWRITE+"(\""+leftSide.toSource()+"\", "+rightSide.toSource()+", "+node.getLineno()+")");//,"+rightSide.toSource());
 
 
 			newRightSide = parse(newBody);
@@ -403,22 +418,22 @@ public class ProxyInstrumenter extends AstInstrumenter {
 		AstNode newTarget;
 		AstNode parent = node.getParent();
 
-
 		if (node.getParent().getType() == org.mozilla.javascript.Token.GETPROP) {
-			String[] methods = node.getParent().toSource().split("\\.");
 			// If leading name/label e.g. 'document' in 'document.getElement()'
 			if (node.toSource().split("\\.")[0].equals(node.getIdentifier())) {
-				newBody = "_clematest.read(\'"+node.getIdentifier()+"\', "+node.getIdentifier()+", "+node.getLineno()+")";
+				newBody = VARREAD+"(\'"+node.getIdentifier()+"\', "+node.getIdentifier()+", "+node.getLineno()+")";
 			} else {
-				// FCW
-				newBody = parent.toSource().replaceFirst("."+node.getIdentifier(), "[FCW(\""+node.getIdentifier()+"\", "+node.getLineno()+")]");
+				newBody = parent.toSource().replaceFirst("."+node.getIdentifier(), "["+PROPREAD+"(\""+node.getIdentifier()+"\", "+node.getLineno()+")]");
 			}
+		} else if (node.getParent().getType() != org.mozilla.javascript.Token.VAR
+				) {
+			newBody = VARREAD+"(\'"+node.getIdentifier()+"\', "+node.getIdentifier()+", "+node.getLineno()+")";
 		} else {
-			newBody = "_clematest.read(\'"+node.getIdentifier()+"\', "+node.getIdentifier()+", "+node.getLineno()+")";
+			return;
 		}
 		newTarget = parse(newBody);
 		if (newTarget != null) {
-			//			node.setIdentifier(newTarget);
+			node.setIdentifier(newBody);
 		}
 
 	}
@@ -431,14 +446,14 @@ public class ProxyInstrumenter extends AstInstrumenter {
 		String[] separate;
 
 
-		String newBody = "[FCW(\""+node.getProperty().toSource()+"\", "+node.getLineno()+")]";
+		String newBody = "["+PROPREAD+"(\""+node.getProperty().toSource()+"\", "+node.getLineno()+")]";
 		newTarget = parse(newBody);
 
 		//	node.removeChild();
 		//	node.replaceChild(node.getRight(), newTarget);
 		//	node.setRight(parse(node.getProperty().toSource()));
 		//	node.setRight();
-	//	node.setTarget(newTarget);
+		//	node.setTarget(newTarget);
 		Name tt = new Name();
 		tt.setIdentifier(newBody);
 		node.setProperty(tt);
@@ -462,15 +477,34 @@ public class ProxyInstrumenter extends AstInstrumenter {
 		// Replacement holders
 		AstNode newRightSide;
 		String newBody = "";
-		String[] variablesInScope = getVariablesNamesInFunction(node.getEnclosingFunction());
+		String[] variablesInScope;
+		
+		if (node.getEnclosingFunction() != null ) {
+			variablesInScope = getVariablesNamesInFunction(node.getEnclosingFunction());
+		} else {
+			variablesInScope = getVariablesNamesInFunction(node.getEnclosingScope());
+		}
+		
+		ArrayList<String> wrapperArgs = new ArrayList<String>();
 
 		//System.out.println(Token.typeToName(rightSide.getType()));
 
 		if (rightRightSideType == org.mozilla.javascript.Token.FUNCTION) {
-			newBody =  "_clematest.write("+leftSide.toSource()+", "
+
+
+		/*	newBody =  VARWRITE+"(\""+leftSide.toSource()+"\", "
 					+rightSide.toSource()+", \'"
 					+getFunctionName((FunctionNode) rightSide)+"\',"
-					+node.getLineno()+")";//,"+rightSide.toSource());
+					+node.getLineno()+")";//,"+rightSide.toSource());*/
+			
+			wrapperArgs.add(leftSide.toSource());
+			wrapperArgs.add(rightSide.toSource());
+			wrapperArgs.add(getFunctionName((FunctionNode) rightSide));
+			wrapperArgs.add(node.getLineno()+"");
+			
+			newBody = generateWrapper(VARWRITE, wrapperArgs);
+
+
 		} else if (rightRightSideType == org.mozilla.javascript.Token.STRING 
 				|| rightRightSideType == org.mozilla.javascript.Token.NUMBER
 				|| rightRightSideType == org.mozilla.javascript.Token.NULL
@@ -479,24 +513,66 @@ public class ProxyInstrumenter extends AstInstrumenter {
 				|| rightRightSideType == org.mozilla.javascript.Token.NAME
 				|| rightRightSideType == org.mozilla.javascript.Token.FALSE
 				|| rightRightSideType == org.mozilla.javascript.Token.TRUE) {
-			newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), 
-					"_clematest.write("+leftSide.toSource()+", "+rightSide.toSource()+", "+node.getLineno()+")");
+
+
+	/*		newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), 
+					VARWRITE+"(\""+leftSide.toSource()+"\", "+rightSide.toSource()+", "+node.getLineno()+")");
+*/
+			wrapperArgs.add(leftSide.toSource());
+			wrapperArgs.add(rightSide.toSource());
+			wrapperArgs.add(node.getLineno()+"");
+			
+			newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), generateWrapper(VARWRITE, wrapperArgs));
+			
+
 		} else if (rightRightSideType == org.mozilla.javascript.Token.ADD) {
 			// Need to iterate through all add items so we can backwards slice from those
 			// These include string concats
-			newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), 
-					"_clematest.write("+leftSide.toSource()+", "+rightSide.toSource()+", "+node.getLineno()+")");	
+
+
+		/*	newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), 
+					VARWRITE+"(\""+leftSide.toSource()+"\", "+rightSide.toSource()+", "+node.getLineno()+")");	
+*/
+			
+			wrapperArgs.add(leftSide.toSource());
+			wrapperArgs.add(rightSide.toSource());
+			wrapperArgs.add(node.getLineno()+"");
+			
+			newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), generateWrapper(VARWRITE, wrapperArgs));
+			
+
 		} else if (rightRightSideType == org.mozilla.javascript.Token.SUB) { 
 			// Need to iterate through all items involve din the subtraction
-			newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), 
-					"_clematest.write("+leftSide.toSource()+", "+rightSide.toSource()+", "+node.getLineno()+")");	
+
+
+		/*	newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), 
+					+"(\""+leftSide.toSource()+"\", "+rightSide.toSource()+", "+node.getLineno()+")");	
+			*/
+			wrapperArgs.add(leftSide.toSource());
+			wrapperArgs.add(rightSide.toSource());
+			wrapperArgs.add(node.getLineno()+"");
+			
+			newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), generateWrapper(VARWRITE, wrapperArgs));
+
+
 		} else if (rightRightSideType == org.mozilla.javascript.Token.CALL) {
 			// Need to iterate through arguments to get data depends
 			// Function being called may provide the control flow? and return type (therefore include the return statement in the slice?)
-			newBody = "_clematest.write("+leftSide.toSource()+", "
-					+rightSide.toSource()+", "
-					+((FunctionCall) rightSide).getTarget().toSource()+", "
-					+node.getLineno()+")";
+
+
+
+			wrapperArgs.add(leftSide.toSource());
+			wrapperArgs.add(rightSide.toSource());
+	//		wrapperArgs.add(((FunctionCall) rightSide).getTarget().toSource());
+			wrapperArgs.add(node.getLineno()+"");
+
+			newBody = generateWrapper(VARWRITEFUNCRET, wrapperArgs);
+
+
+
+		} else if (rightRightSideType == org.mozilla.javascript.Token.NEW) {
+			//TODO:
+			
 		} else {
 			System.out.println("New right side type:" + Token.typeToName(rightRightSideType));
 		}
@@ -508,11 +584,38 @@ public class ProxyInstrumenter extends AstInstrumenter {
 		//	System.out.println("lineno: " + node.getLineno());
 
 		newRightSide = parse(newBody);
+		System.out.println("~~~~~~~~~~~~~~~~~~~~~~");
+		System.out.println(node.toSource());
+		System.out.println("~~~~~~~~~~~~~~~~~~~~~~");
+		System.out.println(newBody);
+		System.out.println("~~~~~~~~~~~~~~~~~~~~~~");
+		
 		if (newRightSide != null) {
 			node.setRight(newRightSide);
 		}
 
 
+	}
+	
+	
+	private String generateWrapper (String wrapperMethod, ArrayList<String> arguments) {
+		String toBeReturned = wrapperMethod + "(";
+		Iterator<String> it = arguments.iterator();
+		String nextArgument;
+		boolean first = true;
+		
+		while (it.hasNext()) {
+			nextArgument = it.next();
+			if (first) {
+				nextArgument = "\"" + nextArgument.replaceAll("\"", "\'") + "\"";
+				first = false;
+			} else {
+				nextArgument = ", " + nextArgument;
+			}
+			toBeReturned += nextArgument;
+		}
+		toBeReturned += ")";
+		return toBeReturned;
 	}
 
 
@@ -586,35 +689,26 @@ public class ProxyInstrumenter extends AstInstrumenter {
 		AstNode target = node.getTarget();
 		String targetBody = target.toSource();
 		int lineNo = -1;
-		if (node.getParent().toSource().indexOf("FCW(") > -1) {
+		if (node.getParent().toSource().indexOf(TOOLNAME) > -1) {
 			lineNo = node.getParent().getParent().getParent().getLineno() +1;
 		} else {
 			lineNo = node.getLineno()+1;
 		}
 		AstNode newTarget = null;
 
-		if (target.toSource().indexOf("FCW") == 0) {
+		if (target.toSource().indexOf(TOOLNAME) != -1) {
 			// We don't want to instrument out code (dirty way)
 			return;
 		}
-
 
 		int tt = target.getType();
 		if (tt == org.mozilla.javascript.Token.NAME) {
 			// Regular function call, 39
 			// E.g. parseInt, print, startClock
 			targetBody = target.toSource();
-			String newBody = target.toSource().replaceFirst(targetBody, "FCW("+targetBody+",'"+targetBody+"',"+lineNo+")");
+			String newBody = target.toSource().replaceFirst(targetBody, FUNCCALL+"('"+targetBody+"',"+targetBody+","+lineNo+")");
 			newTarget = parse(newBody);
 
-		} else if (tt == org.mozilla.javascript.Token.GETPROP) {
-			// Class specific function call, 33
-			// E.g. document.getElementById, e.stopPropagation
-			String[] methods = targetBody.split("\\.");
-			targetBody = methods[methods.length-1];
-
-			String newBody = target.toSource().replaceFirst("."+targetBody, "[FCW(\""+targetBody+"\", "+lineNo+")]");
-			newTarget = parse(newBody);
 		}
 		if (newTarget != null) {
 			newTarget.setLineno(node.getTarget().getLineno());

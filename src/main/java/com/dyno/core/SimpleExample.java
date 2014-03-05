@@ -47,16 +47,7 @@ public class SimpleExample {
 			ProxyInstrumenter s = new ProxyInstrumenter();
 
 			// Add necessary files from resources
-			s.setFileNameToAttach("/esprima.js");
-			s.setFileNameToAttach("/esmorph.js");
-			s.setFileNameToAttach("/jsonml-dom.js");
-			s.setFileNameToAttach("/addvariable.js");
-			s.setFileNameToAttach("/asyncLogger.js");
-			s.setFileNameToAttach("/applicationView.js");
-			s.setFileNameToAttach("/eventlistenersMirror.js");
-			s.setFileNameToAttach("/domMutations.js");
-			s.setFileNameToAttach("/mutation_summary.js");
-			s.instrumentDOMModifications();
+			s.setFileNameToAttach("/dyno.wrapers.js");
 
 			// Interface for Ast traversal
 			JSModifyProxyPlugin p = new JSModifyProxyPlugin(s);
