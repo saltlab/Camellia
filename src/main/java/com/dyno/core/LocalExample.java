@@ -73,6 +73,16 @@ public class LocalExample {
 		ft.start(new String(input));
 
 		/* recurse through AST */
+		
+		//ast.getContainerFunction_or_Scope_for line
+		
+		//ast.getDefiningScope
+		
+		// if ast.getDefiningScope == ast.getContainerFunction_or_Scope_for, easy instrument all write in one funciton
+		
+		// otherwise, visit definiting funciton downwards replacing all writes to variable, then get its data depend,
+		// and repeat for those!
+		
 		ast.visit(ft);
 
 		ast = ft.finish(ast);
