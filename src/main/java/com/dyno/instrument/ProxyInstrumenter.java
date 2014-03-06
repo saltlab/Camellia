@@ -15,9 +15,11 @@ import org.mozilla.javascript.Token;
 import org.mozilla.javascript.ast.Assignment;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
+import org.mozilla.javascript.ast.ElementGet;
 import org.mozilla.javascript.ast.FunctionCall;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Name;
+import org.mozilla.javascript.ast.NewExpression;
 import org.mozilla.javascript.ast.PropertyGet;
 import org.mozilla.javascript.ast.ReturnStatement;
 import org.mozilla.javascript.ast.Scope;
@@ -573,6 +575,32 @@ public class ProxyInstrumenter extends AstInstrumenter {
 		} else if (rightRightSideType == org.mozilla.javascript.Token.NEW) {
 			//TODO:
 			
+
+			
+			wrapperArgs.add(leftSide.toSource());
+			wrapperArgs.add(rightSide.toSource());
+			wrapperArgs.add(node.getLineno()+"");
+			
+			newBody = generateWrapper(VARWRITEFUNCRET, wrapperArgs);
+			
+			
+			System.out.println("~~~~~~~~~~~~~~~~~~~~~~");
+			System.out.println(node.toSource());
+			System.out.println(((NewExpression) rightSide).getTarget().toSource());
+			System.out.println(newBody);
+			System.out.println((leftSide).toSource());
+			System.out.println(Token.typeToName(leftSide.getType()));
+			System.out.println("~~~~~~~~~~~~~~~~~~~~~~");
+			
+			if (leftSide.getType() == org.mozilla.javascript.Token.GETELEM) {
+				System.out.println(((ElementGet) leftSide).getElement().toSource());
+				
+			}
+			
+			
+			
+			
+			newBody = rightSide.toSource();
 		} else {
 			System.out.println("New right side type:" + Token.typeToName(rightRightSideType));
 		}
@@ -584,11 +612,7 @@ public class ProxyInstrumenter extends AstInstrumenter {
 		//	System.out.println("lineno: " + node.getLineno());
 
 		newRightSide = parse(newBody);
-		System.out.println("~~~~~~~~~~~~~~~~~~~~~~");
-		System.out.println(node.toSource());
-		System.out.println("~~~~~~~~~~~~~~~~~~~~~~");
-		System.out.println(newBody);
-		System.out.println("~~~~~~~~~~~~~~~~~~~~~~");
+
 		
 		if (newRightSide != null) {
 			node.setRight(newRightSide);

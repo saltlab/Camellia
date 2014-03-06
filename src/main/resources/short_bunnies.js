@@ -1,5 +1,9 @@
+var tt = 0;
+
 function getPosition(theElement)
 {
+    tt = 1;
+
     var positionX = 0;
     positionX = getMe("sfu");
     helloWord(positionX);
@@ -16,3 +20,4 @@ function getPosition(theElement)
 imageObjects[currImage] = new Image();
 imageObjects[currImage].onload = preloadImages;
 imageObjects[currImage].src = imageArray[currImage] + "?" + Math.random();
+
