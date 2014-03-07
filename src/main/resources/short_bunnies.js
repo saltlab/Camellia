@@ -1,10 +1,15 @@
-var tt = 0;
+//var tt = 0;
 
 function getPosition(theElement)
 {
-    tt = 1;
+    var gg = 1, tt = 1;
+
+    tt = new FakeClass();
 
     var positionX = 0;
+
+	positionX;	
+
     positionX = getMe("sfu");
     helloWord(positionX);
     document.getElementById("foo").target = "ubc";
@@ -14,6 +19,9 @@ function getPosition(theElement)
         theElement = theElement.offsetParent;
         theElement;
     }
+
+    tt.getInner().modifyMe();
+
     return [positionX, positionY];
 };
 

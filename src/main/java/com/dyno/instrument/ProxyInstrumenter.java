@@ -137,7 +137,7 @@ public class ProxyInstrumenter extends AstInstrumenter {
 				&& node.getParent().getType() != org.mozilla.javascript.Token.FUNCTION
 				&& !((node.getParent().getType() == org.mozilla.javascript.Token.CALL)
 						&& (((FunctionCall) node.getParent()).getTarget().toSource().equals(FUNCCALL)
-						|| ((FunctionCall) node.getParent()).getTarget().toSource().equals(VARWRITEFUNCRET)))) {
+								|| ((FunctionCall) node.getParent()).getTarget().toSource().equals(VARWRITEFUNCRET)))) {
 
 
 
@@ -480,13 +480,13 @@ public class ProxyInstrumenter extends AstInstrumenter {
 		AstNode newRightSide;
 		String newBody = "";
 		String[] variablesInScope;
-		
+
 		if (node.getEnclosingFunction() != null ) {
 			variablesInScope = getVariablesNamesInFunction(node.getEnclosingFunction());
 		} else {
 			variablesInScope = getVariablesNamesInFunction(node.getEnclosingScope());
 		}
-		
+
 		ArrayList<String> wrapperArgs = new ArrayList<String>();
 
 		//System.out.println(Token.typeToName(rightSide.getType()));
@@ -494,16 +494,16 @@ public class ProxyInstrumenter extends AstInstrumenter {
 		if (rightRightSideType == org.mozilla.javascript.Token.FUNCTION) {
 
 
-		/*	newBody =  VARWRITE+"(\""+leftSide.toSource()+"\", "
+			/*	newBody =  VARWRITE+"(\""+leftSide.toSource()+"\", "
 					+rightSide.toSource()+", \'"
 					+getFunctionName((FunctionNode) rightSide)+"\',"
 					+node.getLineno()+")";//,"+rightSide.toSource());*/
-			
+
 			wrapperArgs.add(leftSide.toSource());
 			wrapperArgs.add(rightSide.toSource());
 			wrapperArgs.add(getFunctionName((FunctionNode) rightSide));
 			wrapperArgs.add(node.getLineno()+"");
-			
+
 			newBody = generateWrapper(VARWRITE, wrapperArgs);
 
 
@@ -517,43 +517,43 @@ public class ProxyInstrumenter extends AstInstrumenter {
 				|| rightRightSideType == org.mozilla.javascript.Token.TRUE) {
 
 
-	/*		newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), 
+			/*		newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), 
 					VARWRITE+"(\""+leftSide.toSource()+"\", "+rightSide.toSource()+", "+node.getLineno()+")");
-*/
+			 */
 			wrapperArgs.add(leftSide.toSource());
 			wrapperArgs.add(rightSide.toSource());
 			wrapperArgs.add(node.getLineno()+"");
-			
+
 			newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), generateWrapper(VARWRITE, wrapperArgs));
-			
+
 
 		} else if (rightRightSideType == org.mozilla.javascript.Token.ADD) {
 			// Need to iterate through all add items so we can backwards slice from those
 			// These include string concats
 
 
-		/*	newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), 
+			/*	newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), 
 					VARWRITE+"(\""+leftSide.toSource()+"\", "+rightSide.toSource()+", "+node.getLineno()+")");	
-*/
-			
+			 */
+
 			wrapperArgs.add(leftSide.toSource());
 			wrapperArgs.add(rightSide.toSource());
 			wrapperArgs.add(node.getLineno()+"");
-			
+
 			newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), generateWrapper(VARWRITE, wrapperArgs));
-			
+
 
 		} else if (rightRightSideType == org.mozilla.javascript.Token.SUB) { 
 			// Need to iterate through all items involve din the subtraction
 
 
-		/*	newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), 
+			/*	newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), 
 					+"(\""+leftSide.toSource()+"\", "+rightSide.toSource()+", "+node.getLineno()+")");	
-			*/
+			 */
 			wrapperArgs.add(leftSide.toSource());
 			wrapperArgs.add(rightSide.toSource());
 			wrapperArgs.add(node.getLineno()+"");
-			
+
 			newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), generateWrapper(VARWRITE, wrapperArgs));
 
 
@@ -565,7 +565,7 @@ public class ProxyInstrumenter extends AstInstrumenter {
 
 			wrapperArgs.add(leftSide.toSource());
 			wrapperArgs.add(rightSide.toSource());
-	//		wrapperArgs.add(((FunctionCall) rightSide).getTarget().toSource());
+			//		wrapperArgs.add(((FunctionCall) rightSide).getTarget().toSource());
 			wrapperArgs.add(node.getLineno()+"");
 
 			newBody = generateWrapper(VARWRITEFUNCRET, wrapperArgs);
@@ -574,16 +574,16 @@ public class ProxyInstrumenter extends AstInstrumenter {
 
 		} else if (rightRightSideType == org.mozilla.javascript.Token.NEW) {
 			//TODO:
-			
 
-			
+
+
 			wrapperArgs.add(leftSide.toSource());
 			wrapperArgs.add(rightSide.toSource());
 			wrapperArgs.add(node.getLineno()+"");
-			
+
 			newBody = generateWrapper(VARWRITEFUNCRET, wrapperArgs);
-			
-			
+
+
 			System.out.println("~~~~~~~~~~~~~~~~~~~~~~");
 			System.out.println(node.toSource());
 			System.out.println(((NewExpression) rightSide).getTarget().toSource());
@@ -591,15 +591,15 @@ public class ProxyInstrumenter extends AstInstrumenter {
 			System.out.println((leftSide).toSource());
 			System.out.println(Token.typeToName(leftSide.getType()));
 			System.out.println("~~~~~~~~~~~~~~~~~~~~~~");
-			
+
 			if (leftSide.getType() == org.mozilla.javascript.Token.GETELEM) {
 				System.out.println(((ElementGet) leftSide).getElement().toSource());
-				
+
 			}
-			
-			
-			
-			
+
+
+
+
 			newBody = rightSide.toSource();
 		} else {
 			System.out.println("New right side type:" + Token.typeToName(rightRightSideType));
@@ -613,21 +613,21 @@ public class ProxyInstrumenter extends AstInstrumenter {
 
 		newRightSide = parse(newBody);
 
-		
+
 		if (newRightSide != null) {
 			node.setRight(newRightSide);
 		}
 
 
 	}
-	
-	
+
+
 	private String generateWrapper (String wrapperMethod, ArrayList<String> arguments) {
 		String toBeReturned = wrapperMethod + "(";
 		Iterator<String> it = arguments.iterator();
 		String nextArgument;
 		boolean first = true;
-		
+
 		while (it.hasNext()) {
 			nextArgument = it.next();
 			if (first) {

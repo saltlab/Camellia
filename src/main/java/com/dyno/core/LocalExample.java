@@ -16,6 +16,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
+import org.mozilla.javascript.ast.Scope;
 
 import com.google.common.io.Resources;
 
@@ -24,15 +25,18 @@ import com.dyno.instrument.AstInstrumenter;
 import com.dyno.instrument.FunctionTrace;
 import com.dyno.instrument.ProxyInstrumenter;
 import com.dyno.instrument.ProxyInstrumenter2;
+import com.dyno.instrument.ReadWriteReplacer;
 import com.dyno.jsmodify.JSModifyProxyPlugin;
 
 public class LocalExample {
 	
 	private static String targetFile = "/short_bunnies.js";
-	private static int tempLineNo = 5;
+	private static int tempLineNo = 7;
 	private static String varName = "tt";
 	
+	// Definition scope finder
 	private static ProxyInstrumenter2 ft = new ProxyInstrumenter2();
+	private static ReadWriteReplacer wrr = new ReadWriteReplacer();
 	
 	public static void main(String[] args) {
 		URL urlOfTarget = AstInstrumenter.class.getResource(targetFile);
@@ -55,6 +59,7 @@ public class LocalExample {
 	private static String asd(String input, String scopename) {
 		AstRoot ast = null;
 		ArrayList<AstNode> dataNodes = new ArrayList<AstNode>();
+		Scope scopeOfInterest = null;
 
 		/* initialize JavaScript context */
 		Context cx = Context.enter();
@@ -65,12 +70,22 @@ public class LocalExample {
 		/* parse some script and save it in AST */
 		ast = rhinoParser.parse(new String(input), scopename, 0);
 
-		// modifier.setScopeName(scopename);
 		ft.setScopeName(targetFile);
 		ft.setLineNo(tempLineNo);
 		ft.setVariableName(varName);
-		
 		ft.start(new String(input));
+		
+		
+		ast.visit(ft);
+		scopeOfInterest = ft.getLastScopeVisited();
+
+	//	System.out.println(scopeOfInterest.toSource());
+		
+		wrr.setScopeName(targetFile);
+		wrr.setLineNo(tempLineNo);
+		wrr.setVariableName(varName);
+		wrr.start(new String(input));
+		scopeOfInterest.visit(wrr);
 
 		/* recurse through AST */
 		
@@ -83,11 +98,10 @@ public class LocalExample {
 		// otherwise, visit definiting funciton downwards replacing all writes to variable, then get its data depend,
 		// and repeat for those!
 		
-		ast.visit(ft);
 
-		ast = ft.finish(ast);
+		ast = wrr.finish(ast);
 		
-		dataNodes = ft.getNextSliceStart();
+	/*	dataNodes = ft.getNextSliceStart();
 		
 		Iterator<AstNode> itt = dataNodes.iterator();
 		AstNode nextNode;
@@ -97,15 +111,7 @@ public class LocalExample {
 			System.out.println(Token.typeToName(nextNode.getType()));
 			System.out.println(nextNode.getLineno());
 			System.out.println(nextNode.toSource());
-		}
-
-		// todo todo todo do not instrument again if visited before
-		StringTokenizer tokenizer = new StringTokenizer(scopename, "?");
-		String newBaseUrl = "";
-		if (tokenizer.hasMoreTokens()) {
-			newBaseUrl = tokenizer.nextToken();
-		}
-		PrintStream output2;
+		}*/
 
 
 		/* clean up */
