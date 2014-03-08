@@ -31,7 +31,7 @@ import com.dyno.jsmodify.JSModifyProxyPlugin;
 public class LocalExample {
 	
 	private static String targetFile = "/short_bunnies.js";
-	private static int tempLineNo = 7;
+	private static int tempLineNo = 5;
 	private static String varName = "tt";
 	
 	// Definition scope finder
@@ -84,6 +84,7 @@ public class LocalExample {
 		wrr.setScopeName(targetFile);
 		wrr.setLineNo(tempLineNo);
 		wrr.setVariableName(varName);
+		wrr.setTopScope(scopeOfInterest);
 		wrr.start(new String(input));
 		scopeOfInterest.visit(wrr);
 
@@ -98,7 +99,7 @@ public class LocalExample {
 		// otherwise, visit definiting funciton downwards replacing all writes to variable, then get its data depend,
 		// and repeat for those!
 		
-
+		// Which ever finish is used, make sure to initialize the global class counter
 		ast = wrr.finish(ast);
 		
 	/*	dataNodes = ft.getNextSliceStart();

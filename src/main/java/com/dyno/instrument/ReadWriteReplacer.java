@@ -114,6 +114,17 @@ public class ReadWriteReplacer extends AstInstrumenter {
 	public String getScopeName() {
 		return scopeName;
 	}
+	
+	
+	private static Scope topMost;
+	
+	public void setTopScope(Scope s) {
+		this.topMost = s;
+	}
+
+	public Scope getTopScope() {
+		return topMost;
+	}
 
 	@Override
 	public  boolean visit(AstNode node){
@@ -121,20 +132,30 @@ public class ReadWriteReplacer extends AstInstrumenter {
 
 
 		if (tt == org.mozilla.javascript.Token.GETPROP) {
+			// TODO:
 			//	handleProperty((PropertyGet) node);
 		} else if (tt == org.mozilla.javascript.Token.VAR && node instanceof VariableDeclaration) {
+			// TODO:
 			handleVariableDeclaration((VariableDeclaration) node);
 		} else if (tt == org.mozilla.javascript.Token.ASSIGN) {
-			handleAssignmentOperator((Assignment) node);
+			// TODO:
+
+		//	handleAssignmentOperator((Assignment) node);
 		} else if (tt == org.mozilla.javascript.Token.CALL) {
-			handleFunctionCall((FunctionCall) node);
+			// TODO:
+
+		//	handleFunctionCall((FunctionCall) node);
 		} else if (tt == org.mozilla.javascript.Token.NAME && node.getLineno() == lineNo && ((Name) node).getIdentifier().equals(variableName)) {
+			// TODO:
+
 			// Might need stricter check since target variable could appear multiple times on single line
+		//	handleName((Name) node);
+		} else if (tt == org.mozilla.javascript.Token.FUNCTION && !node.equals(topMost) && InstrumenterHelper.isVariableLocal(variableName, (FunctionNode) node)) {
+			// TODO:
 
-			handleName((Name) node);
-		} 
-
-
+			// The variable of interest is not used in the function, skip it
+			return false;
+		}
 
 		return true;  // process kids
 	}
@@ -237,7 +258,6 @@ public class ReadWriteReplacer extends AstInstrumenter {
 		TreeSet<String> result = new TreeSet<String>();
 
 		/* get the symboltable for the current scope */
-		System.out.println(scope == null);
 		Map<String, Symbol> t = scope.getSymbolTable();
 
 		if (t != null) {
@@ -358,14 +378,33 @@ public class ReadWriteReplacer extends AstInstrumenter {
 			nextInitializer = varIt.next();
 			leftSide = nextInitializer.getTarget();
 			rightSide = nextInitializer.getInitializer();
+			// Just in case
+			newBody = rightSide.toSource();
 
+			System.out.println("----------------");
+			System.out.println(nextInitializer.toSource());
+			
 			if (leftSide.getType() == org.mozilla.javascript.Token.NAME && ((Name) leftSide).getIdentifier().equals(variableName)) {
-				newBody = ("("+VARWRITE+"(\""+leftSide.toSource()+"\", "+node.getLineno()+"), "+rightSide.toSource()+")");
+			//	newBody = ("("+VARWRITE+"(\""+leftSide.toSource()+"\", "+node.getLineno()+"), "+rightSide.toSource()+")");
+				
+				newBody = (VARWRITE+"(\""+leftSide.toSource()+"\", " +rightSide.toSource()+ " ,"+node.getLineno()+")");
 
-				newRightSide = parse(newBody);
-				if (newRightSide != null) {
-					nextInitializer.setInitializer(newRightSide);
-				}
+
+			} else {
+				System.out.println("Right side is a foreign type: ");
+				System.out.println(Token.typeToName(rightSide.getType()));
+			}
+						
+			SimpleSearcher ss = new SimpleSearcher();
+			ss.setVariableName(variableName);
+			ss.visit(rightSide);
+			boolean found = ss.getFound();
+			
+			System.out.println("Element found in here? " + found);
+
+			newRightSide = parse(newBody);
+			if (newRightSide != null) {
+				nextInitializer.setInitializer(newRightSide);
 			}
 
 		}

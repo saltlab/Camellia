@@ -1,31 +1,54 @@
-//var tt = 0;
+function Bar() {
+    var privateAlso = "rumour";
 
-function getPosition(theElement)
-{
-    var gg = 1, tt = 1;
+    this.publicAlso = {
+        a: 1,
+        b: 2
+    };
 
-    tt = new FakeClass();
+    this.getPrivate = function () {
+        return privateAlso;
+    };
 
-    var positionX = 0;
+    this.setPrivate = function (b) {
+        privateAlso = b;
+    };
+}
 
-	positionX;	
+function Foo() {
 
-    positionX = getMe("sfu");
-    helloWord(positionX);
-    document.getElementById("foo").target = "ubc";
+    var private = "secret";
 
-    while (theElement != null)
-    {
-        theElement = theElement.offsetParent;
-        theElement;
-    }
+    var privateComplex = new Bar();
 
-    tt.getInner().modifyMe();
+    this.public = "announcement";
 
-    return [positionX, positionY];
+    this.getPrivate = function () {
+        return private;
+    };
+
+    this.setPrivate = function (a) {
+        private = a;
+    };
+
+    this.getPrivateComplex = function () {
+        return privateComplex;
+    };
+
+    this.setPrivateComplex = function (a) {
+        privateComplex = a;
+    };
+}
+
+
+var tt = new Foo();
+
+tt.newMethod = function () {
+    return this.public;
 };
 
-imageObjects[currImage] = new Image();
-imageObjects[currImage].onload = preloadImages;
-imageObjects[currImage].src = imageArray[currImage] + "?" + Math.random();
+var yy = tt.getPrivateComplex().publicAlso;
 
+yy.a = 3;
+
+tt;

@@ -129,7 +129,7 @@ public final class InstrumenterHelper {
         return result.toArray(new String[0]);
     }
     
-    public static  String getFunctionNodeName(FunctionNode node){
+    public static String getFunctionNodeName(FunctionNode node){
         AstNode parent = node.getParent();
         String name = node.getName();
 
@@ -138,6 +138,21 @@ public final class InstrumenterHelper {
             name = name.substring(name.lastIndexOf(".")+1,name.indexOf("="));
         }
         return name;
+    }
+    
+    public static boolean isVariableLocal(String name, FunctionNode node) {
+    	boolean found = false;
+    	
+    	String[] localVariables = getArgumentsAndDeclarations(node);
+    	
+    	for (int i = 0; i < localVariables.length; i++) {
+    		if (localVariables[i].equals(name)) {
+    			found = true;
+    			break;
+    		}
+    	}
+    	
+    	return found;
     }
 
 	private InstrumenterHelper () {

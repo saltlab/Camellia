@@ -55,5 +55,13 @@ public class SimpleSearcher extends AstInstrumenter {
 		
 		return elementFound;
 	}
+	
+	public boolean getFound () {
+		return elementFound;
+	}
+	
+	public void setVariableName (String target) {
+		this.variableName = target;
+	}
 
 }
