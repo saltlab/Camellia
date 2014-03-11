@@ -1,54 +1,17 @@
-function Bar() {
-    var privateAlso = "rumour";
+var tt = "hello";
 
-    this.publicAlso = {
-        a: 1,
-        b: 2
-    };
+tt = {
+    prop: "world!"
+}; 
 
-    this.getPrivate = function () {
-        return privateAlso;
-    };
+tt = "goodbye";
 
-    this.setPrivate = function (b) {
-        privateAlso = b;
-    };
-}
+tt.hello.goodbye;
 
-function Foo() {
+var dd = tt;
 
-    var private = "secret";
+dd = tt;
 
-    var privateComplex = new Bar();
+callMe(otherCall(), tt.prop1.prop2());
 
-    this.public = "announcement";
-
-    this.getPrivate = function () {
-        return private;
-    };
-
-    this.setPrivate = function (a) {
-        private = a;
-    };
-
-    this.getPrivateComplex = function () {
-        return privateComplex;
-    };
-
-    this.setPrivateComplex = function (a) {
-        privateComplex = a;
-    };
-}
-
-
-var tt = new Foo();
-
-tt.newMethod = function () {
-    return this.public;
-};
-
-var yy = tt.getPrivateComplex().publicAlso;
-
-yy.a = 3;
-
-tt;
+dd = 0;
