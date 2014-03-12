@@ -59,6 +59,30 @@ public final class InstrumenterHelper {
 		// returns either a function scope, or script scope
 		return defScope;
 	}
+	
+	public static String getScopeChainAsString(AstNode node) {
+		// AstNode node should be part of a larger Ast Tree
+		
+		ArrayList<Scope> sc = getScopeChain(node);
+		Iterator<Scope> it = sc.iterator();
+		String returnMe = "-";
+		Scope currentScope;
+		
+		while (it.hasNext()) {
+			currentScope = it.next();
+			
+			if (currentScope.getType() == org.mozilla.javascript.Token.FUNCTION) {
+				// Parent function
+				returnMe += getFunctionNodeName((FunctionNode) currentScope);
+			} else {
+				// Top scope (file?)
+				returnMe += "global";
+			}					
+		}
+		System.out.println("[getScopeChainAsString]: returning " + returnMe.substring(1));
+		
+		return returnMe.substring(1);
+	}
 
 	private static ArrayList<Scope> getScopeChain(AstNode node) {
 		Scope currentScope = node.getEnclosingScope();

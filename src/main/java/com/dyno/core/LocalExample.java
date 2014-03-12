@@ -23,6 +23,7 @@ import com.google.common.io.Resources;
 
 import com.crawljax.util.Helper;
 import com.dyno.instrument.AstInstrumenter;
+import com.dyno.instrument.DependencyFinder;
 import com.dyno.instrument.FunctionTrace;
 import com.dyno.instrument.ProxyInstrumenter;
 import com.dyno.instrument.ProxyInstrumenter2;
@@ -32,13 +33,14 @@ import com.dyno.units.SlicingCriteria;
 
 public class LocalExample {
 
-	private static String targetFile = "/short_bunnies.js";
-	private static int tempLineNo = 1;
-	private static String varName = "tt";
+	//private static String targetFile = "/short_bunnies.js";
+	private static String targetFile = "/testing.js";
+	private static int tempLineNo = 7;
+	private static String varName = "r";
 
 	// Definition scope finder
 	private static ProxyInstrumenter2 ft = new ProxyInstrumenter2();
-	private static ReadWriteReplacer wrr = new ReadWriteReplacer();
+	private static DependencyFinder wrr = new DependencyFinder();
 
 	private static ArrayList<SlicingCriteria> remainingSlices = new ArrayList<SlicingCriteria>();
 	private static ArrayList<SlicingCriteria> completedSlices = new ArrayList<SlicingCriteria>();
@@ -102,7 +104,7 @@ public class LocalExample {
 			
 			
 			// Set up parameters for instrumentation once scope if known
-			wrr.clearRelatedVariables();
+			wrr.clearDataDependencies();
 			wrr.setScopeName(targetFile);
 			//wrr.setLineNo(tempLineNo);
 			wrr.setVariableName(justFinished.getVariable());
@@ -125,7 +127,7 @@ public class LocalExample {
 			}
 
 			// Get all the related variables to slice iteratively (E.g. LHS/RHS of assignments for initially sliced variable)
-			nextToSlice =  wrr.getRelatedVariables();
+			nextToSlice =  wrr.getDataDependencies();
 			System.out.println("Size of new vars to slice: " + nextToSlice.size());
 
 			varIterator = nextToSlice.iterator();
