@@ -9,6 +9,7 @@ import org.mozilla.javascript.ast.FunctionCall;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.InfixExpression;
 import org.mozilla.javascript.ast.Name;
+import org.mozilla.javascript.ast.PropertyGet;
 import org.mozilla.javascript.ast.VariableDeclaration;
 
 import com.dyno.instrument.AstInstrumenter;
@@ -20,6 +21,8 @@ public class InfixExpressionParser {//extends AstInstrumenter {
 	}
 
 	public static ArrayList<Name> /* ArrayList<AstNode> */ getOperandDependencies(InfixExpression node) {
+		System.out.println("[OperandDependencies]: Entering");
+
 		ArrayList<Name> d = new ArrayList<Name>();
 		ArrayList<AstNode> operands = new ArrayList<AstNode>();
 		AstNode operand;
@@ -43,12 +46,14 @@ public class InfixExpressionParser {//extends AstInstrumenter {
 			case org.mozilla.javascript.Token.SUB:
 				d.addAll(getOperandDependencies((InfixExpression) operand));
 				break;
-			case org.mozilla.javascript.Token.FUNCTION:  
-
-				break;
 			case org.mozilla.javascript.Token.NAME:  
-
+				d.add((Name) operand);
 				break;
+			case org.mozilla.javascript.Token.GETPROP:  
+				d.addAll(PropertyGetParser.getPropertyDependencies((PropertyGet) operand));
+				break;
+			case org.mozilla.javascript.Token.NUMBER:  
+			case org.mozilla.javascript.Token.STRING:  
 			default:
 				System.out.println("[InfixExpression]: Error parsing Infix Expression. Unknown operand type. (getNames())");
 				break;

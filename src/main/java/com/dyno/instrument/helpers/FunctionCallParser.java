@@ -17,6 +17,7 @@ public class FunctionCallParser {
 	}
 
 	public static ArrayList<Name> /* ArrayList<AstNode> */ getArgumentDependencies(FunctionCall node) {
+		System.out.println("[getArgumentDependencies]: Entering");
 		ArrayList<Name> a = new ArrayList<Name>();
 
 		// Iterate through arguments
@@ -29,15 +30,22 @@ public class FunctionCallParser {
 
 			switch (nextArg.getType()) {
 			case org.mozilla.javascript.Token.ADD:  
+				System.out.println("ADD: " + nextArg.toSource());
+
 				a.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) nextArg));
 				break;
 			case org.mozilla.javascript.Token.SUB:
+				System.out.println("SUB: " + nextArg.toSource());
+
 				a.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) nextArg));
 				break;
 			case org.mozilla.javascript.Token.CALL:  
+				System.out.println("CALL: " + nextArg.toSource());
+
 				a.addAll(getArgumentDependencies((FunctionCall) nextArg));
 				break;
 			case org.mozilla.javascript.Token.NAME:  
+				System.out.println("NAME: " + ((Name) nextArg).getIdentifier());
 				a.add((Name) nextArg);
 				break;
 			case org.mozilla.javascript.Token.STRING:  
@@ -46,7 +54,9 @@ public class FunctionCallParser {
 				// Function might been to be added to dependencies
 				break;
 			case org.mozilla.javascript.Token.GETPROP:  
-				PropertyGetParser.getArgumentDependencies((PropertyGet) nextArg);
+				System.out.println("GETPROP: " + nextArg.toSource());
+				
+				a.addAll(PropertyGetParser.getPropertyDependencies((PropertyGet) nextArg));
 				
 			default:
 				System.out.println("[InfixExpression]: Error parsing Infix Expression. Unknown operand type. (getNames())");

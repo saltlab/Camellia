@@ -2,11 +2,14 @@ package com.dyno.instrument.helpers;
 
 import java.util.ArrayList;
 
+import net.sourceforge.htmlunit.corejs.javascript.Token;
+
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.FunctionCall;
 import org.mozilla.javascript.ast.InfixExpression;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.PropertyGet;
+
 
 public class PropertyGetParser {
 
@@ -14,20 +17,25 @@ public class PropertyGetParser {
 
 	}
 
-	public static ArrayList<Name> getArgumentDependencies(PropertyGet node) {
+	public static ArrayList<Name> getPropertyDependencies(PropertyGet rightSide) {
+		System.out.println("[PropertyDependencies]: Entering");
+		
 		ArrayList<Name> p = new ArrayList<Name>();
 
-		AstNode object = node.getTarget();
+		AstNode object = rightSide.getTarget();
+		
+		System.out.println(Token.typeToName(object.getType()));
+		System.out.println(object.toSource());
 		
 		// Not used currently, naive case
-		AstNode property = node.getProperty();
+		AstNode property = rightSide.getProperty();
 
 		switch (object.getType()) {
 		case org.mozilla.javascript.Token.NAME:  
 			p.add((Name) object);
 			break;
 		case org.mozilla.javascript.Token.GETPROP:
-			p.addAll(getArgumentDependencies((PropertyGet) object));
+			p.addAll(getPropertyDependencies((PropertyGet) object));			
 			break;
 		case org.mozilla.javascript.Token.CALL:  
 			p.addAll(FunctionCallParser.getArgumentDependencies((FunctionCall) object));

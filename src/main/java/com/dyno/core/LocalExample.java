@@ -35,7 +35,7 @@ public class LocalExample {
 
 	//private static String targetFile = "/short_bunnies.js";
 	private static String targetFile = "/testing.js";
-	private static int tempLineNo = 7;
+	private static int tempLineNo = 1;
 	private static String varName = "r";
 
 	// Definition scope finder
