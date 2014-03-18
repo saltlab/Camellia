@@ -22,6 +22,7 @@ import org.mozilla.javascript.ast.Scope;
 import com.google.common.io.Resources;
 
 import com.crawljax.util.Helper;
+import com.dyno.instrument.ActualInstrumentation;
 import com.dyno.instrument.AstInstrumenter;
 import com.dyno.instrument.DependencyFinder;
 import com.dyno.instrument.FunctionTrace;
@@ -35,7 +36,7 @@ public class LocalExample {
 
 	//private static String targetFile = "/short_bunnies.js";
 	private static String targetFile = "/testing.js";
-	private static int tempLineNo = 1;
+	private static int tempLineNo = 8;
 	private static String varName = "r";
 
 	// Definition scope finder
@@ -182,6 +183,8 @@ public class LocalExample {
 				}
 
 			}
+			
+			
 
 			
 
@@ -191,16 +194,47 @@ public class LocalExample {
 		itsc2 = completedSlices.iterator();
 		System.out.println("Completed slicing criteria:");
 		System.out.println("===========================");
+		
+		SlicingCriteria next;
+		
 		while (itsc2.hasNext()) {
-			System.out.println(itsc2.next().getVariable());
+			
+			next = itsc2.next();
+			System.out.println(next.getVariable() + " ||  " + Token.typeToName(next.getScope().getType()));
 		}
 
 
 		// Which ever finish is used, make sure to initialize the global class counter
 
+ActualInstrumentation ai = new ActualInstrumentation();
 
+		// Actual code augmentation/instrumentation happens here, at this point we know all the variables which must be tracked in the file
+		while (completedSlices.size() > 0) {			
+			justFinished = new SlicingCriteria(completedSlices.get(0).getScope(), completedSlices.get(0).getVariable());
 
+			// Set up parameters for instrumentation once scope if known
+			ai.setVariableName(justFinished.getVariable());
+			ai.setTopScope(justFinished.getScope());
+			
+			
+			
+			// Set up parameters for instrumentation once scope if known
+			ai.setScopeName(targetFile);
+			//wrr.setLineNo(tempLineNo);
+			ai.setVariableName(justFinished.getVariable());
+			ai.setTopScope(justFinished.getScope());
+			ai.start(new String(input));
+			
+			
+			// Start the instrumentation for a single variable
+			scopeOfInterest.visit(ai);
 
+			// Tidy up code after all instance of variable have been instrumented
+			ast = ai.finish(ast);
+			
+			completedSlices.remove(0);
+			
+		}
 
 
 

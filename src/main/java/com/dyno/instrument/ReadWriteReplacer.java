@@ -157,7 +157,6 @@ public class ReadWriteReplacer extends AstInstrumenter {
 			handleVariableDeclaration((VariableDeclaration) node);
 		} else if (tt == org.mozilla.javascript.Token.ASSIGN) {
 			// TODO:
-
 			handleAssignmentOperator((Assignment) node);
 		} else if (tt == org.mozilla.javascript.Token.CALL
 				&& !((FunctionCall) node).getTarget().toSource().contains(TOOLNAME)) {

@@ -59,7 +59,7 @@ public class FunctionCallParser {
 				a.addAll(PropertyGetParser.getPropertyDependencies((PropertyGet) nextArg));
 				
 			default:
-				System.out.println("[InfixExpression]: Error parsing Infix Expression. Unknown operand type. (getNames())");
+				System.out.println("[FunctionCallParser]: Error parsing function call Expression. Unknown operand type.");
 				break;
 			}
 		}
