@@ -18,7 +18,6 @@ public class ReturnParser {
 	}
 
 	public static ArrayList<Name> getReturnValueDependencies(ReturnStatement r) {
-		System.out.println("[ReturnValueDependencies]: Entering");
 
 		ArrayList<Name> p = new ArrayList<Name>();
 		AstNode returnValue = r.getReturnValue();

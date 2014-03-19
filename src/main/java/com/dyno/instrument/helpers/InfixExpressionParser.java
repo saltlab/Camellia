@@ -21,7 +21,6 @@ public class InfixExpressionParser {//extends AstInstrumenter {
 	}
 
 	public static ArrayList<Name> /* ArrayList<AstNode> */ getOperandDependencies(InfixExpression node) {
-		System.out.println("[OperandDependencies]: Entering");
 
 		ArrayList<Name> d = new ArrayList<Name>();
 		ArrayList<AstNode> operands = new ArrayList<AstNode>();

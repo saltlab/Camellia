@@ -25,14 +25,13 @@ import org.mozilla.javascript.ast.Symbol;
 import org.mozilla.javascript.ast.VariableDeclaration;
 import org.mozilla.javascript.ast.VariableInitializer;
 
-import com.dyno.instrument.helpers.FunctionCallParser;
+import com.dyno.instrument.helpers.PropertyGetParser;
 import com.dyno.units.PertinentArgument;
 
-public class ReadWriteReplacer extends AstInstrumenter {
+public class ActualInstrumentation extends AstInstrumenter{
 
 	private static final String TOOLNAME = "_dyno";
 	private static final String VARREAD = "_dynoRead";
-	private static final String ARGREAD = "_dynoReadAsArg";
 	private static final String VARWRITE = "_dynoWrite";
 	private static final String VARWRITEFUNCRET = "_dynoWriteReturnValue";
 	private static final String PROPREAD = "_dynoReadProp";
@@ -59,7 +58,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
 	/**
 	 * Construct without patterns.
 	 */
-	public ReadWriteReplacer() {
+	public ActualInstrumentation() {
 		super();
 	}
 
@@ -69,7 +68,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
 	 * @param excludes
 	 *            List with variable patterns to exclude.
 	 */
-	public ReadWriteReplacer(ArrayList<String> excludes) {
+	public ActualInstrumentation(ArrayList<String> excludes) {
 		super(excludes);
 		excludeList = excludes;
 	}
@@ -83,20 +82,8 @@ public class ReadWriteReplacer extends AstInstrumenter {
 	 */
 	public AstRoot parse(String code) {
 		Parser p = new Parser(compilerEnvirons, errorReporter);
-		
-		System.out.println("[parsing compilerEnvirons]: ");
-		
 
-		
-		code = code.replaceAll("\\;\\\n\\ \\,", ",")
-				.replaceAll("\"", "\'")
-		.replaceAll("\\;\\\n\\)", ")");
-				
-		
-		System.out.println(code);
-
-		
-		
+		//System.out.println(code);
 		return p.parse(code, null, 0);
 	}
 
@@ -156,7 +143,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
 	public  boolean visit(AstNode node){
 		int tt = node.getType();
 
-	/*	if (tt == org.mozilla.javascript.Token.GETPROP
+		/*	if (tt == org.mozilla.javascript.Token.GETPROP
 				|| tt == org.mozilla.javascript.Token.CALL
 				|| tt == org.mozilla.javascript.Token.NAME) {
 			System.out.println(Token.typeToName(node.getType()) + " : " + node.toSource());
@@ -165,18 +152,18 @@ public class ReadWriteReplacer extends AstInstrumenter {
 
 		if (tt == org.mozilla.javascript.Token.GETPROP) {
 			// TODO:
-			handleProperty((PropertyGet) node);
+		//	handleProperty((PropertyGet) node);
 		} else if (tt == org.mozilla.javascript.Token.VAR && node instanceof VariableDeclaration) {
 			// TODO:
-			handleVariableDeclaration((VariableDeclaration) node);
+			//	handleVariableDeclaration((VariableDeclaration) node);
 		} else if (tt == org.mozilla.javascript.Token.ASSIGN) {
 			// TODO:
-			handleAssignmentOperator((Assignment) node);
+			//	handleAssignmentOperator((Assignment) node);
 		} else if (tt == org.mozilla.javascript.Token.CALL
 				&& !((FunctionCall) node).getTarget().toSource().contains(TOOLNAME)) {
 			// TODO:
 
-			handleFunctionCall((FunctionCall) node);
+				handleFunctionCall((FunctionCall) node);
 		} else if (tt == org.mozilla.javascript.Token.NAME /*&& node.getLineno() == lineNo*/ && ((Name) node).getIdentifier().equals(variableName)) {
 			// TODO:
 
@@ -239,7 +226,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
 				.replaceAll("\\;\\n+\\,", ",")
 				.replaceAll("\\ \\.", " ")
 				.replaceAll("(\\n\\;\\n)", "\n\n")
-			//	.replaceAll("(\\n)", "\n\n")  // <-- just for spacing, might not be needed
+				//	.replaceAll("(\\n)", "\n\n")  // <-- just for spacing, might not be needed
 				.replaceAll("\\.\\[", "[");
 
 	//	System.out.println(isc);
@@ -408,10 +395,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
 		AstNode newRightSide;
 		String newBody;
 
-		System.out.println("[handleVariableDeclaration]: begin");
-		System.out.println(node.toSource());
-		
-		while (varIt.hasNext()) {
+		while (varIt.hasNext()) {			
 			nextInitializer = varIt.next();
 			leftSide = nextInitializer.getTarget();
 			rightSide = nextInitializer.getInitializer();
@@ -464,15 +448,12 @@ public class ReadWriteReplacer extends AstInstrumenter {
 			boolean found = ss.getFound();
 
 			System.out.println("Element found in here? " + found);*/
-			
-			System.out.println(newBody);
 
 			newRightSide = parse(newBody);
 			if (newRightSide != null) {
 				nextInitializer.setInitializer(newRightSide);
 			}
-			System.out.println("[handleVariableDeclaration]: end");
-			System.out.println(node.toSource());
+
 		}
 	}
 
@@ -498,112 +479,51 @@ public class ReadWriteReplacer extends AstInstrumenter {
 		if (newTarget != null) {
 			node.setIdentifier(newBody);
 		}
-	}
-	
-	private void handleArgumentName(Name node, int index) {
-		String newBody;
-		AstNode newTarget;
-		AstNode parent = node.getParent();
 
-		if (node.getParent().getType() == org.mozilla.javascript.Token.GETPROP) {
-			// If leading name/label e.g. 'document' in 'document.getElement()'
-			if (parent.toSource().split("\\.")[0].equals(node.getIdentifier())) {
-
-				newBody = ARGREAD+"(\'"+node.getIdentifier()+"\',"+ node.getIdentifier() +", "+index+", "+node.getLineno()+")";
-			} else {
-				newBody = parent.toSource().replaceFirst("."+node.getIdentifier(), "["+ARGREAD+"(\""+node.getIdentifier()+"\", "+index+ ", "+node.getLineno()+")]");
-			}
-		} else if (node.getParent().getType() != org.mozilla.javascript.Token.VAR) {
-			newBody = ARGREAD+"(\'"+node.getIdentifier()+"\',"+ node.getIdentifier()+", "+index+", " +node.getLineno()+")";
-		} else {
-			return;
-		}
-		newTarget = parse(newBody);
-		System.out.println(">>>>>>>>>>>>> handleArgumentName");
-		System.out.println(newTarget.toSource());
-		if (newTarget != null) {
-			node.setIdentifier(newBody);
-		}
 	}
 
 	private void handleProperty(PropertyGet node) {
-		if (node.getProperty().toSource().indexOf("[") == 0) {
-			System.out.println("First character is square bracket!");
-			return;
-		}
-		
-		System.out.println("[handleProperty] : begin");
-		System.out.println(node.toSource());
-		System.out.println(node.getProperty().toSource());
-
-		String varBeingWritten = node.getLeft().toSource().split("\\.")[0];
-
-		if (!varBeingWritten.equals(variableName)) {
-			return;
-		}
-
 		AstNode newTarget;
+		ArrayList<Name> affectedNames = PropertyGetParser.getPropertyDependencies(node);
+		Iterator<Name> nt = affectedNames.iterator();
+		boolean nameFound = false;
+
+		while (nt.hasNext()) {
+			if (nt.next().getIdentifier().equals(variableName)) {
+				nameFound = true;
+				break;
+			}
+		}
 
 
-		String newBody = "["+ARGREAD+"(\""+node.getTarget().toSource()+"\", \""+node.getProperty().toSource()+"\", "+node.getLineno()+")]";
+
+			if (nameFound) {
+				String newBody = "["+PROPREAD+"(\""+node.getTarget().toSource()+"\", \""+node.getProperty().toSource()+"\", "+node.getLineno()+")]";
+				newTarget = parse(newBody);
+				Name tt = new Name();
+				tt.setIdentifier(newBody);
+				node.setProperty(tt);
+			}
+
+		
+
+
+
 		//String newBody = PROPREAD+"(\""+node.toSource()+"\", "+node.toSource()+", "+node.getLineno()+")";
 
 
 		// Check if valid JavaScript to be safe
-		newTarget = parse(newBody);
-		
-		System.out.println("[handleProperty] : end");
-		System.out.println(newBody);
 
 		//	node.removeChild();
 		//	node.replaceChild(node.getRight(), newTarget);
 		//	node.setRight(parse(node.getProperty().toSource()));
 		//	node.setRight();
 		//	node.setTarget(newTarget);
-		Name tt = new Name();
-		tt.setIdentifier(newBody);
-		node.setProperty(tt);
+
 
 		//node.setTarget(parse(""));
 		//node.setOperator(org.mozilla.javascript.Token.EMPTY);
 		//node.setTarget(parse("_clematestRemove"));
-	}
-	
-	private void handleArgumentGetProp(PropertyGet node, int index) {
-		if (node.getProperty().toSource().indexOf("[") == 0) {
-			System.out.println("First character is square bracket!");
-			return;
-		}
-		
-		System.out.println("[handleProperty] : begin");
-		System.out.println(node.toSource());
-		System.out.println(node.getProperty().toSource());
-
-		String varBeingWritten = node.getLeft().toSource().split("\\.")[0];
-
-		if (!varBeingWritten.equals(variableName)) {
-			return;
-		}
-
-		AstNode newTarget;
-
-
-		String newBody = "["+PROPREAD+"(\""+node.getTarget().toSource()+"\", \""+node.getProperty().toSource()+"\", "+index+", "+node.getLineno()+")]";
-		//String newBody = PROPREAD+"(\""+node.toSource()+"\", "+node.toSource()+", "+node.getLineno()+")";
-
-
-		// Check if valid JavaScript to be safe
-		newTarget = parse(newBody);
-		
-		System.out.println("[handleProperty] : end");
-		System.out.println(newBody);
-
-
-		Name tt = new Name();
-		tt.setIdentifier(newBody);
-		node.setProperty(tt);
-
-
 	}
 
 
@@ -770,16 +690,10 @@ public class ReadWriteReplacer extends AstInstrumenter {
 	}
 
 	private void handleFunctionCall(FunctionCall node) {
-
 		if (node.getTarget().toSource().indexOf(TOOLNAME) != -1) {
 			// We don't want to instrument out code (dirty way)
 			return;
 		}
-		System.out.println("========================");
-		System.out.println("[handleFunctionCall]: begin");
-		System.out.println(variableName);
-		System.out.println(node.getTarget().toSource());
-		System.out.println("========================");
 
 		boolean isTargetInArgument = false;
 
@@ -800,6 +714,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
 		// TODO: fix this
 		int lineNo = (node.getLineno() == 0 ? node.getParent().getParent().getLineno() : 0);
 
+		ArrayList<PertinentArgument> argumentsOfInterest = new ArrayList<PertinentArgument>();
 
 
 
@@ -810,9 +725,10 @@ public class ReadWriteReplacer extends AstInstrumenter {
 
 			// Argument is variable of interest
 			if (nextArg.getType() == org.mozilla.javascript.Token.NAME && ((Name) nextArg).getIdentifier().equals(variableName)) {
-				handleArgumentName((Name) nextArg, i);
+				handleName((Name) nextArg);
 
-
+				PertinentArgument pertArg = new PertinentArgument(i, variableName);
+				argumentsOfInterest.add(pertArg);
 				isTargetInArgument = true;
 
 			} else if (nextArg.getType() == org.mozilla.javascript.Token.GETPROP && dotSplit[0].equals(variableName)) {
@@ -820,9 +736,15 @@ public class ReadWriteReplacer extends AstInstrumenter {
 				// Portion of target variable is being passed as argument, could be modified in function, must instrument function for whichever argument we want to track
 
 
+				PertinentArgument pertArg = new PertinentArgument(i, variableName);
+				for (int j = 1; j < dotSplit.length; j++) {
+					pertArg.addProperty(dotSplit[j]);
+				}
+
+				argumentsOfInterest.add(pertArg);
 
 
-				handleArgumentGetProp((PropertyGet) nextArg, i);
+				handleProperty((PropertyGet) nextArg);
 
 				isTargetInArgument = true;
 
@@ -831,27 +753,25 @@ public class ReadWriteReplacer extends AstInstrumenter {
 					&& dotSplit[0].equals(variableName)) {
 
 
+				PertinentArgument pertArg = new PertinentArgument(i, variableName);
 
+
+				for (int j = 1; j < dotSplit.length; j++) {
+
+					pertArg.addProperty(dotSplit[j]);
+				}
+
+
+				argumentsOfInterest.add(pertArg);
 
 				isTargetInArgument = true;
 
-			} else if (org.mozilla.javascript.Token.CALL == nextArg.getType()
-					&& isAnArgument(node, variableName)) {
-				
-				newBody = nextArg.toSource() + ")";
-				
-				newBody = "("+VARWRITEFUNCRET+"('"+((FunctionCall) nextArg).getTarget().toSource()+"')," + newBody;
-
-				nextArg = parse(newBody);
-				System.out.println("NEXTARG: " + nextArg.toSource());
-				args.remove(i);
-				args.add(i, nextArg);
-
-				//fnCall.set
 			}
 
 			i++;
 		}
+
+
 
 
 
@@ -861,36 +781,9 @@ public class ReadWriteReplacer extends AstInstrumenter {
 		}
 
 
-		// Maybe we dont need to wrap the actual call, just the declaration
-		
-		// this should be done in DependencyFinder
-		
+
+
 		int tt = target.getType();
-		if (tt == org.mozilla.javascript.Token.GETPROP) {
-			// Class specific function call, 33
-			// E.g. document.getElementById, e.stopPropagation
-
-			String[] methods = targetMethod.split("\\.");
-			targetObject = methods[0];
-			targetMethod = methods[methods.length-1];
-
-			if (variableName.equals(targetObject)) {
-
-			//	newBody = target.toSource().replaceFirst("."+targetMethod, "["+FUNCCALL+"(\""+((PropertyGet) target).getLeft().toSource()+"\",\""+targetMethod+"\", "+target.getLineno()+")]");
-				
-
-				// Add 'targetMethod' to functions to instrument entry
-
-			}
-
-		} else if (node.getType() == org.mozilla.javascript.Token.CALL && isTargetInArgument) {
-			// Add 'newBody' to functions to instrument (closest in scope tree)
-			
-		
-
-		} 
-
-	/*	int tt = target.getType();
 		if (tt == org.mozilla.javascript.Token.GETPROP) {
 			// Class specific function call, 33
 			// E.g. document.getElementById, e.stopPropagation
@@ -907,7 +800,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
 
 			}
 
-		} else if (node.getType() == org.mozilla.javascript.Token.CALL && isTargetInArgument) {
+		} else if (node.getType() == org.mozilla.javascript.Token.CALL) {
 			newBody = target.toSource();
 			newBody = target.toSource().replaceFirst(newBody, FUNCCALL+"('"+newBody+"',"+newBody+","+lineNo+")");
 			newTarget = parse(newBody);
@@ -920,7 +813,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
 
 		if (newTarget != null) {
 			node.setTarget(newTarget);
-		}*/
+		}
 	}
 
 	private void handleReturn(ReturnStatement node) {
@@ -944,24 +837,6 @@ public class ReadWriteReplacer extends AstInstrumenter {
 
 		updateAllLineNo(newRV);
 		node.setReturnValue(newRV);
-	}
-	
-	private boolean isAnArgument(FunctionCall node, String name) {
-		
-		ArrayList<Name> argumentNames = FunctionCallParser.getArgumentDependencies(node);
-		Iterator<Name> argumentIterator = argumentNames.iterator();
-		Name nextArgument;
-		boolean found = false;
-		
-		while (argumentIterator.hasNext()) {
-			nextArgument = argumentIterator.next();
-			if (nextArgument.getIdentifier().equals(name)) {
-				found = true;
-				break;
-			}
-		}
-		
-		return found;
 	}
 
 	static private ArrayList<AstNode> dependencies = new ArrayList<AstNode>();

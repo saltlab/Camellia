@@ -167,7 +167,7 @@ public class DependencyFinder extends AstInstrumenter {
 		} else if (tt == org.mozilla.javascript.Token.CALL) {
 			// TODO:   uncomment this vv
 
-		//	handleFunctionCall((FunctionCall) node);
+			handleFunctionCall((FunctionCall) node);
 		} 
 
 		return true;  // process kids
@@ -606,124 +606,23 @@ public class DependencyFinder extends AstInstrumenter {
 			// We don't want to instrument out code (dirty way)
 			return;
 		}
-
-		boolean isTargetInArgument = false;
-
-		// Store information on function calls
-		AstNode target = node.getTarget();
-		String targetMethod = target.toSource();
-		String targetObject = "";
-		String[] dotSplit;
-
-		AstNode newTarget = null;
-		String newBody;
-
-		List<AstNode> args = node.getArguments();
-		Iterator<AstNode> argsIt = args.iterator();
-		AstNode nextArg;
-		int i = 0;
-
-		// TODO: fix this
-		int lineNo = (node.getLineno() == 0 ? node.getParent().getParent().getLineno() : 0);
-
-		ArrayList<PertinentArgument> argumentsOfInterest = new ArrayList<PertinentArgument>();
-
-
-
-		// Check arguments passed into function call
-		while (argsIt.hasNext()) {
-			nextArg = argsIt.next();
-			dotSplit = nextArg.toSource().split("\\.");
-
-			// Argument is variable of interest
-			if (nextArg.getType() == org.mozilla.javascript.Token.NAME && ((Name) nextArg).getIdentifier().equals(variableName)) {
-				handleName((Name) nextArg);
-
-				PertinentArgument pertArg = new PertinentArgument(i, variableName);
-				argumentsOfInterest.add(pertArg);
-				isTargetInArgument = true;
-
-			} else if (nextArg.getType() == org.mozilla.javascript.Token.GETPROP && dotSplit[0].equals(variableName)) {
-
-				// Portion of target variable is being passed as argument, could be modified in function, must instrument function for whichever argument we want to track
-
-
-				PertinentArgument pertArg = new PertinentArgument(i, variableName);
-				for (int j = 1; j < dotSplit.length; j++) {
-					pertArg.addProperty(dotSplit[j]);
-				}
-
-				argumentsOfInterest.add(pertArg);
-
-
-
-				isTargetInArgument = true;
-
-			} else if (org.mozilla.javascript.Token.CALL == nextArg.getType()
-					&& dotSplit.length > 1
-					&& dotSplit[0].equals(variableName)) {
-
-
-				PertinentArgument pertArg = new PertinentArgument(i, variableName);
-
-
-				for (int j = 1; j < dotSplit.length; j++) {
-
-					pertArg.addProperty(dotSplit[j]);
-				}
-
-
-				argumentsOfInterest.add(pertArg);
-
-				isTargetInArgument = true;
-
+		
+		ArrayList<Name> argumentNames = FunctionCallParser.getArgumentDependencies(node);
+		Iterator<Name> argumentIterator = argumentNames.iterator();
+		Name nextArgument;
+		boolean found = false;
+		
+		while (argumentIterator.hasNext()) {
+			nextArgument = argumentIterator.next();
+			if (nextArgument.getIdentifier().equals(variableName)) {
+				found = true;
+				break;
 			}
-
-			i++;
 		}
-
-
-
-
-
-
-		if (!isTargetInArgument) {
-			return;
-		}
-
-
-
-
-		int tt = target.getType();
-		if (tt == org.mozilla.javascript.Token.GETPROP) {
-			// Class specific function call, 33
-			// E.g. document.getElementById, e.stopPropagation
-
-			String[] methods = targetMethod.split("\\.");
-			targetObject = methods[0];
-			targetMethod = methods[methods.length-1];
-
-			if (variableName.equals(targetObject)) {
-
-				newBody = target.toSource().replaceFirst("."+targetMethod, "["+FUNCCALL+"(\""+((PropertyGet) target).getLeft().toSource()+"\",\""+targetMethod+"\", "+target.getLineno()+")]");
-				newTarget = parse(newBody);
-				newTarget.setLineno(target.getLineno());
-
-			}
-
-		} else if (node.getType() == org.mozilla.javascript.Token.CALL) {
-			newBody = target.toSource();
-			newBody = target.toSource().replaceFirst(newBody, FUNCCALL+"('"+newBody+"',"+newBody+","+lineNo+")");
-			newTarget = parse(newBody);
-
-		} 
-
-
-
-
-
-		if (newTarget != null) {
-			node.setTarget(newTarget);
+		
+		
+		if (found) {
+			dataDependencies.addAll(argumentNames);
 		}
 	}
 

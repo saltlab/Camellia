@@ -18,14 +18,10 @@ public class PropertyGetParser {
 	}
 
 	public static ArrayList<Name> getPropertyDependencies(PropertyGet rightSide) {
-		System.out.println("[PropertyDependencies]: Entering");
 		
 		ArrayList<Name> p = new ArrayList<Name>();
 
 		AstNode object = rightSide.getTarget();
-		
-		System.out.println(Token.typeToName(object.getType()));
-		System.out.println(object.toSource());
 		
 		// Not used currently, naive case
 		AstNode property = rightSide.getProperty();

@@ -1,9 +1,10 @@
 var global = "hello world!";
 
 function () {
-    b = z;
 
-    a = x;
+    mutator(r, a, nested(r));
 
-    r = getReturn(a, nested(b), c-d+e, big.small);
+
+
+    r = "end";
 }

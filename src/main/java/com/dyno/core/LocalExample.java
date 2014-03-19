@@ -36,7 +36,7 @@ public class LocalExample {
 
 	//private static String targetFile = "/short_bunnies.js";
 	private static String targetFile = "/testing.js";
-	private static int tempLineNo = 8;
+	private static int tempLineNo = 9;
 	private static String varName = "r";
 
 	// Definition scope finder
@@ -118,7 +118,7 @@ public class LocalExample {
 			scopeOfInterest.visit(wrr);
 
 			// Tidy up code after all instance of variable have been instrumented
-			ast = wrr.finish(ast);
+			//ast = wrr.finish(ast);
 
 			// The current slice should be the first in queue, move it to completed queue
 			if (remainingSlices.get(0).equals(justFinished)) {
@@ -206,7 +206,7 @@ public class LocalExample {
 
 		// Which ever finish is used, make sure to initialize the global class counter
 
-ActualInstrumentation ai = new ActualInstrumentation();
+		ReadWriteReplacer ai = new ReadWriteReplacer();
 
 		// Actual code augmentation/instrumentation happens here, at this point we know all the variables which must be tracked in the file
 		while (completedSlices.size() > 0) {			
@@ -225,14 +225,16 @@ ActualInstrumentation ai = new ActualInstrumentation();
 			ai.setTopScope(justFinished.getScope());
 			ai.start(new String(input));
 			
+			System.out.println("visiting!");
 			
 			// Start the instrumentation for a single variable
 			scopeOfInterest.visit(ai);
 
 			// Tidy up code after all instance of variable have been instrumented
-			ast = ai.finish(ast);
+			//ast = ai.finish(ast);
 			
 			completedSlices.remove(0);
+			
 			
 		}
 
@@ -240,7 +242,7 @@ ActualInstrumentation ai = new ActualInstrumentation();
 
 
 
-
+		ast = ai.finish(ast);
 
 		/* clean up */
 		Context.exit();
