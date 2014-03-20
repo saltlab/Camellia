@@ -36,7 +36,7 @@ public class LocalExample {
 
 	//private static String targetFile = "/short_bunnies.js";
 	private static String targetFile = "/testing.js";
-	private static int tempLineNo = 9;
+	private static int tempLineNo = 11;
 	private static String varName = "r";
 
 	// Definition scope finder
@@ -139,6 +139,9 @@ public class LocalExample {
 
 				//TODO: instrument instances of this variable in other JavaScript files if it is global:
 				//      ft.setScopeName(targetFile);
+				System.out.println("Setting line number:");
+				System.out.println(nextVar.getIdentifier());
+				System.out.println(nextVar.getLineno());
 				ft.setLineNo(nextVar.getLineno());
 				ft.setVariableName(nextVar.getIdentifier());
 
@@ -225,7 +228,10 @@ public class LocalExample {
 			ai.setTopScope(justFinished.getScope());
 			ai.start(new String(input));
 			
-			System.out.println("visiting!");
+			System.out.println("visiting! : " + justFinished.getVariable());
+			System.out.println(Token.typeToName(justFinished.getScope().getType()));
+			System.out.println(Token.typeToName(justFinished.getScope().getLineno()));
+			System.out.println("????????????");
 			
 			// Start the instrumentation for a single variable
 			scopeOfInterest.visit(ai);

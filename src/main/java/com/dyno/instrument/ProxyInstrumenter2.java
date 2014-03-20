@@ -148,6 +148,8 @@ public class ProxyInstrumenter2 extends AstInstrumenter {
 				&& ((Name) node).getIdentifier().equals(variableName)) {
 			// Starting point of slice
 
+			System.out.println("Found declaration for " + variableName);
+			
 			definingScope = InstrumenterHelper.getDefiningScope((Name) node);
 
 			if (definingScope.getType() == org.mozilla.javascript.Token.SCRIPT) {

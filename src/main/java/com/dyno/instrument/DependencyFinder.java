@@ -159,7 +159,7 @@ public class DependencyFinder extends AstInstrumenter {
 		if (tt == org.mozilla.javascript.Token.VAR && node instanceof VariableDeclaration) {
 			// TODO:   uncomment this vv
 
-		//	handleVariableDeclaration((VariableDeclaration) node);
+			handleVariableDeclaration((VariableDeclaration) node);
 		} else if (tt == org.mozilla.javascript.Token.ASSIGN) {
 			// TODO:
 
@@ -394,39 +394,32 @@ public class DependencyFinder extends AstInstrumenter {
 			if (leftSide.getType() == org.mozilla.javascript.Token.NAME && ((Name) leftSide).getIdentifier().equals(variableName)) {
 				//	newBody = ("("+VARWRITE+"(\""+leftSide.toSource()+"\", "+node.getLineno()+"), "+rightSide.toSource()+")");
 
-				newBody = (VARWRITE+"(\""+leftSide.toSource()+"\", " +rightSide.toSource()+ " ,"+node.getLineno()+")");
 
-				/*System.out.println("Variable declaration:");
-				System.out.println(((Name) leftSide).getIdentifier() + " at line number: " + node.getLineno());
-				System.out.println(Token.typeToName(rightSide.getType()));*/
+				//dataDependencies.add((Name) leftSide);
 
 			} else if (rightSide.getType() == org.mozilla.javascript.Token.NAME 
 					&& ((Name) rightSide).getIdentifier().equals(variableName)) {
 
 
-				System.out.println("Right side of declarations is variable of interest");
+				if (leftSide.getType() == org.mozilla.javascript.Token.NAME) {
+					dataDependencies.add((Name) leftSide);
 
-				newBody = (VARWRITE+"(\""+leftSide.toSource()+"\", \""+rightSide.toSource()+"\", " +rightSide.toSource()+ " ,"+node.getLineno()+")");
+				} else if (leftSide.getType() == org.mozilla.javascript.Token.GETPROP) {
+					dataDependencies.addAll(PropertyGetParser.getPropertyDependencies((PropertyGet) leftSide));
 
-				// TODO: Add left side to interesting variables
-				Name related = new Name();
-				related.setLineno(node.getLineno()+1);
-				related.setIdentifier(leftSide.toSource());
-				dataDependencies.add(related);
+				}
+
 
 			} else if (rightSide.getType() == org.mozilla.javascript.Token.GETPROP 
 					&& ((PropertyGet) rightSide).getTarget().toSource().equals(variableName)) {
 
-				System.out.println("Right side of declarations is variable of interest (PROP)");
+				if (leftSide.getType() == org.mozilla.javascript.Token.NAME) {
+					dataDependencies.add((Name) leftSide);
 
-				newBody = (VARWRITE+"(\""+leftSide.toSource()+"\", " +rightSide.toSource()+ " ,"+node.getLineno()+")");
+				} else if (leftSide.getType() == org.mozilla.javascript.Token.GETPROP) {
+					dataDependencies.addAll(PropertyGetParser.getPropertyDependencies((PropertyGet) leftSide));
 
-				// TODO: Add left side to interesting variables
-				Name related = new Name();
-				related.setLineno(node.getLineno()+1);
-				related.setIdentifier(leftSide.toSource());
-				dataDependencies.add(related);
-
+				}
 
 
 			}
