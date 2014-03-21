@@ -160,7 +160,9 @@ public class DependencyFinder extends AstInstrumenter {
 			// TODO:   uncomment this vv
 
 			handleVariableDeclaration((VariableDeclaration) node);
-		} else if (tt == org.mozilla.javascript.Token.ASSIGN) {
+		} else if (tt == org.mozilla.javascript.Token.ASSIGN
+		        || tt == org.mozilla.javascript.Token.ASSIGN_ADD
+		        || tt == org.mozilla.javascript.Token.ASSIGN_SUB) {
 			// TODO:
 
 			handleAssignmentOperator((Assignment) node);
@@ -463,7 +465,7 @@ public class DependencyFinder extends AstInstrumenter {
 
 	}
 
-	private void handleAssignmentOperator(Assignment node) {
+	private void handleAssignmentOperator(InfixExpression node) {
 		System.out.println("[handleAssignmentOperator]: " + node.toSource());
 		
 		// Left & Right side

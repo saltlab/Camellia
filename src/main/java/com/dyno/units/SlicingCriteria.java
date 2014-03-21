@@ -5,7 +5,7 @@ import org.mozilla.javascript.ast.Scope;
 
 public class SlicingCriteria {
 
-	private static Scope startScope;
+	private Scope startScope;
 	private String variableName;
 	
 	public SlicingCriteria(Scope s, String n) {
@@ -13,7 +13,7 @@ public class SlicingCriteria {
 		this.variableName = n;
 	}
 	
-	public static Scope getScope () {
+	public Scope getScope () {
 		return startScope;
 	}
 	

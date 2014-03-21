@@ -35,12 +35,16 @@ import com.dyno.units.SlicingCriteria;
 public class LocalExample {
 
 	//private static String targetFile = "/short_bunnies.js";
-	private static String targetFile = "/testing.js";
-	private static int tempLineNo = 11;
-	private static String varName = "r";
+	private static String targetFile = "/bunnies.js";
+	private static int tempLineNo = 732;
+	private static String varName = "positionX";
 
 	// Definition scope finder
+	
+	// SCOPE FIND
 	private static ProxyInstrumenter2 ft = new ProxyInstrumenter2();
+	
+	// DEPENDENCY FIND
 	private static DependencyFinder wrr = new DependencyFinder();
 
 	private static ArrayList<SlicingCriteria> remainingSlices = new ArrayList<SlicingCriteria>();
@@ -100,22 +104,14 @@ public class LocalExample {
 
 			// Set up parameters for instrumentation once scope if known
 			wrr.setVariableName(justFinished.getVariable());
-			wrr.setTopScope(justFinished.getScope());
-			
-			
-			
-			// Set up parameters for instrumentation once scope if known
+			wrr.setTopScope(justFinished.getScope());			
 			wrr.clearDataDependencies();
 			wrr.setScopeName(targetFile);
-			//wrr.setLineNo(tempLineNo);
-			wrr.setVariableName(justFinished.getVariable());
-			wrr.setTopScope(justFinished.getScope());
 			wrr.start(new String(input));
-
-			System.out.println(scopeOfInterest.toSource());
 			
-			// Start the instrumentation for a single variable
-			scopeOfInterest.visit(wrr);
+            // Start the instrumentation for a single variable
+            wrr.getTopScope().visit(wrr);			
+
 
 			// Tidy up code after all instance of variable have been instrumented
 			//ast = wrr.finish(ast);
@@ -147,8 +143,13 @@ public class LocalExample {
 
 				// Slicing criteria is made up of variable name and its context (line number, scope, etc.)
 				// Determine scope of variable, find its delcaration
+				
+                System.out.println(nextVar.getLineno());
+				
 				ast.visit(ft);
-				scopeOfInterest = ft.getLastScopeVisited();	
+                scopeOfInterest = ft.getLastScopeVisited(); 
+
+				ft.finish(ast);
 
 				itsc = remainingSlices.iterator();
 				itsc2 = completedSlices.iterator();
@@ -218,6 +219,8 @@ public class LocalExample {
 			// Set up parameters for instrumentation once scope if known
 			ai.setVariableName(justFinished.getVariable());
 			ai.setTopScope(justFinished.getScope());
+			// NEW
+			scopeOfInterest = justFinished.getScope();
 			
 			
 			
@@ -230,7 +233,6 @@ public class LocalExample {
 			
 			System.out.println("visiting! : " + justFinished.getVariable());
 			System.out.println(Token.typeToName(justFinished.getScope().getType()));
-			System.out.println(Token.typeToName(justFinished.getScope().getLineno()));
 			System.out.println("????????????");
 			
 			// Start the instrumentation for a single variable

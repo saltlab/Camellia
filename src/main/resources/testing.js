@@ -8,5 +8,7 @@ function () {
 
     second.newP = "unexpected";
 
+    second.third.method();
+
     r = "end";
 }
