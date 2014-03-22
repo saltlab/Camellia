@@ -231,6 +231,9 @@ public class DependencyFinder extends AstInstrumenter {
 	@Override
 	public void start(String node) {
 	}
+	
+	public void start() {
+	}
 
 	/**
 	 * Returns all variables in scope.

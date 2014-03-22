@@ -255,4 +255,7 @@ public class ProxyInstrumenter2 extends AstInstrumenter {
     public void start(String node) {
         src = node;
     }
+    
+    public void start() {
+    }
 }

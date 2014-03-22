@@ -1,35 +1,26 @@
 package com.dyno.core;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.StringTokenizer;
 
 import net.sourceforge.htmlunit.corejs.javascript.Token;
 
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Parser;
-import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.Scope;
 
 import com.google.common.io.Resources;
 
-import com.crawljax.util.Helper;
-import com.dyno.instrument.ActualInstrumentation;
 import com.dyno.instrument.AstInstrumenter;
 import com.dyno.instrument.DependencyFinder;
-import com.dyno.instrument.FunctionTrace;
-import com.dyno.instrument.ProxyInstrumenter;
 import com.dyno.instrument.ProxyInstrumenter2;
 import com.dyno.instrument.ReadWriteReplacer;
-import com.dyno.jsmodify.JSModifyProxyPlugin;
 import com.dyno.units.SlicingCriteria;
 
 public class LocalExample {
@@ -40,12 +31,9 @@ public class LocalExample {
 	private static String varName = "positionX";
 
 	// Definition scope finder
-	
+
 	// SCOPE FIND
 	private static ProxyInstrumenter2 ft = new ProxyInstrumenter2();
-	
-	// DEPENDENCY FIND
-	private static DependencyFinder wrr = new DependencyFinder();
 
 	private static ArrayList<SlicingCriteria> remainingSlices = new ArrayList<SlicingCriteria>();
 	private static ArrayList<SlicingCriteria> completedSlices = new ArrayList<SlicingCriteria>();
@@ -64,20 +52,20 @@ public class LocalExample {
 			System.out.println("[LocalExample]: " + "Trouble reading local file.");
 			e.printStackTrace();
 		}
-
-
 	}
 
 	private static String asd(String input, String scopename) {
 		AstRoot ast = null;
 		Scope scopeOfInterest = null;
-		ArrayList<Name> nextToSlice;
-		Iterator<Name> varIterator;
-		Name nextVar;
-		Iterator<SlicingCriteria> itsc;
+
 		Iterator<SlicingCriteria> itsc2;
-		
+		Name start = new Name();
 		SlicingCriteria justFinished;
+		ArrayList<Name> varDeps;
+
+		ArrayList<SlicingCriteria> possibleNextSteps;
+		Iterator<Name> it;
+		Name step;
 
 		/* initialize JavaScript context */
 		Context cx = Context.enter();
@@ -88,128 +76,45 @@ public class LocalExample {
 		/* parse some script and save it in AST */
 		ast = rhinoParser.parse(new String(input), scopename, 0);
 
-		ft.setScopeName(targetFile);
-		ft.setLineNo(tempLineNo);
-		ft.setVariableName(varName);
-		ft.start(new String(input));
-
-		ast.visit(ft);
-		scopeOfInterest = ft.getLastScopeVisited();
-
-		remainingSlices.add(new SlicingCriteria(scopeOfInterest, varName));
+		// First criteria specified by user?
+		start.setIdentifier(varName);
+		start.setLineno(tempLineNo);
+		remainingSlices.add(new SlicingCriteria(getDefiningScope(ast, start), varName));
 
 		while (remainingSlices.size() > 0) {
-			
+
 			justFinished = new SlicingCriteria(remainingSlices.get(0).getScope(), remainingSlices.get(0).getVariable());
 
-			// Set up parameters for instrumentation once scope if known
-			wrr.setVariableName(justFinished.getVariable());
-			wrr.setTopScope(justFinished.getScope());			
-			wrr.clearDataDependencies();
-			wrr.setScopeName(targetFile);
-			wrr.start(new String(input));
-			
-            // Start the instrumentation for a single variable
-            wrr.getTopScope().visit(wrr);			
+			// Get next variables dependencies
+			varDeps = getDataDependencies(ast, justFinished);
 
+			// Check if dependencies are new
+			it = varDeps.iterator();
+			possibleNextSteps = new ArrayList<SlicingCriteria>();
 
-			// Tidy up code after all instance of variable have been instrumented
-			//ast = wrr.finish(ast);
-
-			// The current slice should be the first in queue, move it to completed queue
-			if (remainingSlices.get(0).equals(justFinished)) {
-				completedSlices.add(remainingSlices.remove(0));
-			} else {
-				System.err.println("Error! Insturmentation exeucted out of order!");
+			while (it.hasNext()) {
+				step = it.next();
+				possibleNextSteps.add(new SlicingCriteria(getDefiningScope(ast, step), step.getIdentifier()));
 			}
 
-			// Get all the related variables to slice iteratively (E.g. LHS/RHS of assignments for initially sliced variable)
-			nextToSlice =  wrr.getDataDependencies();
-			System.out.println("Size of new vars to slice: " + nextToSlice.size());
-
-			varIterator = nextToSlice.iterator();
-
-			// Check if the variable is already queued for instrumentation
-			while (varIterator.hasNext()) {
-				nextVar = varIterator.next();
-
-				//TODO: instrument instances of this variable in other JavaScript files if it is global:
-				//      ft.setScopeName(targetFile);
-				System.out.println("Setting line number:");
-				System.out.println(nextVar.getIdentifier());
-				System.out.println(nextVar.getLineno());
-				ft.setLineNo(nextVar.getLineno());
-				ft.setVariableName(nextVar.getIdentifier());
-
-				// Slicing criteria is made up of variable name and its context (line number, scope, etc.)
-				// Determine scope of variable, find its delcaration
-				
-                System.out.println(nextVar.getLineno());
-				
-				ast.visit(ft);
-                scopeOfInterest = ft.getLastScopeVisited(); 
-
-				ft.finish(ast);
-
-				itsc = remainingSlices.iterator();
-				itsc2 = completedSlices.iterator();
-
-				// Check if the recently discovered related variables had already been known
-				SlicingCriteria newSlice = new SlicingCriteria(scopeOfInterest, nextVar.getIdentifier());
-				SlicingCriteria queuedSlice;
-				SlicingCriteria completedSlice;
-				boolean alreadyInQueue = false;
-
-				// Already in queue
-				while (itsc.hasNext()) {
-					queuedSlice = itsc.next();
-					if (queuedSlice.equals(newSlice)) {
-						alreadyInQueue = true;
-						break;
-					}
-				}
-
-				// Already instrumented
-				while (itsc2.hasNext()) {
-					completedSlice = itsc2.next();
-					if (completedSlice.equals(newSlice)) {
-						alreadyInQueue = true;
-						break;
-					}
-				}
-
-				// Debugging:
-				if (!alreadyInQueue) {
-					remainingSlices.add(newSlice);
-					System.out.println("New Name: " + nextVar.getIdentifier() + " @ " + nextVar.getLineno());
-				} else {
-					System.out.println("Old Name: " + nextVar.getIdentifier() + " @ " + nextVar.getLineno());
-				}
-
-			}
-			
-			
-
-			
-
+			// Add the new slicing criteria to queue (method checks against existing)
+			addToQueue(possibleNextSteps);
 		}
 
-
+		// Actual instrumentation/augmentation of code after all dependencies known
 		itsc2 = completedSlices.iterator();
 		System.out.println("Completed slicing criteria:");
 		System.out.println("===========================");
-		
+
 		SlicingCriteria next;
-		
+
 		while (itsc2.hasNext()) {
-			
+
 			next = itsc2.next();
 			System.out.println(next.getVariable() + " ||  " + Token.typeToName(next.getScope().getType()));
 		}
 
-
 		// Which ever finish is used, make sure to initialize the global class counter
-
 		ReadWriteReplacer ai = new ReadWriteReplacer();
 
 		// Actual code augmentation/instrumentation happens here, at this point we know all the variables which must be tracked in the file
@@ -221,34 +126,26 @@ public class LocalExample {
 			ai.setTopScope(justFinished.getScope());
 			// NEW
 			scopeOfInterest = justFinished.getScope();
-			
-			
-			
+
 			// Set up parameters for instrumentation once scope if known
 			ai.setScopeName(targetFile);
 			//wrr.setLineNo(tempLineNo);
 			ai.setVariableName(justFinished.getVariable());
 			ai.setTopScope(justFinished.getScope());
 			ai.start(new String(input));
-			
+
 			System.out.println("visiting! : " + justFinished.getVariable());
 			System.out.println(Token.typeToName(justFinished.getScope().getType()));
 			System.out.println("????????????");
-			
+
 			// Start the instrumentation for a single variable
 			scopeOfInterest.visit(ai);
 
 			// Tidy up code after all instance of variable have been instrumented
 			//ast = ai.finish(ast);
-			
+
 			completedSlices.remove(0);
-			
-			
 		}
-
-
-
-
 
 		ast = ai.finish(ast);
 
@@ -256,26 +153,97 @@ public class LocalExample {
 		Context.exit();
 
 		return ast.toSource();
-
 	}
 
+	private static ArrayList<Name> getDataDependencies (AstRoot ast, SlicingCriteria target) {
+		// DEPENDENCY FIND
+		DependencyFinder wrr = new DependencyFinder();
 
-	private boolean compareVariables(Name nameA, Name nameB, Scope scopeA, Scope scopeB) {
-		boolean isSame = false;
+		ArrayList<Name> deps = new ArrayList<Name>();
 
-		if (nameA.getIdentifier().equals(nameB.getIdentifier())
-				&& scopeA.equals(scopeB)) {
-			System.out.println();
-			isSame = true;
-		} else if (nameA.getIdentifier().equals(nameB.getIdentifier())
-				&& !scopeA.equals(scopeB)) { 
-			System.out.println("Names same, scopes different:");
-			System.out.println("Scope A:");
-			System.out.println(scopeA.toSource());
-			System.out.println("Scope B:");
-			System.out.println(scopeB.toSource());
+		SlicingCriteria newSlice = new SlicingCriteria(target.getScope(), target.getVariable());
+
+		// Set up parameters for instrumentation once scope if known
+		wrr.setVariableName(target.getVariable());
+		wrr.setTopScope(target.getScope());			
+		wrr.clearDataDependencies();
+		wrr.setScopeName(targetFile);
+
+		// Start the instrumentation for a single variable
+		wrr.getTopScope().visit(wrr);			
+
+		// The current slice should be the first in queue, move it to completed queue
+		if (remainingSlices.get(0).equals(newSlice)) {
+			completedSlices.add(remainingSlices.remove(0));
+		} else {
+			System.err.println("Error! Insturmentation exeucted out of order!");
 		}
-		return isSame;
+
+		// Get all the related variables to slice iteratively (E.g. LHS/RHS of assignments for initially sliced variable)
+		deps =  wrr.getDataDependencies();
+		System.out.println("Size of new vars to slice: " + deps.size());
+
+		return deps;
 	}
 
+
+
+	private static void addToQueue (ArrayList<SlicingCriteria> addThese) {
+		Iterator<SlicingCriteria> itsc;
+		SlicingCriteria queuedSlice;
+
+		Iterator<SlicingCriteria> itsc2;
+		SlicingCriteria completedSlice;
+
+		Iterator<SlicingCriteria> itnew = addThese.iterator();
+		SlicingCriteria newSlice;
+
+		boolean alreadyInQueue;
+
+		while (itnew.hasNext()) {
+			newSlice = itnew.next();
+
+			// Initialize iterator for each criteria check
+			itsc = remainingSlices.iterator();
+			itsc2 = completedSlices.iterator();
+
+			// Check if the recently discovered related variables had already been known
+			alreadyInQueue = false;
+
+			// Already in queue
+			while (itsc.hasNext()) {
+				queuedSlice = itsc.next();
+				if (queuedSlice.equals(newSlice)) {
+					alreadyInQueue = true;
+					break;
+				}
+			}
+
+			// Already instrumented
+			while (itsc2.hasNext()) {
+				completedSlice = itsc2.next();
+				if (completedSlice.equals(newSlice)) {
+					alreadyInQueue = true;
+					break;
+				}
+			}
+
+			// Debugging:
+			if (!alreadyInQueue) {
+				remainingSlices.add(newSlice);
+				System.out.println("New Name: " + newSlice.getVariable());
+			} else {
+				System.out.println("Old Name: " + newSlice.getVariable());
+			}
+		}
+	}
+
+	private static Scope getDefiningScope(AstRoot ast, Name target) {
+		ft.setScopeName(targetFile);
+		ft.setLineNo(target.getLineno());
+		ft.setVariableName(target.getIdentifier());
+
+		ast.visit(ft);
+		return ft.getLastScopeVisited();
+	}
 }
