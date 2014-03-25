@@ -27,13 +27,13 @@ public class LocalExample {
 
 	//private static String targetFile = "/short_bunnies.js";
 	private static String targetFile = "/bunnies.js";
-	private static int tempLineNo = 732;
+	private static int tempLineNo = 736;
 	private static String varName = "positionX";
 
 	// Definition scope finder
 
 	// SCOPE FIND
-	private static ProxyInstrumenter2 ft = new ProxyInstrumenter2();
+	private static ProxyInstrumenter2 sc = new ProxyInstrumenter2();
 
 	private static ArrayList<SlicingCriteria> remainingSlices = new ArrayList<SlicingCriteria>();
 	private static ArrayList<SlicingCriteria> completedSlices = new ArrayList<SlicingCriteria>();
@@ -115,31 +115,31 @@ public class LocalExample {
 		}
 
 		// Which ever finish is used, make sure to initialize the global class counter
-		ReadWriteReplacer ai = new ReadWriteReplacer();
+		ReadWriteReplacer inst = new ReadWriteReplacer();
 
 		// Actual code augmentation/instrumentation happens here, at this point we know all the variables which must be tracked in the file
 		while (completedSlices.size() > 0) {			
 			justFinished = new SlicingCriteria(completedSlices.get(0).getScope(), completedSlices.get(0).getVariable());
 
 			// Set up parameters for instrumentation once scope if known
-			ai.setVariableName(justFinished.getVariable());
-			ai.setTopScope(justFinished.getScope());
+			inst.setVariableName(justFinished.getVariable());
+			inst.setTopScope(justFinished.getScope());
 			// NEW
 			scopeOfInterest = justFinished.getScope();
 
 			// Set up parameters for instrumentation once scope if known
-			ai.setScopeName(targetFile);
+			inst.setScopeName(targetFile);
 			//wrr.setLineNo(tempLineNo);
-			ai.setVariableName(justFinished.getVariable());
-			ai.setTopScope(justFinished.getScope());
-			ai.start(new String(input));
+			inst.setVariableName(justFinished.getVariable());
+			inst.setTopScope(justFinished.getScope());
+			inst.start(new String(input));
 
 			System.out.println("visiting! : " + justFinished.getVariable());
 			System.out.println(Token.typeToName(justFinished.getScope().getType()));
 			System.out.println("????????????");
 
 			// Start the instrumentation for a single variable
-			scopeOfInterest.visit(ai);
+			scopeOfInterest.visit(inst);
 
 			// Tidy up code after all instance of variable have been instrumented
 			//ast = ai.finish(ast);
@@ -147,7 +147,7 @@ public class LocalExample {
 			completedSlices.remove(0);
 		}
 
-		ast = ai.finish(ast);
+		ast = inst.finish(ast);
 
 		/* clean up */
 		Context.exit();
@@ -157,20 +157,20 @@ public class LocalExample {
 
 	private static ArrayList<Name> getDataDependencies (AstRoot ast, SlicingCriteria target) {
 		// DEPENDENCY FIND
-		DependencyFinder wrr = new DependencyFinder();
+		DependencyFinder df = new DependencyFinder();
 
 		ArrayList<Name> deps = new ArrayList<Name>();
 
 		SlicingCriteria newSlice = new SlicingCriteria(target.getScope(), target.getVariable());
 
 		// Set up parameters for instrumentation once scope if known
-		wrr.setVariableName(target.getVariable());
-		wrr.setTopScope(target.getScope());			
-		wrr.clearDataDependencies();
-		wrr.setScopeName(targetFile);
+		df.setVariableName(target.getVariable());
+		df.setTopScope(target.getScope());			
+		df.clearDataDependencies();
+		df.setScopeName(targetFile);
 
 		// Start the instrumentation for a single variable
-		wrr.getTopScope().visit(wrr);			
+		df.getTopScope().visit(df);			
 
 		// The current slice should be the first in queue, move it to completed queue
 		if (remainingSlices.get(0).equals(newSlice)) {
@@ -180,7 +180,7 @@ public class LocalExample {
 		}
 
 		// Get all the related variables to slice iteratively (E.g. LHS/RHS of assignments for initially sliced variable)
-		deps =  wrr.getDataDependencies();
+		deps =  df.getDataDependencies();
 		System.out.println("Size of new vars to slice: " + deps.size());
 
 		return deps;
@@ -239,11 +239,11 @@ public class LocalExample {
 	}
 
 	private static Scope getDefiningScope(AstRoot ast, Name target) {
-		ft.setScopeName(targetFile);
-		ft.setLineNo(target.getLineno());
-		ft.setVariableName(target.getIdentifier());
+		sc.setScopeName(targetFile);
+		sc.setLineNo(target.getLineno());
+		sc.setVariableName(target.getIdentifier());
 
-		ast.visit(ft);
-		return ft.getLastScopeVisited();
+		ast.visit(sc);
+		return sc.getLastScopeVisited();
 	}
 }

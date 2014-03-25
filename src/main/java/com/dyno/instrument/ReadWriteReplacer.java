@@ -16,6 +16,7 @@ import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.ElementGet;
 import org.mozilla.javascript.ast.FunctionCall;
 import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.ast.InfixExpression;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.NewExpression;
 import org.mozilla.javascript.ast.PropertyGet;
@@ -26,6 +27,7 @@ import org.mozilla.javascript.ast.VariableDeclaration;
 import org.mozilla.javascript.ast.VariableInitializer;
 
 import com.dyno.instrument.helpers.FunctionCallParser;
+import com.dyno.instrument.helpers.PropertyGetParser;
 import com.dyno.units.PertinentArgument;
 
 public class ReadWriteReplacer extends AstInstrumenter {
@@ -89,8 +91,8 @@ public class ReadWriteReplacer extends AstInstrumenter {
 
 		code = code.replaceAll("\\;\\\n\\ \\,", ",")
 				.replaceAll("\"", "\'")
+				.replaceAll("\\.\\[", "[")
 				.replaceAll("\\;\\\n\\)", ")");
-
 
 		System.out.println(code);
 
@@ -671,11 +673,24 @@ public class ReadWriteReplacer extends AstInstrumenter {
 					|| rightRightSideType == org.mozilla.javascript.Token.TRUE
 					|| rightRightSideType == org.mozilla.javascript.Token.OBJECTLIT)
 					// Must be an assign if right side is variable of interest
-					&& (node.getOperator() == org.mozilla.javascript.Token.ASSIGN
+					&& ((node.getOperator() == org.mozilla.javascript.Token.ASSIGN
 					&& varBeingRead.equals(variableName)) ||
 					// If not sure assign (e.g. += or -=, no new reference is created, no need to watch line)
-					(varBeingWritten.equals(variableName))) {
+					(varBeingWritten.equals(variableName)))) {
 				System.out.println(node.toSource());
+				System.out.println(varBeingRead.toString());
+				System.out.println(varBeingWritten.toString());
+				System.out.println(Token.typeToName(rightRightSideType));
+				
+				if (rightRightSideType == org.mozilla.javascript.Token.ADD
+						|| rightRightSideType == org.mozilla.javascript.Token.SUB) {
+					handleInfix((InfixExpression) rightSide);
+				} else if (rightRightSideType == org.mozilla.javascript.Token.GETPROP) {
+					handleProperty((PropertyGet) rightSide);
+				} else if (rightRightSideType == org.mozilla.javascript.Token.NAME) {
+					handleName((Name) rightSide);
+				}
+				
 				wrapperArgs.add(varBeingWritten);
 				wrapperArgs.add(rightSide.toSource());
 				wrapperArgs.add(node.getLineno()+"");
@@ -970,6 +985,47 @@ public class ReadWriteReplacer extends AstInstrumenter {
 		}
 
 		return found;
+	}
+	
+	private void handleInfix (InfixExpression node) {
+		ArrayList<AstNode> operands = new ArrayList<AstNode>();
+		AstNode operand;
+		Iterator<AstNode> it;
+		ArrayList<Name> d = new ArrayList<Name>();
+
+		// Un-used right now
+		//int operationType = node.getOperator();
+
+		operands.add(node.getLeft());
+		operands.add(node.getRight());
+
+		it = operands.iterator();
+
+		while (it.hasNext()) {
+			operand = it.next();
+			switch (operand.getType()) {
+			case org.mozilla.javascript.Token.ADD:  
+				// Call recursively (e.g. var a = b + c + d)
+				handleInfix((InfixExpression) operand);
+				break;
+			case org.mozilla.javascript.Token.SUB:
+				handleInfix((InfixExpression) operand);
+				break;
+			case org.mozilla.javascript.Token.NAME:  
+				d.add((Name) operand);
+				handleName((Name) operand);
+				break;
+			case org.mozilla.javascript.Token.GETPROP:  
+				handleProperty((PropertyGet) operand);
+				break;
+			case org.mozilla.javascript.Token.NUMBER:  
+			case org.mozilla.javascript.Token.STRING:  
+				break;
+			default:
+				System.out.println("[InfixExpression]: Error parsing Infix Expression. Unknown operand type. (getNames())");
+				break;
+			}
+		}
 	}
 
 	static private ArrayList<AstNode> dependencies = new ArrayList<AstNode>();
