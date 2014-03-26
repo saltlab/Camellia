@@ -52,7 +52,6 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 		visitedBaseUrls = new ArrayList<String>();
 
 		modifier = modify;
-
 		outputFolder = Helper.addFolderSlashIfNeeded("clematis-output") + "js_snapshot";
 	}
 
@@ -134,10 +133,13 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 
 			// Save original JavaScript files/nodes
 			Helper.directoryCheck(getOutputFolder());
+	         Helper.checkFolderForFile("src/main/webapp/" + getFilename());
+
 			setFileName(scopename);
 			PrintStream oldOut = System.out;
 			PrintStream outputVisual =
 					new PrintStream("src/main/webapp/" + getFilename());
+
 			System.setOut(outputVisual);
 			System.out.println(input);
 			System.setOut(oldOut);

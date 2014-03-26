@@ -72,7 +72,7 @@ window.console.log("_dynoReadProp", baseObject, propAsString, lineNo);
 
     // Send info here
     send(JSON.stringify({
-             type: "PROPERTY_READ",
+             messageType: "PROPERTY_READ",
              lineNo: lineNo,
              variable: baseObject,
              property: propAsString,
