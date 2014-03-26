@@ -22,6 +22,7 @@ import org.owasp.webscarab.model.Response;
 import org.owasp.webscarab.plugin.proxy.ProxyPlugin;
 
 import com.crawljax.util.Helper;
+import com.dyno.core.LocalExample;
 import com.dyno.instrument.AstInstrumenter;
 import com.google.common.io.Resources;
 
@@ -79,13 +80,8 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 
 		// Example application specific
 		excludeFilenamePatterns.add(".*tabcontent.js?.*");
-
 		excludeFilenamePatterns.add(".*toolbar.js?.*");
 		excludeFilenamePatterns.add(".*jquery*.js?.*");
-
-		// excludeFilenamePatterns.add(".*http://localhost:8888/phormer331/index.phpscript1?.*"); //
-		// todo ???????
-
 	}
 
 	@Override
@@ -105,7 +101,10 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 				return false;
 			}
 		}
-		return true;
+		if (name.equals("http://www.themaninblue.com:80/experiment/BunnyHunt/scripts/bunnies.js")) {
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -143,64 +142,13 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 			System.out.println(input);
 			System.setOut(oldOut);
 
-			AstRoot ast = null;
+			String ast = LocalExample.asd(input, "/bunnies.js");
 
-			/* initialize JavaScript context */
-			Context cx = Context.enter();
-
-			/* create a new parser */
-			Parser rhinoParser = new Parser(new CompilerEnvirons(), cx.getErrorReporter());
-
-			/* parse some script and save it in AST */
-			ast = rhinoParser.parse(new String(input), scopename, 0);
-
-			// modifier.setScopeName(scopename);
-			modifier.setScopeName(getFilename());
-
-			modifier.start(new String(input));
-
-			/* recurse through AST */
-			ast.visit(modifier);
-
-			ast = modifier.finish(ast);
-
-			// todo todo todo do not instrument again if visited before
-			StringTokenizer tokenizer = new StringTokenizer(scopename, "?");
-			String newBaseUrl = "";
-			if (tokenizer.hasMoreTokens()) {
-				newBaseUrl = tokenizer.nextToken();
-			}
-			PrintStream output2;
-			try {
-				output2 = new PrintStream("tempUrls.txt");
-				PrintStream oldOut2 = System.out;
-				System.setOut(output2);
-				System.out.println("new newBaseUrl: " + newBaseUrl + "\n ---");
-				boolean baseUrlExists = false;
-				for (String str : visitedBaseUrls) {
-					System.out.print(str);
-					if (/* str.startsWith(newBaseUrl) || */str.equals(newBaseUrl)) {
-						System.out.println(" -> exists");
-						// System.setOut(oldOut2);
-						baseUrlExists = true;
-						// return input;
-					}
-					else {
-						System.out.println();
-					}
-				}
-				if (!baseUrlExists)
-					visitedBaseUrls.add(newBaseUrl); //
-				System.setOut(oldOut2);
-			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
+			System.out.println(ast);
+			
 			/* clean up */
-			Context.exit();
 
-			return ast.toSource();
+			return ast;//.toSource();
 		} catch (RhinoException re) {
 			System.err.println(re.getMessage()
 					+ "Unable to instrument. This might be a JSON response sent"
@@ -292,7 +240,7 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 		String type = response.getHeader("Content-Type");
 
 		// Communication with client in regards to recording
-		if (request.getURL().toString().contains("?thisisafunctiontracingcall")) {
+		if (request.getURL().toString().contains("?slicinginformation")) {
 			String rawResponse = new String(request.getContent());
 			JSExecutionTracer.parseReadWrites(rawResponse);
 			return response;

@@ -27,7 +27,7 @@ public class LocalExample {
 
 	//private static String targetFile = "/short_bunnies.js";
 	private static String targetFile = "/bunnies.js";
-	private static int tempLineNo = 736;
+	private static int tempLineNo = 732;
 	private static String varName = "positionX";
 
 	// Definition scope finder
@@ -54,7 +54,7 @@ public class LocalExample {
 		}
 	}
 
-	private static String asd(String input, String scopename) {
+	public static String asd(String input, String scopename) {
 		AstRoot ast = null;
 		Scope scopeOfInterest = null;
 

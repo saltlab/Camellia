@@ -47,7 +47,8 @@ public class SimpleExample {
 			ProxyInstrumenter s = new ProxyInstrumenter();
 
 			// Add necessary files from resources
-			s.setFileNameToAttach("/dyno.wrapers.js");
+			s.setFileNameToAttach("/dyno.wrappers.js");
+			s.setFileNameToAttach("/send.and.buffer.js");
 
 			// Interface for Ast traversal
 			JSModifyProxyPlugin p = new JSModifyProxyPlugin(s);

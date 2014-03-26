@@ -4,6 +4,10 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.logging.Logger;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import com.crawljax.util.Helper;
 
 /**
@@ -17,8 +21,10 @@ public class JSExecutionTracer {
 	private static String outputFolder;
 	private static String traceFilename;
 
+	private static JSONArray points = new JSONArray();
+
 	private static final Logger LOGGER = Logger
-	        .getLogger(JSExecutionTracer.class.getName());
+			.getLogger(JSExecutionTracer.class.getName());
 
 	public static final String READWRITEDIRECTORY = "readswrites/";
 
@@ -66,10 +72,73 @@ public class JSExecutionTracer {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public static void parseReadWrites (String bunchOfRWs) {
-		
-		
+		JSONArray buffer = null;
+		JSONObject targetAttributes = null;
+		JSONObject targetElement = null;
+		String JSONLabel = new String();
+		int i;
+
+		try {
+			/* save the current System.out for later usage */
+			PrintStream oldOut = System.out;
+			/* redirect it to the file */
+			System.setOut(output);
+
+			buffer = new JSONArray(bunchOfRWs);
+			for (i = 0; i < buffer.length(); i++) {
+
+				if (points.length() > 0) {
+					// Add comma after previous trace object
+					System.out.println(",");
+				}
+
+				points.put(buffer.getJSONObject(i));
+
+				// Insert @class key for Jackson mapping
+				if (buffer.getJSONObject(i).has("messageType")) {
+					String mType = buffer.getJSONObject(i).get("messageType")
+							.toString();
+
+					// Maybe better to change mType to ENUM and use switch
+					// instead of 'if's
+					if (mType.contains("VARIABLE_READ")) {
+						buffer.getJSONObject(i).put("@class",
+								"com.dyno.core.trace.VariableRead");
+						JSONLabel = "\"VariableRead\":";
+					} else if (mType.contains("READ_AS_ARGUMENT")) {
+						buffer.getJSONObject(i).put("@class",
+								"com.dyno.core.trace.ArgumentRead");
+						JSONLabel = "\"ArgumentRead\":";
+					} else if (mType.contains("VARIABLE_WRITE")) {
+						buffer.getJSONObject(i).put("@class",
+								"com.dyno.core.trace.VariableWrite");
+						JSONLabel = "\"VariableWrite\":";
+					} else if (mType.contains("WRITE_RETURN_VALUE")) {
+						buffer.getJSONObject(i).put("@class",
+								"com.dyno.core.trace.ReturnValueWrite");
+						JSONLabel = "\"ReturnValueWrite\":";
+					} else if (mType.contains("PROPERTY_READ")) {
+						buffer.getJSONObject(i).put("@class",
+								"com.dyno.core.trace.PropertyRead");
+						JSONLabel = "\"PropertyRead\":";
+					} 
+					// messageType obsolete
+					buffer.getJSONObject(i).remove("messageType");
+				}
+
+				System.out.print(JSONLabel + "["
+						+ buffer.getJSONObject(i).toString(2) + "]");
+			}
+
+			/* Restore the old system.out */
+			System.setOut(oldOut);
+
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+
 	}
 
 	/**

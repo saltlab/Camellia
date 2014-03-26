@@ -1,4 +1,3 @@
-
 var level = 0;
 
 
@@ -720,7 +719,6 @@ function blink(bunny)
 
 function getPosition(theElement)
 {
-    madeup = "lol";
     var positionX = 0;
     var positionY = 0;
 
@@ -730,9 +728,6 @@ function getPosition(theElement)
         positionY += theElement.offsetTop;
         theElement = theElement.offsetParent;
     }
-
-    positionX = method(madeup);
-    method(positionX);
     
     return [positionX, positionY];
 };
