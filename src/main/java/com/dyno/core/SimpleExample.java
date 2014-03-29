@@ -2,6 +2,7 @@ package com.dyno.core;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Iterator;
 
 import org.openqa.selenium.NoAlertPresentException;
 import org.openqa.selenium.TimeoutException;
@@ -134,12 +135,29 @@ public class SimpleExample {
                             new TypeReference<TreeMultimap<String, RWOperation>>() {
                             });
 
-            Collection<RWOperation> variableReads = traceMap.get("VariableWrite");
+            Collection<RWOperation> variableWrites = traceMap.get("VariableWrite");
+            Collection<RWOperation> properyReads = traceMap.get("PropertyRead");  
+            
+            Collection<RWOperation> all = traceMap.values();
+            
+            System.out.println("All size: " + all.size());
+            
+            Iterator<RWOperation> it1 = all.iterator();
+            RWOperation nextOp;
+            
+            while (it1.hasNext()) {
+            	nextOp = it1.next();
+            	
+            	// 1  -  Get all instances of slicing criteria (all the reads for positionX on line _, etc.)
+            	
+            	
+            	// 2  -  Get last write for that instance
+            	
+            	// 3  -  Get all dependencies for that last write
+            	
+            	// 4  - repeat 1 for each new dependency
+            }
 
-            Collection<RWOperation> domEventTraces = traceMap.get("PropertyRead");           
-            System.out.println(            variableReads.toArray().length
-                    );
-            System.out.println(domEventTraces.size());
 
             //   story = new Story(domEventTraces, functionTraces, timingTraces, XHRTraces);
             //   story.setOrderedTraceList(sortTraceObjects());
