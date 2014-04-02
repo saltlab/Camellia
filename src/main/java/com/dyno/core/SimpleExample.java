@@ -263,9 +263,24 @@ public class SimpleExample {
 					System.out.println(nextOp.getClass().toString());
 
 					for (int a = index - 1; a >= 0; a--) {
+					    // Checking backwards from READ looking for WRITE
 						searchingOp = TraceHelper.getElementAtIndex(all, a);
 
-						if (searchingOp instanceof VariableWrite) {
+						if (searchingOp instanceof VariableWrite && ((VariableWrite) searchingOp).getVariable().equals(VAR)) {
+						    
+						    /*
+						     * TODO: Wednesday, If that write to 'VAR' is a reference (not primitive type), will need 
+						     * to check if the 'right side' of the write/assignment is updated between THIS VariableWrite
+						     * and the 'Relevant READ' since such an update would change the value of VAR before the
+						     * 'Relevant READ' (since the reference is still live)
+						     * 
+						     * Need to check PropertyWrites only??
+						     * 
+						     * Need to integrate this into algorithm each time a variable's write is found...check
+						     * for changes by reference if the written value is not primitive
+						     * 
+						     */
+						    
 							System.out.println("Relevant <WRITE> found!");
 
 							System.out.println(searchingOp.getOrder());
