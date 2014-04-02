@@ -46,6 +46,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
      * Contains the scopename of the AST we are visiting. Generally this will be the filename
      */
     private String scopeName = null;
+    private int lineNo = -1;
 
     /**
      * List with regular expressions of variables that should not be instrumented.
@@ -141,7 +142,11 @@ public class ReadWriteReplacer extends AstInstrumenter {
     public void setTopScope(Scope s) {
         this.topMost = s;
     }
-
+    
+    public void setLineNo(int l) {
+        this.lineNo = l;
+    }
+    
     public Scope getTopScope() {
         return topMost;
     }
@@ -173,16 +178,19 @@ public class ReadWriteReplacer extends AstInstrumenter {
             // TODO:
 
             handleFunctionCall((FunctionCall) node);
-        } else if (tt == org.mozilla.javascript.Token.NAME /*&& node.getLineno() == lineNo*/ && ((Name) node).getIdentifier().equals(variableName)) {
+        } else if (tt == org.mozilla.javascript.Token.NAME && node.getLineno() == lineNo && ((Name) node).getIdentifier().equals(variableName)) {
             // TODO:
 
             // Might need stricter check since target variable could appear multiple times on single line
-            //	handleName((Name) node);
+           	handleName((Name) node);
         } else if (tt == org.mozilla.javascript.Token.FUNCTION && !node.equals(topMost) && InstrumenterHelper.isVariableLocal(variableName, (FunctionNode) node)) {
             // TODO:
 
             // The variable of interest is not used in the function, skip it
             return false;
+        } else if (tt == org.mozilla.javascript.Token.NAME && ((Name) node).getIdentifier().equals(variableName)) {
+        	System.out.println(node.getLineno());
+        	System.out.println(lineNo);
         }
 
         return true;  // process kids

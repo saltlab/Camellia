@@ -40,6 +40,9 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 	
 	private static String outputFolder = "";
 	private static String jsFilename = "";
+	private static String targetFile = "";
+	private static int targetLine = -1;
+	private static String targetVariable = "";
 
 	/**
 	 * Construct without patterns.
@@ -82,6 +85,16 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 		excludeFilenamePatterns.add(".*toolbar.js?.*");
 		excludeFilenamePatterns.add(".*jquery*.js?.*");
 	}
+	
+	public void setTargetFile (String t) {
+		targetFile = t;
+	}
+	public void setLineNo (int l) {
+		targetLine = l;
+	}
+	public void setVariableName (String t) {
+		targetVariable = t;
+	}
 
 	@Override
 	public String getPluginName() {
@@ -100,9 +113,18 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 				return false;
 			}
 		}
-		if (name.equals("http://www.themaninblue.com:80/experiment/BunnyHunt/scripts/bunnies.js")) {
+		if (name.indexOf(targetFile) != -1 && (name.indexOf(targetFile) == (name.length() - targetFile.length()))) {
 			return true;
+		} else if (name.indexOf(targetFile) != -1) {
+			System.out.println(name.length());
+			System.out.println(targetFile.length());
+			System.out.println(name.indexOf(targetFile));
 		}
+				
+				
+		/*if (name.equals("http://www.themaninblue.com:80/experiment/BunnyHunt/scripts/bunnies.js")) {
+			return true;
+		}*/
 		return false;
 	}
 
@@ -121,6 +143,7 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 
 		System.out.println("<<<<");
 		System.out.println("Scope: " + scopename);
+		LocalExample le = new LocalExample();
 
 		scopeNameForExternalUse = scopename;
 
@@ -130,6 +153,13 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 			return input;
 		}
 		try {
+			System.out.println(targetFile);
+			System.out.println(targetLine);
+			System.out.println(targetVariable);
+			
+			le.setTargetFile(targetFile);
+			le.setLineNo(targetLine);
+			le.setVariableName(targetVariable);
 
 			// Save original JavaScript files/nodes
 			Helper.directoryCheck(getOutputFolder());
@@ -140,11 +170,12 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 			PrintStream outputVisual =
 					new PrintStream("src/main/webapp/" + getFilename());
 
+			// Save the original JavaScript file for displaying later
 			System.setOut(outputVisual);
 			System.out.println(input);
 			System.setOut(oldOut);
 
-			String ast = LocalExample.asd(input, "/bunnies.js");
+			String ast = le.instrument(input, "/bunnies.js");
 
 			System.out.println(ast);
 			

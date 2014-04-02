@@ -43,12 +43,13 @@ public class Main {
     }
 
     public void runDynoSlicer(String[] args) {
-    	 
+    	LocalExample le = new LocalExample(); 
+    	
     	if (isServer) {
     		// Rename to server example?
     		SimpleExample.main(args);
     	} else if (isLocal) {
-    		LocalExample.main(args);
+    		le.main(args);
     	} else {
     		System.out.println("Unsupported Mode, choose either local or server.");
     	}

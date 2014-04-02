@@ -26,9 +26,9 @@ import com.dyno.units.SlicingCriteria;
 public class LocalExample {
 
 	//private static String targetFile = "/short_bunnies.js";
-	private static String targetFile = "/bunnies.js";
-	private static int tempLineNo = 732;
-	private static String varName = "positionX";
+	private String targetFile = "";
+	private int tempLineNo = -1;
+	private String varName = "";
 
 	// Definition scope finder
 
@@ -38,7 +38,7 @@ public class LocalExample {
 	private static ArrayList<SlicingCriteria> remainingSlices = new ArrayList<SlicingCriteria>();
 	private static ArrayList<SlicingCriteria> completedSlices = new ArrayList<SlicingCriteria>();
 
-	public static void main(String[] args) {
+	public void main(String[] args) {
 		URL urlOfTarget = AstInstrumenter.class.getResource(targetFile);
 		String jsFileContents;
 
@@ -47,14 +47,26 @@ public class LocalExample {
 
 		try {
 			jsFileContents = Resources.toString(urlOfTarget, Charset.defaultCharset());
-			asd(jsFileContents, targetFile);
+			instrument(jsFileContents, targetFile);
 		} catch (IOException e) {
 			System.out.println("[LocalExample]: " + "Trouble reading local file.");
 			e.printStackTrace();
 		}
 	}
 
-	public static String asd(String input, String scopename) {
+	public void setTargetFile (String file) { 
+		targetFile = "/" + file;
+	}
+
+	public void setLineNo (int l) { 
+		tempLineNo = l;
+	}
+
+	public void setVariableName (String n) { 
+		varName = n;
+	}
+
+	public String instrument(String input, String scopename) {
 		AstRoot ast = null;
 		Scope scopeOfInterest = null;
 
@@ -133,7 +145,8 @@ public class LocalExample {
 			inst.setVariableName(justFinished.getVariable());
 			inst.setTopScope(justFinished.getScope());
 			inst.start(new String(input));
-
+			inst.setLineNo(tempLineNo);
+			
 			System.out.println("visiting! : " + justFinished.getVariable());
 			System.out.println(Token.typeToName(justFinished.getScope().getType()));
 			System.out.println("????????????");
@@ -155,7 +168,7 @@ public class LocalExample {
 		return ast.toSource();
 	}
 
-	private static ArrayList<Name> getDataDependencies (AstRoot ast, SlicingCriteria target) {
+	private ArrayList<Name> getDataDependencies (AstRoot ast, SlicingCriteria target) {
 		// DEPENDENCY FIND
 		DependencyFinder df = new DependencyFinder();
 
@@ -238,7 +251,7 @@ public class LocalExample {
 		}
 	}
 
-	private static Scope getDefiningScope(AstRoot ast, Name target) {
+	private Scope getDefiningScope(AstRoot ast, Name target) {
 		sc.setScopeName(targetFile);
 		sc.setLineNo(target.getLineno());
 		sc.setVariableName(target.getIdentifier());
