@@ -1,34 +1,15 @@
 package com.dyno.instrument;
 
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeSet;
-
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.ErrorReporter;
-import org.mozilla.javascript.Node;
-import org.mozilla.javascript.NodeTransformer;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.Token;
-import org.mozilla.javascript.ast.Assignment;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
-import org.mozilla.javascript.ast.ElementGet;
-import org.mozilla.javascript.ast.FunctionCall;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Name;
-import org.mozilla.javascript.ast.NewExpression;
-import org.mozilla.javascript.ast.PropertyGet;
-import org.mozilla.javascript.ast.ReturnStatement;
 import org.mozilla.javascript.ast.Scope;
-import org.mozilla.javascript.ast.ScriptNode;
-import org.mozilla.javascript.ast.Symbol;
-import org.mozilla.javascript.ast.VariableDeclaration;
-import org.mozilla.javascript.ast.VariableInitializer;
-
-import com.gargoylesoftware.htmlunit.javascript.host.Document;
 
 public class ProxyInstrumenter2 extends AstInstrumenter {
 

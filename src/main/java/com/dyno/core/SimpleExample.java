@@ -263,7 +263,7 @@ public class SimpleExample {
 			begin.setVariable(VAR);
 
 			readsToBeSliced.add(begin);
-			
+
 			// 1  -  Get all instances of slicing criteria (all the reads for positionX on line _, etc.)
 			// 2  -  Get last write for that instance
 			// 3  -  Get all dependencies for that last write
@@ -271,18 +271,13 @@ public class SimpleExample {
 			while (readsToBeSliced.size() > 0) {
 				next = readsToBeSliced.get(0);
 				it1 = all.iterator();
-				
+
 				while (it1.hasNext()) {
 					nextOp = it1.next();
 
 					if (nextOp.getLineNo() == next.getLineNo() && nextOp.getVariable().equals(next.getVariable()) && (nextOp instanceof VariableRead || nextOp instanceof PropertyRead)) {
-						System.out.println("Relevant [READ] found!");
-
+						// Relevant [READ] found! --> nextOp
 						index = all.indexOf(nextOp);
-
-						System.out.println(nextOp.getOrder());
-						System.out.println(nextOp.getVariable());
-						System.out.println(nextOp.getClass().toString());
 
 						for (int a = index - 1; a >= 0; a--) {
 							// Checking backwards from READ looking for WRITE
@@ -318,12 +313,8 @@ public class SimpleExample {
 									}
 
 								}
-
-								System.out.println("Relevant <WRITE> found!");
-
-								System.out.println(searchingOp.getOrder());
-								System.out.println(searchingOp.getVariable());
-								System.out.println(searchingOp.getClass().toString());
+								
+								//Relevant <WRITE> found! --> 'searchingOp'
 								// If the line is not part of the slice...add it
 								if (TraceHelper.getIndexOfIgnoreOrderNumber(theSlice, searchingOp) == -1) {
 									theSlice.add(searchingOp);
@@ -332,10 +323,6 @@ public class SimpleExample {
 
 								Iterator<RWOperation> depCheck = potentialNewDependencies.iterator();
 								RWOperation nextDep;
-
-
-
-
 
 								/*		for (int b = a - 1; b >= 0; b--) {
 								searchingOp2 = TraceHelper.getElementAtIndex(all, b);
@@ -364,14 +351,8 @@ public class SimpleExample {
 				readsCompleted.add(readsToBeSliced.remove(0));
 			}
 
-			System.out.println(theSlice.size());
-
-			System.out.println(readsToBeSliced.size());
-
-			System.out.println(readsCompleted.size());
-			
 			ArrayList<String> vars = new ArrayList<String>();
-			
+
 			for (int d = 0; d < readsCompleted.size(); d++) {
 				if (vars.indexOf(readsCompleted.get(d).getVariable()) == -1) {
 					vars.add(readsCompleted.get(d).getVariable());

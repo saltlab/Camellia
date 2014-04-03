@@ -206,6 +206,9 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 			System.err.println("Error saving original javascript files.");
 			System.err.println("getMessage: " + ioe.getMessage());
 			ioe.printStackTrace();
+		} catch (Exception ee) {
+			System.err.println("Error instrumenting code (check 'isArgument' function).");
+			ee.printStackTrace();
 		}
 		System.err.println("Here is the corresponding buffer: \n" + input + "\n");
 

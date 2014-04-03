@@ -5,13 +5,16 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import net.sourceforge.htmlunit.corejs.javascript.Token;
 
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Parser;
+import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
+import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.Scope;
 
@@ -51,6 +54,9 @@ public class LocalExample {
 		} catch (IOException e) {
 			System.out.println("[LocalExample]: " + "Trouble reading local file.");
 			e.printStackTrace();
+		} catch (Exception e) {
+			System.out.println("[LocalExample]: " + "Something went wrong while instrumenting code.");
+			e.printStackTrace();
 		}
 	}
 
@@ -66,7 +72,7 @@ public class LocalExample {
 		varName = n;
 	}
 
-	public String instrument(String input, String scopename) {
+	public String instrument(String input, String scopename) throws Exception {
 		AstRoot ast = null;
 		Scope scopeOfInterest = null;
 
@@ -74,6 +80,7 @@ public class LocalExample {
 		Name start = new Name();
 		SlicingCriteria justFinished;
 		ArrayList<Name> varDeps;
+		Scope definingScope;
 
 		ArrayList<SlicingCriteria> possibleNextSteps;
 		Iterator<Name> it;
@@ -91,11 +98,19 @@ public class LocalExample {
 		// First criteria specified by user?
 		start.setIdentifier(varName);
 		start.setLineno(tempLineNo);
-		remainingSlices.add(new SlicingCriteria(getDefiningScope(ast, start), varName));
+		definingScope = getDefiningScope(ast, start);
+
+		remainingSlices.add(new SlicingCriteria(definingScope, varName));
 
 		while (remainingSlices.size() > 0) {
 
 			justFinished = new SlicingCriteria(remainingSlices.get(0).getScope(), remainingSlices.get(0).getVariable());
+
+			if (isArgument(justFinished.getVariable(), justFinished.getScope())) {
+	            // Need to find all places where the function is called add argument number __ as a data dependency
+				
+				// get enclosing scope of the function delcaration...and find all calls to the function in there
+			}
 
 			// Get next variables dependencies
 			varDeps = getDataDependencies(ast, justFinished);
@@ -146,7 +161,7 @@ public class LocalExample {
 			inst.setTopScope(justFinished.getScope());
 			inst.start(new String(input));
 			inst.setLineNo(tempLineNo);
-			
+
 			System.out.println("visiting! : " + justFinished.getVariable());
 			System.out.println(Token.typeToName(justFinished.getScope().getType()));
 			System.out.println("????????????");
@@ -166,6 +181,30 @@ public class LocalExample {
 		Context.exit();
 
 		return ast.toSource();
+	}
+
+	private boolean isArgument(String varName2, Scope definingScope) throws Exception {
+		if (definingScope instanceof FunctionNode) {
+			List<AstNode> args = ((FunctionNode) definingScope).getParams();
+			Iterator<AstNode> it = args.iterator();
+			AstNode nextArg;
+
+			while (it.hasNext()) {
+				nextArg = it.next();
+
+				if (nextArg instanceof Name) {
+					if (((Name) nextArg).getIdentifier().equals(varName2)) {
+						return true;	
+					}
+				} else {
+					System.out.println("[isArgument]: Argument to Function defining scope is not 'Name'");
+					throw new Exception();
+				}
+			}
+		}
+		
+		// Specified variable was not found function arguments
+		return false;
 	}
 
 	private ArrayList<Name> getDataDependencies (AstRoot ast, SlicingCriteria target) {
