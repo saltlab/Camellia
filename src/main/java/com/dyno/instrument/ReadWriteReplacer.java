@@ -32,6 +32,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
     private static final String VARREAD = "_dynoRead";
     private static final String ARGREAD = "_dynoReadAsArg";
     private static final String VARWRITE = "_dynoWrite";
+    private static final String VARWRITEAUG = "_dynoWriteAug";
     private static final String VARWRITEFUNCRET = "_dynoWriteReturnValue";
     private static final String PROPREAD = "_dynoReadProp";
     private static final String FUNCCALL = "_dynoFunc";
@@ -703,7 +704,12 @@ public class ReadWriteReplacer extends AstInstrumenter {
                 wrapperArgs.add(node.getLineno()+"");
 
                 //newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), generateWrapper(VARWRITE, wrapperArgs));
-                newBody = generateWrapper(VARWRITE, wrapperArgs);
+                if (node.getType() == org.mozilla.javascript.Token.ASSIGN) {
+                    newBody = generateWrapper(VARWRITE, wrapperArgs);
+                } else {
+                	// ASSIGN_ADD, ASSIGN_SUB
+                    newBody = generateWrapper(VARWRITEAUG, wrapperArgs);
+                }
             } else if (rightRightSideType == org.mozilla.javascript.Token.ADD) {
                 // Need to iterate through all add items so we can backwards slice from those
                 // These include string concats

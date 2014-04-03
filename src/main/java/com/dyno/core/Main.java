@@ -47,7 +47,13 @@ public class Main {
     	
     	if (isServer) {
     		// Rename to server example?
+    		
+    		
     		SimpleExample.main(args);
+    		
+    		
+    		
+    		//SimpleExample_Tester.main(args);
     	} else if (isLocal) {
     		le.main(args);
     	} else {

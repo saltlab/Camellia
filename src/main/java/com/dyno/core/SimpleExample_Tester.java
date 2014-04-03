@@ -40,7 +40,7 @@ import com.google.common.collect.TreeMultimap;
 
 import com.crawljax.util.Helper;
 
-public class SimpleExample {
+public class SimpleExample_Tester {
 
 	public static final String SERVER_PREFIX2 = "--server";
 	public static final String SERVER_PREFIX1 = "--s";
@@ -129,95 +129,6 @@ public class SimpleExample {
 				throw new IllegalArgumentException();
 			} 
 
-			outputFolder = Helper.addFolderSlashIfNeeded("clematis-output");
-
-			JSExecutionTracer tracer = new JSExecutionTracer();
-			tracer.setOutputFolder(outputFolder + "ftrace");
-			tracer.preCrawling();
-
-			// Create a new instance of the firefox driver
-			FirefoxProfile profile = new FirefoxProfile();
-			// Instantiate proxy components
-			ProxyConfiguration prox = new ProxyConfiguration();
-
-			// Modifier responsible for parsing Ast tree
-			ProxyInstrumenter s = new ProxyInstrumenter();
-
-			// Add necessary files from resources
-			s.setFileNameToAttach("/dyno.wrappers.js");
-			s.setFileNameToAttach("/send.and.buffer.js");
-
-			// Interface for Ast traversal
-			JSModifyProxyPlugin p = new JSModifyProxyPlugin(s);
-			p.excludeDefaults();
-
-			// Set slicing criteria (as it was passed in by user)
-			p.setTargetFile(FILE);
-			p.setLineNo(LINE);
-			p.setVariableName(VAR);
-
-			Framework framework = new Framework();
-
-			/* set listening port before creating the object to avoid warnings */
-			Preferences.setPreference("Proxy.listeners", "127.0.0.1:" + prox.getPort());
-
-			Proxy proxy = new Proxy(framework);
-
-			/* add the plugins to the proxy */
-			proxy.addPlugin(p);
-
-			framework.setSession("FileSystem", new File("convo_model"), "");
-
-			/* start the proxy */
-			proxy.run();
-
-			if (prox != null) {
-				profile.setPreference("network.proxy.http", prox.getHostname());
-				profile.setPreference("network.proxy.http_port", prox.getPort());
-				profile.setPreference("network.proxy.type", prox.getType().toInt());
-				/* use proxy for everything, including localhost */
-				profile.setPreference("network.proxy.no_proxies_on", "");
-			}
-
-			/*
-			 * For enabling Firebug with Clematis Replace '...' with the appropriate path to your
-			 * Firebug installation
-			 */
-			// File file = new
-			// File("/Users/.../Library/Application Support/Firefox/Profiles/zga73n4v.default/extensions/firebug@software.joehewitt.com.xpi");
-			/*
-			 * File file = new File(
-			 * "/Users/Saba/Library/Application Support/Firefox/Profiles/b0dzzwrl.default/extensions/firebug@software.joehewitt.com.xpi"
-			 * ); profile.addExtension(file);
-			 * profile.setPreference("extensions.firebug.currentVersion", "1.8.1"); // Avoid startup
-			 */// screen
-
-			driver = new FirefoxDriver(profile);
-			WebDriverWait wait = new WebDriverWait(driver, 10);
-			boolean sessionOver = false;
-
-			// Use WebDriver to visit specified URL
-			driver.get(URL);
-
-			while (!sessionOver) {
-				// Wait until the user/tester has closed the browser
-
-				try {
-					waitForWindowClose(wait);
-
-					// At this point the window was closed, no TimeoutException
-					sessionOver = true;
-				} catch (TimeoutException e) {
-					// 10 seconds has elapsed and the window is still open
-					sessionOver = false;
-				} catch (WebDriverException wde) {
-					wde.printStackTrace();
-					sessionOver = false;
-				}
-			}
-
-			tracer.postCrawling();
-
 			ObjectMapper mapper = new ObjectMapper();
 			// Register the module that serializes the Guava Multimap
 			mapper.registerModule(new GuavaModule());
@@ -263,30 +174,26 @@ public class SimpleExample {
 			begin.setVariable(VAR);
 
 			readsToBeSliced.add(begin);
-			
-			// 1  -  Get all instances of slicing criteria (all the reads for positionX on line _, etc.)
-			// 2  -  Get last write for that instance
-			// 3  -  Get all dependencies for that last write
-			// 4  - repeat 1 for each new dependency
+
 			while (readsToBeSliced.size() > 0) {
 				next = readsToBeSliced.get(0);
-				it1 = all.iterator();
-				
+
 				while (it1.hasNext()) {
 					nextOp = it1.next();
 
+					//all.
 					if (nextOp.getLineNo() == next.getLineNo() && nextOp.getVariable().equals(next.getVariable()) && (nextOp instanceof VariableRead || nextOp instanceof PropertyRead)) {
 						System.out.println("Relevant [READ] found!");
 
 						index = all.indexOf(nextOp);
 
 						System.out.println(nextOp.getOrder());
-						System.out.println(nextOp.getVariable());
 						System.out.println(nextOp.getClass().toString());
 
 						for (int a = index - 1; a >= 0; a--) {
 							// Checking backwards from READ looking for WRITE
 							searchingOp = all.get(a);
+
 
 							/*if (searchingOp instanceof VariableWriteAugmentAssign && ((VariableWriteAugmentAssign) searchingOp).getVariable().equals(next.getVariable())) {
 
@@ -322,9 +229,7 @@ public class SimpleExample {
 								System.out.println("Relevant <WRITE> found!");
 
 								System.out.println(searchingOp.getOrder());
-								System.out.println(searchingOp.getVariable());
 								System.out.println(searchingOp.getClass().toString());
-								// If the line is not part of the slice...add it
 								if (TraceHelper.getIndexOfIgnoreOrderNumber(theSlice, searchingOp) == -1) {
 									theSlice.add(searchingOp);
 								}
@@ -359,52 +264,28 @@ public class SimpleExample {
 
 					}
 
+					// 1  -  Get all instances of slicing criteria (all the reads for positionX on line _, etc.)
 
+
+					// 2  -  Get last write for that instance
+
+					// 3  -  Get all dependencies for that last write
+
+					// 4  - repeat 1 for each new dependency
 				}
 				readsCompleted.add(readsToBeSliced.remove(0));
 			}
 
 			System.out.println(theSlice.size());
 
-			System.out.println(readsToBeSliced.size());
-
-			System.out.println(readsCompleted.size());
-			
-			ArrayList<String> vars = new ArrayList<String>();
-			
-			for (int d = 0; d < readsCompleted.size(); d++) {
-				if (vars.indexOf(readsCompleted.get(d).getVariable()) == -1) {
-					vars.add(readsCompleted.get(d).getVariable());
-				}
-			}
-			System.out.println("%%%%%%%%%%%");
-			for (int d = 0; d < vars.size(); d++) {
-				System.out.println(vars.get(d));
-			}
-			System.out.println("%%%%%%%%%%%");
-
-
-			String dataLines = "";
-
 			for (int a = 0; a < theSlice.size(); a++) {
-				dataLines += (theSlice.get(a).getLineNo()+1)+",";
+				System.out.println(theSlice.get(a).getClass());
+				System.out.println(theSlice.get(a).getOrder());
+				System.out.println(theSlice.get(a).getLineNo());
+				System.out.println(theSlice.get(a).getVariable());
 			}
 
-			// Save slice line numbers to file for visualization
-			Helper.directoryCheck(p.getOutputFolder());
-			Helper.checkFolderForFile("src/main/webapp/lineNumbers.txt");
-
-			PrintStream oldOut = System.out;
-			PrintStream outputVisual =
-					new PrintStream("src/main/webapp/lineNumbers.txt");
-
-			System.setOut(outputVisual);
-			System.out.println(dataLines);
-			System.setOut(oldOut);
-
-
-			//   story = new Story(domEventTraces, functionTraces, timingTraces, XHRTraces);
-			//   story.setOrderedTraceList(sortTraceObjects());
+			
 
 
 			//   story = new Story(domEventTraces, functionTraces, timingTraces, XHRTraces);

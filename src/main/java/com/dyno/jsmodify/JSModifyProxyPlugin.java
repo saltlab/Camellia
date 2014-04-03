@@ -37,7 +37,7 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 	public static String scopeNameForExternalUse;
 
 	private final JSASTModifier modifier;
-	
+
 	private static String outputFolder = "";
 	private static String jsFilename = "";
 	private static String targetFile = "";
@@ -85,7 +85,7 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 		excludeFilenamePatterns.add(".*toolbar.js?.*");
 		excludeFilenamePatterns.add(".*jquery*.js?.*");
 	}
-	
+
 	public void setTargetFile (String t) {
 		targetFile = t;
 	}
@@ -120,8 +120,8 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 			System.out.println(targetFile.length());
 			System.out.println(name.indexOf(targetFile));
 		}
-				
-				
+
+
 		/*if (name.equals("http://www.themaninblue.com:80/experiment/BunnyHunt/scripts/bunnies.js")) {
 			return true;
 		}*/
@@ -156,14 +156,14 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 			System.out.println(targetFile);
 			System.out.println(targetLine);
 			System.out.println(targetVariable);
-			
+
 			le.setTargetFile(targetFile);
 			le.setLineNo(targetLine);
 			le.setVariableName(targetVariable);
 
 			// Save original JavaScript files/nodes
 			Helper.directoryCheck(getOutputFolder());
-	         Helper.checkFolderForFile("src/main/webapp/" + getFilename());
+			Helper.checkFolderForFile("src/main/webapp/" + getFilename());
 
 			setFileName(scopename);
 			PrintStream oldOut = System.out;
@@ -178,7 +178,7 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 			String ast = le.instrument(input, "/bunnies.js");
 
 			System.out.println(ast);
-			
+
 			/* clean up */
 
 			return ast;//.toSource();
@@ -217,7 +217,7 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 		jsFilename = scopename.substring(index + 1);
 	}
 
-	private static String getOutputFolder() {
+	public static String getOutputFolder() {
 		return Helper.addFolderSlashIfNeeded(outputFolder);
 	}
 
@@ -242,7 +242,7 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 			System.err.println("JSModifyProxyPlugin::createResponse: request is null");
 			return response;
 		}
-		
+
 		if (request != null && request.getURL() != null) {
 			System.out.println("Request URL:");
 			System.out.println(request.getURL().toString());
@@ -257,15 +257,15 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 		} else if (response == null) {
 			System.err.println("JSModifyProxyPlugin::createResponse: response is null");
 			return response;
-		// Proxy can provide Clematis files to prepend to application (specified in SimpleExample.java)
+			// Proxy can provide Clematis files to prepend to application (specified in SimpleExample.java)
 		} else if (!request.getURL().toString().contains("-clematis")
 				&& Integer.parseInt(response.getStatus()) == 404
 				&& modifier.getFilesToPrepend().contains(request.getURL().toString().substring(request.getURL().toString().lastIndexOf("/")))) {		
 			return packageMessage(request, request.getURL().toString().substring(request.getURL().toString().lastIndexOf("/")));	
-		// Proxy can provide JavaScript and CSS specific to toolbar
+			// Proxy can provide JavaScript and CSS specific to toolbar
 		} else if (request.getURL().toString().contains("toolbar-clematis") && Integer.parseInt(response.getStatus()) == 404) {		
 			return packageMessage(request,request.getURL().toString().substring(request.getURL().toString().lastIndexOf("/toolbar-clematis/")));
-		// Proxy can provide images for toolbar rendering
+			// Proxy can provide images for toolbar rendering
 		} else if (request.getURL().toString().contains("/images-clematis/") && Integer.parseInt(response.getStatus()) == 404) {
 			return packageMessage(request, request.getURL().toString().substring(request.getURL().toString().lastIndexOf("/images-clematis/")));
 		}
@@ -285,7 +285,7 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 			response.setContent(modifyJS(new String(response.getContent()),
 					request.getURL().toString()).getBytes());
 		} else if (type != null && type.contains("html")) {
-			
+
 			try {
 				Document dom = Helper.getDocument(new String(response.getContent()));
 				/* find script nodes in the html */
@@ -328,7 +328,7 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 						dom.getElementsByTagName("head").item(0).insertBefore(newNodeToAdd, dom.getElementsByTagName("meta").item(dom.getElementsByTagName("meta").getLength()-1));
 					}
 				}
-				
+
 				// Inject toolbar and its dependencies
 				scriptNodesToCreate = modifier.getToolbarFiles();
 				for (int t = 0; t < scriptNodesToCreate.size(); t++) {
@@ -367,7 +367,7 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 		/* return the response to the webbrowser */
 		return response;
 	}
-	
+
 	private Response packageMessage(Request request, String file) {
 		Response intrResponse = new Response();
 		intrResponse.setStatus("200");

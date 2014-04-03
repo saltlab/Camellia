@@ -1,11 +1,16 @@
 package com.dyno.configuration;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
 import org.openqa.selenium.NotFoundException;
 
+import com.dyno.core.trace.FunctionEnter;
+import com.dyno.core.trace.PropertyRead;
 import com.dyno.core.trace.RWOperation;
+import com.dyno.core.trace.VariableRead;
+import com.dyno.core.trace.VariableWrite;
 
 public class TraceHelper {
 
@@ -26,6 +31,27 @@ public class TraceHelper {
 
 	}
 
+	public static int getIndexOfIgnoreOrderNumber(Collection<RWOperation> trace, RWOperation findMe){
+		int i = 0;
+		Iterator<RWOperation> it = trace.iterator();
+		RWOperation next;
+
+		while (it.hasNext()) {
+			next = it.next();
+
+			if (next.getClass().equals(findMe.getClass())
+					&& next.getLineNo() == findMe.getLineNo()
+					&& next.getVariable().equals(findMe.getVariable())) {
+				return i;
+			}
+
+			i++;
+		}
+
+		return -1;
+
+	}
+
 	public static RWOperation getElementAtIndex(Collection<RWOperation> trace, int index) throws IndexOutOfBoundsException {
 		int i = 0;
 		Iterator<RWOperation> it = trace.iterator();
@@ -42,7 +68,33 @@ public class TraceHelper {
 
 		System.err.println("Invalid index when searching trace.");
 		throw new IndexOutOfBoundsException();
+	}
 
+	public static ArrayList<RWOperation> getDataDependencies(Collection<RWOperation> trace, VariableWrite vw) {
+		int i = getIndexOf(trace, vw);
+		ArrayList<RWOperation> deps = new ArrayList<RWOperation>();
+		RWOperation current;
+		boolean jumpAllowed = false;
+
+		for (int j = i - 1; j >= 0; j--) {
+			current = getElementAtIndex(trace, j);
+
+			// TODO: Might need better criteria for checking if write is dependent on read
+			// (programmer might split assignment operation between mutliple lines)
+			if ((current instanceof VariableRead || current instanceof PropertyRead /*|| current instanceof FunctionReturn*/)
+					&& current.getLineNo() == vw.getLineNo()) {
+				deps.add(current);
+			} else if (current instanceof FunctionEnter) {
+				// Line number is allow to change (!= vw.getLineNo())
+
+				// set a flag?
+				jumpAllowed = true;
+
+			} else if (current.getLineNo() != vw.getLineNo() && !jumpAllowed) {
+				break;
+			}
+		}
+		return deps;
 	}
 
 }
