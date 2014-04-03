@@ -143,11 +143,11 @@ public class ReadWriteReplacer extends AstInstrumenter {
     public void setTopScope(Scope s) {
         this.topMost = s;
     }
-    
+
     public void setLineNo(int l) {
         this.lineNo = l;
     }
-    
+
     public Scope getTopScope() {
         return topMost;
     }
@@ -183,15 +183,15 @@ public class ReadWriteReplacer extends AstInstrumenter {
             // TODO:
 
             // Might need stricter check since target variable could appear multiple times on single line
-           	handleName((Name) node);
+            handleName((Name) node);
         } else if (tt == org.mozilla.javascript.Token.FUNCTION && !node.equals(topMost) && InstrumenterHelper.isVariableLocal(variableName, (FunctionNode) node)) {
             // TODO:
 
             // The variable of interest is not used in the function, skip it
             return false;
         } else if (tt == org.mozilla.javascript.Token.NAME && ((Name) node).getIdentifier().equals(variableName)) {
-        	System.out.println(node.getLineno());
-        	System.out.println(lineNo);
+            System.out.println(node.getLineno());
+            System.out.println(lineNo);
         }
 
         return true;  // process kids
@@ -607,8 +607,15 @@ public class ReadWriteReplacer extends AstInstrumenter {
 
         AstNode newTarget;
 
+        // ORIGINAL
+        //String newBody = "["+PROPREAD+"(\""+node.getTarget().toSource()+"\", \""+node.getProperty().toSource()+"\", "+index+", "+node.getLineno()+")]";
 
-        String newBody = "["+PROPREAD+"(\""+node.getTarget().toSource()+"\", \""+node.getProperty().toSource()+"\", "+index+", "+node.getLineno()+")]";
+        // CANT DO THIS SINCE PROPERTY MUST BE RETURNED AS STRING --> bunny["prop"], value cant be second argument
+        
+
+        String newBody = "["+ARGREAD+"(\""+node.getTarget().toSource()+"\", "+node.getTarget().toSource()+", "+index+", "+node.getLineno()+")]";
+
+
         //String newBody = PROPREAD+"(\""+node.toSource()+"\", "+node.toSource()+", "+node.getLineno()+")";
 
 
@@ -707,7 +714,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
                 if (node.getType() == org.mozilla.javascript.Token.ASSIGN) {
                     newBody = generateWrapper(VARWRITE, wrapperArgs);
                 } else {
-                	// ASSIGN_ADD, ASSIGN_SUB
+                    // ASSIGN_ADD, ASSIGN_SUB
                     newBody = generateWrapper(VARWRITEAUG, wrapperArgs);
                 }
             } else if (rightRightSideType == org.mozilla.javascript.Token.ADD) {

@@ -13,15 +13,12 @@ import org.mozilla.javascript.Token;
 import org.mozilla.javascript.ast.Assignment;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
-import org.mozilla.javascript.ast.ElementGet;
 import org.mozilla.javascript.ast.FunctionCall;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.InfixExpression;
 import org.mozilla.javascript.ast.Name;
-import org.mozilla.javascript.ast.NewExpression;
 import org.mozilla.javascript.ast.ObjectLiteral;
 import org.mozilla.javascript.ast.PropertyGet;
-import org.mozilla.javascript.ast.ReturnStatement;
 import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.Symbol;
 import org.mozilla.javascript.ast.VariableDeclaration;
@@ -31,16 +28,8 @@ import com.dyno.instrument.helpers.FunctionCallParser;
 import com.dyno.instrument.helpers.InfixExpressionParser;
 import com.dyno.instrument.helpers.ObjectLiteralParser;
 import com.dyno.instrument.helpers.PropertyGetParser;
-import com.dyno.units.PertinentArgument;
 
 public class DependencyFinder extends AstInstrumenter {
-
-	private static final String TOOLNAME = "_dyno";
-	private static final String VARREAD = "_dynoRead";
-	private static final String VARWRITE = "_dynoWrite";
-	private static final String VARWRITEFUNCRET = "_dynoWriteReturnValue";
-	private static final String PROPREAD = "_dynoReadProp";
-	private static final String FUNCCALL = "_dynoFunc";
 
 	/**
 	 * This is used by the JavaScript node creation functions that follow.
@@ -134,7 +123,6 @@ public class DependencyFinder extends AstInstrumenter {
 		this.dataDependencies = new ArrayList<Name>();
 	}
 
-
 	private static Scope topMost;
 
 	public void setTopScope(Scope s) {
@@ -166,11 +154,7 @@ public class DependencyFinder extends AstInstrumenter {
 			// TODO:
 
 			handleAssignmentOperator((Assignment) node);
-		} else if (tt == org.mozilla.javascript.Token.CALL) {
-			// TODO:   uncomment this vv
-
-			handleFunctionCall((FunctionCall) node);
-		} 
+		}
 
 		return true;  // process kids
 	}
@@ -443,30 +427,7 @@ public class DependencyFinder extends AstInstrumenter {
 		}
 	}
 
-	private void handleName(Name node) {
-		String newBody;
-		AstNode newTarget;
-		AstNode parent = node.getParent();
 
-		if (node.getParent().getType() == org.mozilla.javascript.Token.GETPROP) {
-			// If leading name/label e.g. 'document' in 'document.getElement()'
-			if (parent.toSource().split("\\.")[0].equals(node.getIdentifier())) {
-
-				newBody = VARREAD+"(\'"+node.getIdentifier()+"\',"+ node.getIdentifier() +", "+node.getLineno()+")";
-			} else {
-				newBody = parent.toSource().replaceFirst("."+node.getIdentifier(), "["+PROPREAD+"(\""+node.getIdentifier()+"\", "+node.getLineno()+")]");
-			}
-		} else if (node.getParent().getType() != org.mozilla.javascript.Token.VAR) {
-			newBody = VARREAD+"(\'"+node.getIdentifier()+"\',"+ node.getIdentifier()+", " +node.getLineno()+")";
-		} else {
-			return;
-		}
-		newTarget = parse(newBody);
-		if (newTarget != null) {
-			node.setIdentifier(newBody);
-		}
-
-	}
 
 	private void handleAssignmentOperator(InfixExpression node) {
 		System.out.println("[handleAssignmentOperator]: " + node.toSource());
@@ -546,15 +507,8 @@ public class DependencyFinder extends AstInstrumenter {
 				
 			} else if (rightSideType == org.mozilla.javascript.Token.SUB) {
 				InfixExpression subOperation = ((InfixExpression) rightSide);
-				
-				System.out.println("Class: " + rightSide.getClass().toString());
-				System.out.println("Operation: " + Token.typeToName(subOperation.getOperator()));
-				System.out.println("Right: " + Token.typeToName(subOperation.getRight().getType()));
-				System.out.println("Left: " + Token.typeToName(subOperation.getLeft().getType()));
-				
-				
+		
 				dataDependencies.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) rightSide));
-
 
 				// Investigate how to get all variables in the sub
 			} else if (rightSideType == org.mozilla.javascript.Token.NEG) {
@@ -565,9 +519,7 @@ public class DependencyFinder extends AstInstrumenter {
 				// Investigate how to get all variables in the sub
 			} else if (rightSideType == org.mozilla.javascript.Token.OBJECTLIT) {
 				
-				
 				dataDependencies.addAll(ObjectLiteralParser.getArgumentDependencies((ObjectLiteral) rightSide));
-
 				
 				// Check RHS of property assignments for data dependencies (Name, Function Call, etc.)
 
@@ -597,31 +549,6 @@ public class DependencyFinder extends AstInstrumenter {
 		}
 
 
-	}
-
-	private void handleFunctionCall(FunctionCall node) {
-		if (node.getTarget().toSource().indexOf(TOOLNAME) != -1) {
-			// We don't want to instrument out code (dirty way)
-			return;
-		}
-		
-		ArrayList<Name> argumentNames = FunctionCallParser.getArgumentDependencies(node);
-		Iterator<Name> argumentIterator = argumentNames.iterator();
-		Name nextArgument;
-		boolean found = false;
-		
-		while (argumentIterator.hasNext()) {
-			nextArgument = argumentIterator.next();
-			if (nextArgument.getIdentifier().equals(variableName)) {
-				found = true;
-				break;
-			}
-		}
-		
-		
-		if (found) {
-			dataDependencies.addAll(argumentNames);
-		}
 	}
 
 	static private ArrayList<AstNode> dependencies = new ArrayList<AstNode>();
