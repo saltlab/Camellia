@@ -24,6 +24,8 @@ import org.owasp.webscarab.plugin.proxy.Proxy;
 
 import com.dyno.configuration.ProxyConfiguration;
 import com.dyno.configuration.TraceHelper;
+import com.dyno.core.trace.ArgumentRead;
+import com.dyno.core.trace.ArgumentWrite;
 import com.dyno.core.trace.PropertyRead;
 import com.dyno.core.trace.RWOperation;
 import com.dyno.core.trace.VariableRead;
@@ -255,6 +257,8 @@ public class SimpleExample {
 			ArrayList<RWOperation> readsToBeSliced = new ArrayList<RWOperation>();
 			ArrayList<RWOperation> readsCompleted = new ArrayList<RWOperation>();
 			ArrayList<RWOperation> theSlice = new ArrayList<RWOperation>();
+			ArrayList<RWOperation> potentialNewDependencies;
+			boolean found = false;
 
 			// First one:
 			RWOperation begin = new RWOperation();
@@ -279,7 +283,9 @@ public class SimpleExample {
 						// Relevant [READ] found! --> nextOp
 						index = all.indexOf(nextOp);
 
+
 						for (int a = index - 1; a >= 0; a--) {
+							found = false;
 							// Checking backwards from READ looking for WRITE
 							searchingOp = all.get(a);
 
@@ -287,7 +293,7 @@ public class SimpleExample {
 
 							} else*/
 							if (searchingOp instanceof VariableWrite && ((VariableWrite) searchingOp).getVariable().equals(next.getVariable())) {
-
+								potentialNewDependencies = new ArrayList<RWOperation>();
 								/*
 								 * TODO: Wednesday, If that write to 'VAR' is a reference (not primitive type), will need 
 								 * to check if the 'right side' of the write/assignment is updated between THIS VariableWrite
@@ -302,7 +308,33 @@ public class SimpleExample {
 								 */
 
 								//	((VariableWrite) searchingOp).addDataDependencies(TraceHelper.getDataDependencies(all, (VariableWrite) searchingOp));
-								ArrayList<RWOperation> potentialNewDependencies = TraceHelper.getDataDependencies(all, (VariableWrite) searchingOp);
+
+								if (searchingOp instanceof ArgumentWrite) {
+									for (int q = all.indexOf(searchingOp)-1; q >= 0; q--) {
+										if (all.get(q) instanceof ArgumentRead 
+												&& ((ArgumentRead) all.get(q)).getArgumentNumber() == ((ArgumentWrite) searchingOp).getArgumentNumber()
+												&& ((ArgumentRead) all.get(q)).getFunctionName().equals(((ArgumentWrite) searchingOp).getFunctionName())
+												&& ((ArgumentRead) all.get(q)).getValue().equals(((ArgumentWrite) searchingOp).getValue())) {
+											potentialNewDependencies.add(all.get(q));
+											
+											if (TraceHelper.getIndexOfIgnoreOrderNumber(theSlice, all.get(q)) == -1) {
+												theSlice.add(all.get(q));
+											}
+											
+											// Break from looking from Argument read
+											found = true;
+											break;
+										}
+									}
+								} else {
+									potentialNewDependencies = TraceHelper.getDataDependencies(all, (VariableWrite) searchingOp);
+
+
+									if (!(searchingOp instanceof VariableWriteAugmentAssign)) {
+										// Previous writes are irrelevant if it was not an augmented assignment i.e. -=, +=
+										found = true;
+									}
+								}
 
 								for (int d = 0; d < potentialNewDependencies.size(); d++) {
 
@@ -313,35 +345,18 @@ public class SimpleExample {
 									}
 
 								}
-								
+
 								//Relevant <WRITE> found! --> 'searchingOp'
 								// If the line is not part of the slice...add it
-								if (TraceHelper.getIndexOfIgnoreOrderNumber(theSlice, searchingOp) == -1) {
-									theSlice.add(searchingOp);
-								}
-
-
-								Iterator<RWOperation> depCheck = potentialNewDependencies.iterator();
-								RWOperation nextDep;
-
-								/*		for (int b = a - 1; b >= 0; b--) {
-								searchingOp2 = TraceHelper.getElementAtIndex(all, b);
-
-								if (searchingOp2.getLineNo() == searchingOp.getLineNo()) {
-									System.out.println("Found an operation on the same line as the write");
-
-									System.out.println(searchingOp2.getOrder());
-									System.out.println(searchingOp2.getClass().toString());
-
-								} else { 
-									break;
-								}
-							}*/
-								if (!(searchingOp instanceof VariableWriteAugmentAssign)) {
-									// Previous writes are irrelevant if it was not an augmented assignment i.e. -=, +=
+								if (found) {
+									if (TraceHelper.getIndexOfIgnoreOrderNumber(theSlice, searchingOp) == -1) {
+										theSlice.add(searchingOp);
+									}
 									break;
 								}
 							} 
+
+
 						}
 
 					}

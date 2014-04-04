@@ -1,17 +1,8 @@
 package com.dyno.core.trace;
 
-public class ArgumentRead extends RWOperation{
-    private String value;
+public class ArgumentRead extends VariableRead {
     private int argumentNumber;
     private String calledFunction;
-
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String o) {
-        value = o;
-    }
     
     public int getArgumentNumber() {
         return argumentNumber;
