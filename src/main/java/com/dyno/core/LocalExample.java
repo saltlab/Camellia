@@ -15,6 +15,7 @@ import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.ast.KeywordLiteral;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.Scope;
 
@@ -23,8 +24,10 @@ import com.google.common.io.Resources;
 import com.dyno.instrument.AstInstrumenter;
 import com.dyno.instrument.DependencyFinder;
 import com.dyno.instrument.FunctionCallerDependencies;
+import com.dyno.instrument.FunctionDeclarationInstrumenter;
 import com.dyno.instrument.ProxyInstrumenter2;
 import com.dyno.instrument.ReadWriteReplacer;
+import com.dyno.units.ArgumentPassedIn;
 import com.dyno.units.SlicingCriteria;
 
 public class LocalExample {
@@ -80,12 +83,16 @@ public class LocalExample {
         Iterator<SlicingCriteria> itsc2;
         Name start = new Name();
         SlicingCriteria justFinished;
-        ArrayList<Name> varDeps;
+        ArrayList<AstNode> varDeps;
+        
+        // TODO: TESTING THIS
+        ArrayList<ArgumentPassedIn> logTheseArguments = new ArrayList<ArgumentPassedIn>();
+        
         Scope definingScope;
 
         ArrayList<SlicingCriteria> possibleNextSteps;
-        Iterator<Name> it;
-        Name step;
+        Iterator<AstNode> it;
+        AstNode step;
 
         /* initialize JavaScript context */
         Context cx = Context.enter();
@@ -104,14 +111,18 @@ public class LocalExample {
         remainingSlices.add(new SlicingCriteria(definingScope, varName));
 
         while (remainingSlices.size() > 0) {
-            varDeps = new ArrayList<Name>();
+            varDeps = new ArrayList<AstNode>();
 
             justFinished = new SlicingCriteria(remainingSlices.get(0).getScope(), remainingSlices.get(0).getVariable());
 
+            // "UPWARDS"
             if (justFinished.getScope() instanceof FunctionNode 
                     && isArgument(justFinished.getVariable(), justFinished.getScope()) > -1) {
                 // Need to find all places where the function is called ad(d argument number __ as a data dependency
 
+            	// Shouldn't be any duplicates at this point...remainingSlices are all unique?
+            	logTheseArguments.add(new ArgumentPassedIn((FunctionNode) justFinished.getScope(), justFinished.getVariable(), isArgument(justFinished.getVariable(), justFinished.getScope())));
+            	
                 FunctionCallerDependencies fcd = new FunctionCallerDependencies();
                 
                 fcd.setFunctionName(((FunctionNode) justFinished.getScope()).getName());
@@ -134,7 +145,11 @@ public class LocalExample {
 
             while (it.hasNext()) {
                 step = it.next();
-                possibleNextSteps.add(new SlicingCriteria(getDefiningScope(ast, step), step.getIdentifier()));
+                if (step instanceof Name) {
+                    possibleNextSteps.add(new SlicingCriteria(getDefiningScope(ast, (Name) step), ((Name) step).getIdentifier()));
+                } else if (step instanceof KeywordLiteral && step.toSource().equals("this")) {
+                    possibleNextSteps.add(new SlicingCriteria(((KeywordLiteral) step).getEnclosingFunction(), "this"));
+                }
             }
 
             // Add the new slicing criteria to queue (method checks against existing)
@@ -149,7 +164,6 @@ public class LocalExample {
         SlicingCriteria next;
 
         while (itsc2.hasNext()) {
-
             next = itsc2.next();
             System.out.println(next.getVariable() + " ||  " + Token.typeToName(next.getScope().getType()));
         }
@@ -188,7 +202,41 @@ public class LocalExample {
             completedSlices.remove(0);
         }
 
+        //ast = inst.finish(ast);
+        
+        
+        
+        // Instrument the function declarations! (track argument data flow)
+        FunctionDeclarationInstrumenter fdi = new FunctionDeclarationInstrumenter();
+        Iterator<ArgumentPassedIn> apiIt = logTheseArguments.iterator();
+        while (apiIt.hasNext()) {	
+        	ArgumentPassedIn currentDeclarationToIntrument = apiIt.next();
+
+        	fdi.setArgumentName(currentDeclarationToIntrument.getArgument());
+        	fdi.setArgumentNumber(currentDeclarationToIntrument.getArgumentNumber());
+        	fdi.setTargetFunction(currentDeclarationToIntrument.getFunction());
+            fdi.setScopeName(targetFile);
+
+            
+            System.out.println(currentDeclarationToIntrument.getArgument());
+            System.out.println(currentDeclarationToIntrument.getArgumentNumber());
+            System.out.println(currentDeclarationToIntrument.getFunction().getName());
+            System.out.println("========");
+            
+            
+        	scopeOfInterest = currentDeclarationToIntrument.getFunction().getEnclosingScope();
+            
+        	fdi.setTopScope(scopeOfInterest);
+        	fdi.start(new String(input));
+
+            scopeOfInterest.visit(fdi);
+        }
+        
+        
         ast = inst.finish(ast);
+
+        System.out.println(ast.toSource());
+        
 
         /* clean up */
         Context.exit();
@@ -222,11 +270,11 @@ public class LocalExample {
         return -1;
     }
 
-    private ArrayList<Name> getDataDependencies (AstRoot ast, SlicingCriteria target) {
+    private ArrayList<AstNode> getDataDependencies (AstRoot ast, SlicingCriteria target) {
         // DEPENDENCY FIND
         DependencyFinder df = new DependencyFinder();
 
-        ArrayList<Name> deps = new ArrayList<Name>();
+        ArrayList<AstNode> deps = new ArrayList<AstNode>();
 
         SlicingCriteria newSlice = new SlicingCriteria(target.getScope(), target.getVariable());
 
@@ -309,8 +357,16 @@ public class LocalExample {
         sc.setScopeName(targetFile);
         sc.setLineNo(target.getLineno());
         sc.setVariableName(target.getIdentifier());
+        
+        if (target.getIdentifier().equals("this")) {
+        	System.out.println(target.getLineno());
+        	System.out.println(target.getIdentifier());
+        }
 
         ast.visit(sc);
+        
+        System.out.println(sc.getLastScopeVisited().getLineno());
+        
         return sc.getLastScopeVisited();
     }
 }

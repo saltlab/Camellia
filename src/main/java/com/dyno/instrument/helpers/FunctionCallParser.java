@@ -7,6 +7,7 @@ import java.util.List;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.FunctionCall;
 import org.mozilla.javascript.ast.InfixExpression;
+import org.mozilla.javascript.ast.KeywordLiteral;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.PropertyGet;
 
@@ -16,8 +17,8 @@ public class FunctionCallParser {
 
 	}
 
-	public static ArrayList<Name> /* ArrayList<AstNode> */ getArgumentDependencies(FunctionCall node) {
-		ArrayList<Name> a = new ArrayList<Name>();
+	public static ArrayList<AstNode> /* ArrayList<AstNode> */ getArgumentDependencies(FunctionCall node) {
+		ArrayList<AstNode> a = new ArrayList<AstNode>();
 
 		// Iterate through arguments
 		List<AstNode> args = node.getArguments();
@@ -42,6 +43,9 @@ public class FunctionCallParser {
 				break;
 			case org.mozilla.javascript.Token.NAME:  
 				a.add((Name) nextArg);
+				break;
+			case org.mozilla.javascript.Token.THIS:  
+				a.add((KeywordLiteral) nextArg);
 				break;
 			case org.mozilla.javascript.Token.STRING:  
 			case org.mozilla.javascript.Token.NUMBER:  

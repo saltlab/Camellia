@@ -84,7 +84,7 @@ public final class InstrumenterHelper {
 		return returnMe.substring(1);
 	}
 
-	private static ArrayList<Scope> getScopeChain(AstNode node) {
+	public static ArrayList<Scope> getScopeChain(AstNode node) {
 		Scope currentScope = node.getEnclosingScope();
 		ArrayList<Scope> scopePath = new ArrayList<Scope>();
 

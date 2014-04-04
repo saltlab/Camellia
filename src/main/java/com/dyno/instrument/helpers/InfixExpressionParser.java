@@ -8,6 +8,7 @@ import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.FunctionCall;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.InfixExpression;
+import org.mozilla.javascript.ast.KeywordLiteral;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.PropertyGet;
 import org.mozilla.javascript.ast.VariableDeclaration;
@@ -20,9 +21,9 @@ public class InfixExpressionParser {//extends AstInstrumenter {
 
 	}
 
-	public static ArrayList<Name> /* ArrayList<AstNode> */ getOperandDependencies(InfixExpression node) {
+	public static ArrayList<AstNode> /* ArrayList<AstNode> */ getOperandDependencies(InfixExpression node) {
 
-		ArrayList<Name> d = new ArrayList<Name>();
+		ArrayList<AstNode> d = new ArrayList<AstNode>();
 		ArrayList<AstNode> operands = new ArrayList<AstNode>();
 		AstNode operand;
 		Iterator<AstNode> it;
@@ -44,10 +45,13 @@ public class InfixExpressionParser {//extends AstInstrumenter {
 				break;
 			case org.mozilla.javascript.Token.SUB:
 				d.addAll(getOperandDependencies((InfixExpression) operand));
-				
+
 				break;
 			case org.mozilla.javascript.Token.NAME:  
 				d.add((Name) operand);
+				break;
+			case org.mozilla.javascript.Token.THIS:  
+				d.add((KeywordLiteral) operand);
 				break;
 			case org.mozilla.javascript.Token.GETPROP:  
 				d.addAll(PropertyGetParser.getPropertyDependencies((PropertyGet) operand));

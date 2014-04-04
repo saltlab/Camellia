@@ -5,6 +5,7 @@ import java.util.ArrayList;
 public class VariableWrite extends RWOperation {
 	private String value;
 	private ArrayList<RWOperation> dataDependencies = new ArrayList<RWOperation>();
+	private String alias;
 
 	public String getValue() {
 		return value;
@@ -24,5 +25,13 @@ public class VariableWrite extends RWOperation {
 
 	public ArrayList<RWOperation> getDataDependencies(String o) {
 		return dataDependencies;
+	}
+	
+	public String getAlias() {
+		return alias;
+	}
+
+	public void setAlias(String o) {
+		alias = o;
 	}
 }

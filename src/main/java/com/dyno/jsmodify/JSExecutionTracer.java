@@ -103,6 +103,8 @@ public class JSExecutionTracer {
 
 					// Maybe better to change mType to ENUM and use switch
 					// instead of 'if's
+					
+					
 
 					if (mType.contains("VARIABLE_WRITE_ADDSUB")) {
 						buffer.getJSONObject(i).put("@class",
@@ -112,6 +114,10 @@ public class JSExecutionTracer {
 						buffer.getJSONObject(i).put("@class",
 								"com.dyno.core.trace.ArgumentRead");
 						JSONLabel = "\"ArgumentRead\":";
+					} else if (mType.contains("WRITE_AS_ARGUMENT")) {
+						buffer.getJSONObject(i).put("@class",
+								"com.dyno.core.trace.ArgumentWrite");
+						JSONLabel = "\"ArgumentWrite\":";
 					} else if (mType.contains("VARIABLE_WRITE")) {
 						buffer.getJSONObject(i).put("@class",
 								"com.dyno.core.trace.VariableWrite");

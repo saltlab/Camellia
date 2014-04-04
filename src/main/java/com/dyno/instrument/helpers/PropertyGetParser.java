@@ -7,6 +7,7 @@ import net.sourceforge.htmlunit.corejs.javascript.Token;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.FunctionCall;
 import org.mozilla.javascript.ast.InfixExpression;
+import org.mozilla.javascript.ast.KeywordLiteral;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.PropertyGet;
 
@@ -17,9 +18,9 @@ public class PropertyGetParser {
 
 	}
 
-	public static ArrayList<Name> getPropertyDependencies(PropertyGet rightSide) {
+	public static ArrayList<AstNode> getPropertyDependencies(PropertyGet rightSide) {
 		
-		ArrayList<Name> p = new ArrayList<Name>();
+		ArrayList<AstNode> p = new ArrayList<AstNode>();
 
 		AstNode object = rightSide.getTarget();
 		
@@ -35,6 +36,9 @@ public class PropertyGetParser {
 			break;
 		case org.mozilla.javascript.Token.CALL:  
 			p.addAll(FunctionCallParser.getArgumentDependencies((FunctionCall) object));
+			break;
+		case org.mozilla.javascript.Token.THIS:  
+			p.add((KeywordLiteral) object);
 			break;
 		default:
 			System.out.println("[InfixExpression]: Error parsing Infix Expression. Unknown operand type. (getNames())");

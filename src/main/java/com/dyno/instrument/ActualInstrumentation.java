@@ -16,6 +16,7 @@ import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.ElementGet;
 import org.mozilla.javascript.ast.FunctionCall;
 import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.ast.KeywordLiteral;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.NewExpression;
 import org.mozilla.javascript.ast.PropertyGet;
@@ -484,12 +485,17 @@ public class ActualInstrumentation extends AstInstrumenter{
 
 	private void handleProperty(PropertyGet node) {
 		AstNode newTarget;
-		ArrayList<Name> affectedNames = PropertyGetParser.getPropertyDependencies(node);
-		Iterator<Name> nt = affectedNames.iterator();
+		ArrayList<AstNode> affectedNames = PropertyGetParser.getPropertyDependencies(node);
+		Iterator<AstNode> nt = affectedNames.iterator();
 		boolean nameFound = false;
+		AstNode next;
 
 		while (nt.hasNext()) {
-			if (nt.next().getIdentifier().equals(variableName)) {
+			next = nt.next();
+			if (next instanceof Name && ((Name) next).getIdentifier().equals(variableName)) {
+				nameFound = true;
+				break;
+			} else if (next instanceof KeywordLiteral && next.toSource().equals("this") && variableName.equals("this")) {
 				nameFound = true;
 				break;
 			}

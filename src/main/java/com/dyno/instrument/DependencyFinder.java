@@ -47,7 +47,7 @@ public class DependencyFinder extends AstInstrumenter {
 	 */
 	private ArrayList<String> excludeList = new ArrayList<String>();
 
-	private ArrayList<Name> dataDependencies = new ArrayList<Name>();
+	private ArrayList<AstNode> dataDependencies = new ArrayList<AstNode>();
 	private ArrayList<Name> controlDependencies = new ArrayList<Name>();
 
 	/**
@@ -115,12 +115,12 @@ public class DependencyFinder extends AstInstrumenter {
 		return scopeName;
 	}
 
-	public ArrayList<Name> getDataDependencies () {
+	public ArrayList<AstNode> getDataDependencies () {
 		return this.dataDependencies;
 	}
 
 	public void clearDataDependencies () {
-		this.dataDependencies = new ArrayList<Name>();
+		this.dataDependencies = new ArrayList<AstNode>();
 	}
 
 	private static Scope topMost;

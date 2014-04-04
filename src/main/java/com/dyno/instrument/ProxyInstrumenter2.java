@@ -13,146 +13,146 @@ import org.mozilla.javascript.ast.Scope;
 
 public class ProxyInstrumenter2 extends AstInstrumenter {
 
-    /**
-     * This is used by the JavaScript node creation functions that follow.
-     */
-    private CompilerEnvirons compilerEnvirons = new CompilerEnvirons();
-    private ErrorReporter errorReporter = compilerEnvirons.getErrorReporter();
+	/**
+	 * This is used by the JavaScript node creation functions that follow.
+	 */
+	private CompilerEnvirons compilerEnvirons = new CompilerEnvirons();
+	private ErrorReporter errorReporter = compilerEnvirons.getErrorReporter();
 
-    /**
-     * Contains the scopename of the AST we are visiting. Generally this will be the filename
-     */
-    private String scopeName = null;
+	/**
+	 * Contains the scopename of the AST we are visiting. Generally this will be the filename
+	 */
+	private String scopeName = null;
 
-    /**
-     * List with regular expressions of variables that should not be instrumented.
-     */
-    private ArrayList<String> excludeList = new ArrayList<String>();
-    private String src = "";
+	/**
+	 * List with regular expressions of variables that should not be instrumented.
+	 */
+	private ArrayList<String> excludeList = new ArrayList<String>();
+	private String src = "";
 
-    private Scope lastScopeVisited = null;
+	private Scope lastScopeVisited = null;
 
-    /**
-     * Construct without patterns.
-     */
-    public ProxyInstrumenter2() {
-        super();
-    }
+	/**
+	 * Construct without patterns.
+	 */
+	public ProxyInstrumenter2() {
+		super();
+	}
 
-    /**
-     * Constructor with patterns.
-     * 
-     * @param excludes
-     *            List with variable patterns to exclude.
-     */
-    public ProxyInstrumenter2(ArrayList<String> excludes) {
-        super(excludes);
-        excludeList = excludes;
-    }
+	/**
+	 * Constructor with patterns.
+	 * 
+	 * @param excludes
+	 *            List with variable patterns to exclude.
+	 */
+	public ProxyInstrumenter2(ArrayList<String> excludes) {
+		super(excludes);
+		excludeList = excludes;
+	}
 
-    /**
-     * Parse some JavaScript to a simple AST.
-     * 
-     * @param code
-     *            The JavaScript source code to parse.
-     * @return The AST node.
-     */
-    public AstRoot parse(String code) {
-        Parser p = new Parser(compilerEnvirons, errorReporter);
+	/**
+	 * Parse some JavaScript to a simple AST.
+	 * 
+	 * @param code
+	 *            The JavaScript source code to parse.
+	 * @return The AST node.
+	 */
+	public AstRoot parse(String code) {
+		Parser p = new Parser(compilerEnvirons, errorReporter);
 
-        return p.parse(code, null, 0);
-    }
+		return p.parse(code, null, 0);
+	}
 
-    /**
-     * Find out the function name of a certain node and return "anonymous" if it's an anonymous
-     * function.
-     * 
-     * @param f
-     *            The function node.
-     * @return The function name.
-     */
-    protected String getFunctionName(FunctionNode f) {
-        Name functionName = f.getFunctionName();
+	/**
+	 * Find out the function name of a certain node and return "anonymous" if it's an anonymous
+	 * function.
+	 * 
+	 * @param f
+	 *            The function node.
+	 * @return The function name.
+	 */
+	protected String getFunctionName(FunctionNode f) {
+		Name functionName = f.getFunctionName();
 
-        if (functionName == null) {
-            return "anonymous" + f.getLineno();
-        } else {
-            return functionName.toSource();
-        }
-    }
+		if (functionName == null) {
+			return "anonymous" + f.getLineno();
+		} else {
+			return functionName.toSource();
+		}
+	}
 
-    /**
-     * @param scopeName
-     *            the scopeName to set
-     */
-    public void setScopeName(String scopeName) {
-        this.scopeName = scopeName;
-    }
+	/**
+	 * @param scopeName
+	 *            the scopeName to set
+	 */
+	public void setScopeName(String scopeName) {
+		this.scopeName = scopeName;
+	}
 
-    /**
-     * @return the scopeName
-     */
-    public String getScopeName() {
-        return scopeName;
-    }
+	/**
+	 * @return the scopeName
+	 */
+	public String getScopeName() {
+		return scopeName;
+	}
 
-    static private int lineNo = -1;
+	static private int lineNo = -1;
 
-    public void setLineNo (int num) {
-        this.lineNo = num/*-1*/;
-    }
+	public void setLineNo (int num) {
+		this.lineNo = num/*-1*/;
+	}
 
-    static private ArrayList<AstNode> dependencies = new ArrayList<AstNode>();
+	static private ArrayList<AstNode> dependencies = new ArrayList<AstNode>();
 
-    public ArrayList<AstNode> getNextSliceStart() {
-        return dependencies;
-    }
+	public ArrayList<AstNode> getNextSliceStart() {
+		return dependencies;
+	}
 
-    static private String variableName = null;
+	static private String variableName = null;
 
-    public void setVariableName (String name) {
-        this.variableName = name;
-        firstTime = true;
-    }
+	public void setVariableName (String name) {
+		this.variableName = name;
+		firstTime = true;
+	}
 
-    public Scope getLastScopeVisited () {
-        return lastScopeVisited;
-    }
+	public Scope getLastScopeVisited () {
+		return lastScopeVisited;
+	}
 
-    private boolean firstTime = true;
+	private boolean firstTime = true;
 
-    @Override
-    public  boolean visit(AstNode node){
-        if (firstTime) {
-            System.out.println("beginning search for ORIGIN!");
-            System.out.println(variableName);
-            System.out.println(lineNo);
-        }
-        firstTime = false;
+	@Override
+	public  boolean visit(AstNode node){
+		if (firstTime) {
+			System.out.println("beginning search for ORIGIN!");
+			System.out.println(variableName);
+			System.out.println(lineNo);
+		}
+		firstTime = false;
 
-        boolean continueToChildren = true;
-        int tt = node.getType();
-        Scope definingScope = null;
+		boolean continueToChildren = true;
+		int tt = node.getType();
+		Scope definingScope = null;
 
-        if (tt == org.mozilla.javascript.Token.NAME
-                && node.getLineno() == lineNo
-                && ((Name) node).getIdentifier().equals(variableName)) {
-            // Starting point of slice
+		if (tt == org.mozilla.javascript.Token.NAME
+				&& node.getLineno() == lineNo
+				&& ((Name) node).getIdentifier().equals(variableName)) {
+			// Starting point of slice
 
-            System.out.println("Found " + variableName);
-            System.out.println("Looking for delcaration now");
+			System.out.println("Found " + variableName);
+			System.out.println("Looking for delcaration now");
 
-            definingScope = InstrumenterHelper.getDefiningScope((Name) node);
+			definingScope = InstrumenterHelper.getDefiningScope((Name) node);
 
-            if (definingScope.getType() == org.mozilla.javascript.Token.SCRIPT) {
-                // Assume variable is defined in another JavaScript file and is therefore global
+			if (definingScope.getType() == org.mozilla.javascript.Token.SCRIPT) {
+				// Assume variable is defined in another JavaScript file and is therefore global
 
-            }
-            // At this point the defining scope should be identified, whether its global or a parent function
+			}
+			// At this point the defining scope should be identified, whether its global or a parent function
 
-            // Below, replace getEnclosingFunction with a variable based on above if statement 
+			// Below, replace getEnclosingFunction with a variable based on above if statement 
 
-            /**     if (node.getEnclosingFunction() != null) {
+			/**     if (node.getEnclosingFunction() != null) {
                 if (((Name) node).getDefiningScope() != node.getEnclosingFunction()) {
                     // TROUBLE!
                     System.out.println("TROUBLE 1");
@@ -172,71 +172,91 @@ public class ProxyInstrumenter2 extends AstInstrumenter {
 
                 }
             }*/
-            this.lastScopeVisited = definingScope;
-            System.out.println("FOUND DEFINING SCOPE!");
-            if (definingScope.getType() == org.mozilla.javascript.Token.FUNCTION) {
-                System.out.println("[Function]: " + getFunctionName((FunctionNode) definingScope));
-            } else if (definingScope.getType() == org.mozilla.javascript.Token.SCRIPT) {
-                System.out.println("[Script]");
-            }
-            return false;
+			this.lastScopeVisited = definingScope;
+			System.out.println("FOUND DEFINING SCOPE!");
+			if (definingScope.getType() == org.mozilla.javascript.Token.FUNCTION) {
+				System.out.println("[Function]: " + getFunctionName((FunctionNode) definingScope));
+			} else if (definingScope.getType() == org.mozilla.javascript.Token.SCRIPT) {
+				System.out.println("[Script]");
+			}
+			return false;
 
-        } else if (tt == org.mozilla.javascript.Token.EXPR_VOID
-                || tt == org.mozilla.javascript.Token.ASSIGN_ADD) {
-            System.out.println("--------------------------");
-            System.out.println(Token.typeToName(tt));
-            System.out.println(node.getLineno());
-            System.out.println(node.getClass().toString());
-            if (tt == org.mozilla.javascript.Token.NAME) {
-                System.out.println(((Name) node).getIdentifier());
-            }
-        }
+		} else if (tt == org.mozilla.javascript.Token.THIS
+				&& node.getLineno() == lineNo
+				&& variableName.equals("this")) {
+			// Shouldn't be void/null?
 
-        return continueToChildren;  // process kids
-    }
+			ArrayList<Scope> lookingForFn = InstrumenterHelper.getScopeChain(node);
+			for (int i = 0; i < lookingForFn.size(); i++) {
+				if (lookingForFn.get(i) instanceof FunctionNode) {
+					definingScope = lookingForFn.get(i);
+					break;
+				}
+			}
 
-    @Override
-    public AstNode createNodeInFunction(FunctionNode function, int lineNo) {
-        // TODO Auto-generated method stub
-        return null;
-    }
+			this.lastScopeVisited = definingScope;
+			System.out.println("FOUND DEFINING SCOPE!");
+			System.out.println(node.getClass().toString());
+			System.out.println(definingScope.getClass().toString());
+			System.out.println(definingScope instanceof FunctionNode);
 
-    @Override
-    public AstNode createNode(FunctionNode function, String postfix, int lineNo) {
-        String name;
-        String code;
+			return false;
+		} else if (tt == org.mozilla.javascript.Token.EXPR_VOID
+				|| tt == org.mozilla.javascript.Token.ASSIGN_ADD) {
+			System.out.println("--------------------------");
+			System.out.println(Token.typeToName(tt));
+			System.out.println(node.getLineno());
+			System.out.println(node.getClass().toString());
+			if (tt == org.mozilla.javascript.Token.NAME) {
+				System.out.println(((Name) node).getIdentifier());
+			}
+		}
 
-        name = getFunctionName(function);
-        if (postfix == ":::EXIT") {
-            postfix += lineNo;
-        }
+		return continueToChildren;  // process kids
+	}
 
-        /* only add instrumentation code if there are variables to log */
+	@Override
+	public AstNode createNodeInFunction(FunctionNode function, int lineNo) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
-        /* TODO: this uses JSON.stringify which only works in Firefox? make browser indep. */
-        /* post to the proxy server */
-        code = "send(new Array('" + getScopeName() + "." + name + "', '" + postfix + "'));";
+	@Override
+	public AstNode createNode(FunctionNode function, String postfix, int lineNo) {
+		String name;
+		String code;
 
-        return parse(code);
-    }
+		name = getFunctionName(function);
+		if (postfix == ":::EXIT") {
+			postfix += lineNo;
+		}
 
-    @Override
-    public AstNode createPointNode(String shouldLog, int lineNo) {
-        // TODO Auto-generated method stub
-        return null;
-    }
+		/* only add instrumentation code if there are variables to log */
 
-    @Override
-    public AstRoot finish(AstRoot node) {
-        this.lastScopeVisited = null;
-        return node;
-    }
+		/* TODO: this uses JSON.stringify which only works in Firefox? make browser indep. */
+		/* post to the proxy server */
+		code = "send(new Array('" + getScopeName() + "." + name + "', '" + postfix + "'));";
 
-    @Override
-    public void start(String node) {
-        src = node;
-    }
-    
-    public void start() {
-    }
+		return parse(code);
+	}
+
+	@Override
+	public AstNode createPointNode(String shouldLog, int lineNo) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public AstRoot finish(AstRoot node) {
+		this.lastScopeVisited = null;
+		return node;
+	}
+
+	@Override
+	public void start(String node) {
+		src = node;
+	}
+
+	public void start() {
+	}
 }
