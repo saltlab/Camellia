@@ -15,6 +15,7 @@ function _dynoRead(varName, value, lineNo, id) {
 }
 
 function _dynoReadAsArg(varName, value, functionName, argNumber, lineNo, id) {
+window.console.log("_dynoReadAsArg",  varName, functionName);
     send(JSON.stringify({
              messageType: "READ_AS_ARGUMENT",
              lineNo: lineNo,
@@ -29,6 +30,7 @@ function _dynoReadAsArg(varName, value, functionName, argNumber, lineNo, id) {
 }
 
 function _dynoWrite(varName, newValue, readFrom, lineNo, id) {
+window.console.log("_dynoWrite",  varName, readFrom);
     // Send info here
     send(JSON.stringify({
              messageType: "VARIABLE_WRITE",
@@ -72,6 +74,7 @@ function _dynoWriteReturnValue(varName, returnValue, lineNo, id) {
 }
 
 function _dynoReadProp(baseObject, propAsString, lineNo, id) {
+window.console.log("_dynoReadProp",  baseObject, propAsString);
     // Send info here
     send(JSON.stringify({
              messageType: "PROPERTY_READ",

@@ -21,8 +21,6 @@ import org.mozilla.javascript.ast.ReturnStatement;
 import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.Symbol;
 
-import com.dyno.jsmodify.JSModifyProxyPlugin;
-
 public class FunctionTrace extends AstInstrumenter {
 
 	/**

@@ -43,6 +43,10 @@ import com.google.common.collect.TreeMultimap;
 import com.crawljax.util.Helper;
 
 public class SimpleExample {
+	
+	// Example arguments:       --server http://www.themaninblue.com/experiment/BunnyHunt/ --file bunnies.js --line 732 --variable positionY
+	
+	//--server http://www.themaninblue.com/experiment/BunnyHunt/ --file clouds.js --line 30 --variable cloud1
 
 	public static final String SERVER_PREFIX2 = "--server";
 	public static final String SERVER_PREFIX1 = "--s";
@@ -315,6 +319,8 @@ public class SimpleExample {
 												&& ((ArgumentRead) all.get(q)).getArgumentNumber() == ((ArgumentWrite) searchingOp).getArgumentNumber()
 												&& ((ArgumentRead) all.get(q)).getFunctionName().equals(((ArgumentWrite) searchingOp).getFunctionName())
 												&& ((ArgumentRead) all.get(q)).getValue().equals(((ArgumentWrite) searchingOp).getValue())) {
+											// Special case linking arguments from call to declaration
+											
 											potentialNewDependencies.add(all.get(q));
 											
 											if (TraceHelper.getIndexOfIgnoreOrderNumber(theSlice, all.get(q)) == -1) {
@@ -333,6 +339,12 @@ public class SimpleExample {
 									if (!(searchingOp instanceof VariableWriteAugmentAssign)) {
 										// Previous writes are irrelevant if it was not an augmented assignment i.e. -=, +=
 										found = true;
+									} else {
+										// Add the augment assign line to the slice and continue looking for previous assign (non-augment)
+										
+										if (TraceHelper.getIndexOfIgnoreOrderNumber(theSlice, searchingOp) == -1) {
+											theSlice.add(searchingOp);
+										}
 									}
 								}
 

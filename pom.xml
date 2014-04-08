@@ -12,6 +12,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<dep.jetty>7.6.2.v20120308</dep.jetty>
 	</properties>
 
 	<developers>
@@ -69,6 +70,17 @@
 			<version>2.1.1</version>
 		</dependency>
 	</dependencies>
+
+    <build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.mortbay.jetty</groupId>
+					<artifactId>jetty-maven-plugin</artifactId>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+    </build>
 
 	<repositories>
 		<repository>

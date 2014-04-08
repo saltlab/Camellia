@@ -623,7 +623,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
 		// CANT DO THIS SINCE PROPERTY MUST BE RETURNED AS STRING --> bunny["prop"], value cant be second argument
 
 
-		String newBody = "["+ARGREAD+"(\""+node.getTarget().toSource()+"\", "+node.getTarget().toSource()+",\""+functionName+ "\","+index+", "+node.getLineno()+")]";
+		String newBody = "["+ARGREAD+"(\""+node.getTarget().toSource()+"\", \""+node.getProperty().toSource()+"\",\""+functionName+ "\","+index+", "+node.getLineno()+")]";
 
 
 		//String newBody = PROPREAD+"(\""+node.toSource()+"\", "+node.toSource()+", "+node.getLineno()+")";

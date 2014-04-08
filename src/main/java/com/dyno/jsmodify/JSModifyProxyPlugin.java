@@ -175,7 +175,7 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 			System.out.println(input);
 			System.setOut(oldOut);
 
-			String ast = le.instrument(input, "/bunnies.js");
+			String ast = le.instrument(input, "/"+getFilename());
 
 			System.out.println(ast);
 
