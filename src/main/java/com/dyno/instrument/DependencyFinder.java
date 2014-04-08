@@ -149,8 +149,8 @@ public class DependencyFinder extends AstInstrumenter {
 
 			handleVariableDeclaration((VariableDeclaration) node);
 		} else if (tt == org.mozilla.javascript.Token.ASSIGN
-		        || tt == org.mozilla.javascript.Token.ASSIGN_ADD
-		        || tt == org.mozilla.javascript.Token.ASSIGN_SUB) {
+				|| tt == org.mozilla.javascript.Token.ASSIGN_ADD
+				|| tt == org.mozilla.javascript.Token.ASSIGN_SUB) {
 			// TODO:
 
 			handleAssignmentOperator((Assignment) node);
@@ -215,7 +215,7 @@ public class DependencyFinder extends AstInstrumenter {
 	@Override
 	public void start(String node) {
 	}
-	
+
 	public void start() {
 	}
 
@@ -376,6 +376,11 @@ public class DependencyFinder extends AstInstrumenter {
 			nextInitializer = varIt.next();
 			leftSide = nextInitializer.getTarget();
 			rightSide = nextInitializer.getInitializer();
+			
+			if (rightSide == null) {
+				// Variable declaration without assignment e.g. "var i;"
+				continue;
+			}
 			// Just in case
 			newBody = rightSide.toSource();
 
@@ -431,7 +436,7 @@ public class DependencyFinder extends AstInstrumenter {
 
 	private void handleAssignmentOperator(InfixExpression node) {
 		System.out.println("[handleAssignmentOperator]: " + node.toSource());
-		
+
 		// Left & Right side
 		AstNode leftSide = node.getLeft();
 		AstNode rightSide = node.getRight();
@@ -456,8 +461,15 @@ public class DependencyFinder extends AstInstrumenter {
 			varBeingRead = rightSide.toSource().split("\\.")[0];
 		} else if (rightSide.getType() == org.mozilla.javascript.Token.NAME) {
 			varBeingRead = ((Name) rightSide).getIdentifier();
+		} else if (rightSide.getType() == org.mozilla.javascript.Token.OBJECTLIT) {
+			System.out.println("[handleAssignmentOperator]: Right hand side of assignment is Object literal...to be implemented");
+		} else if (rightSide.getType() == org.mozilla.javascript.Token.STRING
+				|| rightSide.getType() == org.mozilla.javascript.Token.NUMBER) {
+			System.out.println("[handleAssignmentOperator]: Right hand side of assignment is primitive type...no dependency");
+			// No dependency
 		} else {
 			System.out.println("[handleAssignmentOperator]: Right hand side of assignment is not NAME or GETPROP, function?");
+			System.out.println(rightSide.toSource());
 		}
 
 
@@ -471,43 +483,43 @@ public class DependencyFinder extends AstInstrumenter {
 			} else if (rightSideType == org.mozilla.javascript.Token.CALL) {
 				// Must slice return statement of function (could be defined elsewhere)
 				// Must add arguments (see handleFunctionCall
-				
-				
+
+
 				dataDependencies.addAll(FunctionCallParser.getArgumentDependencies((FunctionCall) rightSide));
-				
+
 				// If method call, must add base object to data dependencies
 
 			} else if (rightSideType == org.mozilla.javascript.Token.NAME) {
 				// Add name to data dependencies (variableName, lineNo)
-				
+
 				dataDependencies.add((Name) rightSide);
 
 			} else if (rightSideType == org.mozilla.javascript.Token.GETPROP) {
 				// Need to check if there is over lap with CALL (method calls, which do they fall under)
 
-				
-				dataDependencies.addAll(PropertyGetParser.getPropertyDependencies((PropertyGet) rightSide));
-				
 
-				
+				dataDependencies.addAll(PropertyGetParser.getPropertyDependencies((PropertyGet) rightSide));
+
+
+
 				// Must add base object to data dependencies
 				// LVL add property as data dependency 'this.prop'
 			} else if (rightSideType == org.mozilla.javascript.Token.ADD) {
 
 				// Investigate how to get all variables in the add/concatination
 				InfixExpression addOperation = ((InfixExpression) rightSide);
-				
+
 				System.out.println("Class: " + rightSide.getClass().toString());
 				System.out.println("Operation: " + Token.typeToName(addOperation.getOperator()));
 				System.out.println("Right: " + Token.typeToName(addOperation.getRight().getType()));
 				System.out.println("Left: " + Token.typeToName(addOperation.getLeft().getType()));
-				
+
 				dataDependencies.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) rightSide));
 
-				
+
 			} else if (rightSideType == org.mozilla.javascript.Token.SUB) {
 				InfixExpression subOperation = ((InfixExpression) rightSide);
-		
+
 				dataDependencies.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) rightSide));
 
 				// Investigate how to get all variables in the sub
@@ -518,9 +530,9 @@ public class DependencyFinder extends AstInstrumenter {
 
 				// Investigate how to get all variables in the sub
 			} else if (rightSideType == org.mozilla.javascript.Token.OBJECTLIT) {
-				
+
 				dataDependencies.addAll(ObjectLiteralParser.getArgumentDependencies((ObjectLiteral) rightSide));
-				
+
 				// Check RHS of property assignments for data dependencies (Name, Function Call, etc.)
 
 			} else if (rightSideType == org.mozilla.javascript.Token.STRING

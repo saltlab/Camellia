@@ -6,9 +6,15 @@ window.console.log(original.changeMe);
 
 var clone = original;
 
-clone.changeMe = "Goodbye";
+var i;
 
-window.console.log(original.changeMe);
+for (i = 0; i < 20; i++) {
+
+    clone.changeMe = "Goodbye";
+    window.console.log(original.changeMe);
+}
+
+
 
 
 

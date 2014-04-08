@@ -422,6 +422,12 @@ public class ReadWriteReplacer extends AstInstrumenter {
 			nextInitializer = varIt.next();
 			leftSide = nextInitializer.getTarget();
 			rightSide = nextInitializer.getInitializer();
+			
+			if (rightSide == null) {
+				// Variable declaration without assignment e.g. "var i;"
+				continue;
+			}
+			
 			// Just in case
 			newBody = rightSide.toSource();
 
