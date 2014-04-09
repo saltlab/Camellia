@@ -25,6 +25,8 @@ import org.mozilla.javascript.ast.Symbol;
 import org.mozilla.javascript.ast.VariableDeclaration;
 import org.mozilla.javascript.ast.VariableInitializer;
 
+import bsh.org.objectweb.asm.Type;
+
 import com.dyno.configuration.TraceHelper;
 import com.dyno.instrument.helpers.FunctionCallParser;
 import com.dyno.units.SlicingCriteria;
@@ -518,9 +520,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
 		}
 
 		if (node.getParent() != null) {
-			if (node.getParent().getType() == org.mozilla.javascript.Token.ASSIGN
-					|| node.getParent().getType() == org.mozilla.javascript.Token.ASSIGN_ADD
-					|| node.getParent().getType() == org.mozilla.javascript.Token.ASSIGN_SUB) {
+			if (isLeftOfAssignment(node)) {
 				if (((InfixExpression) node.getParent()).getLeft().equals(node)) {
 					// Don't want to instrument LHS of assignment since it messes up the assignment 
 					// (function return value cant be assigned a value)
@@ -534,10 +534,11 @@ public class ReadWriteReplacer extends AstInstrumenter {
 		}
 
 
-		if (node.getParent().getType() == org.mozilla.javascript.Token.GETPROP) {
+		if (node.getParent().getType() == org.mozilla.javascript.Token.GETPROP
+		        && !isLeftOfAssignment(node)) {
+		    
 			// If leading name/label e.g. 'document' in 'document.getElement()'
 			if (parent.toSource().split("\\.")[0].equals(node.getIdentifier())) {
-
 				newBody = VARREAD+"(\'"+node.getIdentifier()+"\',"+ node.getIdentifier() +", "+node.getLineno()+")";
 			} else {
 				newBody = parent.toSource().replaceFirst("."+node.getIdentifier(), "["+PROPREAD+"(\""+node.getIdentifier()+"\", "+node.getLineno()+")]");
@@ -593,6 +594,12 @@ public class ReadWriteReplacer extends AstInstrumenter {
 
 		if (!isItIteresting(varBeingWritten, node.getLeft().getLineno())) {
 			return;
+		} else if (node.getParent() != null 
+		        && (node.getParent().getType() == org.mozilla.javascript.Token.ASSIGN
+		        ||node.getParent().getType() == org.mozilla.javascript.Token.ASSIGN_ADD
+		        || node.getParent().getType() == org.mozilla.javascript.Token.ASSIGN_SUB)
+		        && node.equals(((InfixExpression) node.getParent()).getLeft())) {
+		    return;
 		}
 
 		AstNode newTarget;
@@ -601,7 +608,8 @@ public class ReadWriteReplacer extends AstInstrumenter {
 		System.out.println("Me:");
 		System.out.println(node.toSource());
 		System.out.println("My dad:");
-		System.out.println(node.getParent().toSource());
+        System.out.println(node.getParent().toSource());
+        System.out.println(Token.typeToName((node.getParent().getType())));
 
 		if (node.getParent().getType() == org.mozilla.javascript.Token.CALL 
 				&& node.getParent().toSource().indexOf(node.toSource()) == 0) {
@@ -1202,5 +1210,23 @@ public class ReadWriteReplacer extends AstInstrumenter {
 			}
 		}
 		return false;
+	}
+	
+	private boolean isLeftOfAssignment (AstNode node) {
+	    AstNode previousParent = node;
+	    AstNode parent = node.getParent();
+	    
+	    while (parent != null) {
+	        if (parent.getType() == org.mozilla.javascript.Token.ASSIGN
+	                || parent.getType() == org.mozilla.javascript.Token.ASSIGN_ADD
+	                || parent.getType() == org.mozilla.javascript.Token.ASSIGN_SUB) {
+	            if (previousParent.equals(((InfixExpression) parent).getLeft())) {
+	                return true;
+	            }   
+	        }   
+	        previousParent = parent;
+	        parent = parent.getParent();
+	    }   
+	    return false;
 	}
 }
