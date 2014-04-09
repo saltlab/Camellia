@@ -102,7 +102,7 @@ public class LocalExample {
 
         /* parse some script and save it in AST */
         ast = rhinoParser.parse(new String(input), scopename, 0);
-
+        
         // First criteria specified by user?
         start.setIdentifier(varName);
         start.setLineno(tempLineNo);
@@ -114,7 +114,7 @@ public class LocalExample {
             varDeps = new ArrayList<AstNode>();
 
             justFinished = new SlicingCriteria(remainingSlices.get(0).getScope(), remainingSlices.get(0).getVariable());
-
+            
             // "UPWARDS"
             if (justFinished.getScope() instanceof FunctionNode 
                     && isArgument(justFinished.getVariable(), justFinished.getScope()) > -1) {
@@ -131,14 +131,15 @@ public class LocalExample {
                 fcd.clearDataDependencies();
                 fcd.setScopeName(targetFile);
                 
-                fcd.getTopScope().visit(fcd);         
+                fcd.getTopScope().visit(fcd);   
+                
                 varDeps.addAll(fcd.getDataDependencies());
                 // get enclosing scope of the function delcaration...and find all calls to the function in there
             }
 
             // Get next variables dependencies
             varDeps.addAll(getDataDependencies(ast, justFinished));
-
+            
             // Check if dependencies are new
             it = varDeps.iterator();
             possibleNextSteps = new ArrayList<SlicingCriteria>();
@@ -172,7 +173,7 @@ public class LocalExample {
         ReadWriteReplacer inst = new ReadWriteReplacer();
 
         // Actual code augmentation/instrumentation happens here, at this point we know all the variables which must be tracked in the file
-        while (completedSlices.size() > 0) {			
+    /**    while (completedSlices.size() > 0) {			
             justFinished = new SlicingCriteria(completedSlices.get(0).getScope(), completedSlices.get(0).getVariable());
 
             // Set up parameters for instrumentation once scope if known
@@ -184,8 +185,7 @@ public class LocalExample {
             // Set up parameters for instrumentation once scope if known
             inst.setScopeName(targetFile);
             //wrr.setLineNo(tempLineNo);
-            inst.setVariableName(justFinished.getVariable());
-            inst.setTopScope(justFinished.getScope());
+                        
             inst.start(new String(input));
             inst.setLineNo(tempLineNo);
 
@@ -200,7 +200,15 @@ public class LocalExample {
             //ast = ai.finish(ast);
 
             completedSlices.remove(0);
-        }
+        }*/
+        
+        //inst.setRoot(ast);  see below line
+        System.out.println(ast);
+        inst.setVariablesOfInterest(completedSlices, ast);
+        inst.setScopeName(targetFile);          
+        inst.start(new String(input));
+        
+        ast.visit(inst);
 
         //ast = inst.finish(ast);
         
@@ -284,8 +292,13 @@ public class LocalExample {
         df.clearDataDependencies();
         df.setScopeName(targetFile);
 
+        System.out.println(df.getTopScope().toSource());
+        
         // Start the instrumentation for a single variable
-        df.getTopScope().visit(df);			
+        df.getTopScope().visit(df);		
+        
+        System.out.println(df.getTopScope().toSource());
+
 
         // The current slice should be the first in queue, move it to completed queue
         if (remainingSlices.get(0).equals(newSlice)) {
@@ -317,7 +330,7 @@ public class LocalExample {
 
         while (itnew.hasNext()) {
             newSlice = itnew.next();
-
+            
             // Initialize iterator for each criteria check
             itsc = remainingSlices.iterator();
             itsc2 = completedSlices.iterator();
@@ -362,9 +375,10 @@ public class LocalExample {
         	System.out.println(target.getLineno());
         	System.out.println(target.getIdentifier());
         }
+        
 
         ast.visit(sc);
-        
+                
         System.out.println(sc.getLastScopeVisited().getLineno());
         
         return sc.getLastScopeVisited();

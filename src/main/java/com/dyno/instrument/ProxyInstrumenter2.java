@@ -143,6 +143,8 @@ public class ProxyInstrumenter2 extends AstInstrumenter {
 			System.out.println("Looking for delcaration now");
 
 			definingScope = InstrumenterHelper.getDefiningScope((Name) node);
+			
+			System.out.println(definingScope);
 
 			if (definingScope.getType() == org.mozilla.javascript.Token.SCRIPT) {
 				// Assume variable is defined in another JavaScript file and is therefore global

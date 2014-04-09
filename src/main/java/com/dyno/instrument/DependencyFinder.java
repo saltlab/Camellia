@@ -376,7 +376,7 @@ public class DependencyFinder extends AstInstrumenter {
 			nextInitializer = varIt.next();
 			leftSide = nextInitializer.getTarget();
 			rightSide = nextInitializer.getInitializer();
-			
+
 			if (rightSide == null) {
 				// Variable declaration without assignment e.g. "var i;"
 				continue;
@@ -422,13 +422,13 @@ public class DependencyFinder extends AstInstrumenter {
 			ss.visit(rightSide);
 			boolean found = ss.getFound();
 
-			System.out.println("Element found in here? " + found);*/
+			System.out.println("Element found in here? " + found);
 
 			newRightSide = parse(newBody);
 			if (newRightSide != null) {
 				nextInitializer.setInitializer(newRightSide);
 			}
-
+			 */
 		}
 	}
 
