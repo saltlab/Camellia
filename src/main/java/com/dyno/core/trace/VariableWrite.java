@@ -34,4 +34,6 @@ public class VariableWrite extends RWOperation {
 	public void setAlias(String o) {
 		alias = o;
 	}
+	
+	
 }

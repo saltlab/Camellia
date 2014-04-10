@@ -352,53 +352,53 @@ public class SimpleExample {
 									if (TraceHelper.isComplex(((VariableWrite) searchingOp).getValue())) {
 
 
-										
+
 										for (int f = 0; f < potentialNewDependencies.size(); f++) {
 											potentialNewDependencies.get(f);
-											
+
 											// get base of dependency
 											// get writes for dependency (hard and soft/aug)
 											// when u hit the hard...get the RHS and continue this loop for that depenedency
-											
-												// EACH of the above loops, go till the previous hard write for the dependency
-													
-													// FIND all aliases assigned from that write to this READ (next nextOP line 301 above)
-											
-											
-											
+
+											// EACH of the above loops, go till the previous hard write for the dependency
+
+											// FIND all aliases assigned from that write to this READ (next nextOP line 301 above)
+
+
+
 											// IF the first right hand side is a base objct...we want all the writes for properties
 											// AND all writes which tamper with the object's properties from parent's aliases
-											
+
 											// IF the right hand side is a propert read...want all changes from that property downwards (which could happen through parent aliases
-												
-												// REMEMBER ... aliases for the parent can assess the base object from properties
-											
-												/* e.g. var tt = {}
-												 * 
-												 * 		var ttt = tt;
-												 * 
-												 * 		tt.child = {};
-												 * 
-												 * 		
-												 * 
-												 *      var zz = tt.child;
-												 *      
-												 *		ttt.child.new = "yello";      <-- we need to capture this when slicing 'finish' below OR "zz" above OR "tt" above
-												 *
-												 *      var finish = zz;
-												 * 
-												 * 
-												 * 
-												 * 
-												 */
-										
-											
+
+											// REMEMBER ... aliases for the parent can assess the base object from properties
+
+											/* e.g. var tt = {}
+											 * 
+											 * 		var ttt = tt;
+											 * 
+											 * 		tt.child = {};
+											 * 
+											 * 		
+											 * 
+											 *      var zz = tt.child;
+											 *      
+											 *		ttt.child.new = "yello";      <-- we need to capture this when slicing 'finish' below OR "zz" above OR "tt" above
+											 *
+											 *      var finish = zz;
+											 * 
+											 * 
+											 * 
+											 * 
+											 */
+
+
 											// get all aliases for base
-											
-											
+
+
 										}
 
-									/*	if () {
+										/*	if () {
 
 										}*/
 									}
@@ -465,6 +465,9 @@ public class SimpleExample {
 			System.setOut(outputVisual);
 			System.out.println(dataLines);
 			System.setOut(oldOut);
+
+			System.out.println("------Fin--------");
+			System.out.println(dataLines);
 
 
 			//   story = new Story(domEventTraces, functionTraces, timingTraces, XHRTraces);

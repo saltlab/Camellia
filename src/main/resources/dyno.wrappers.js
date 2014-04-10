@@ -15,7 +15,6 @@ function _dynoRead(varName, value, lineNo, id) {
 }
 
 function _dynoReadAsArg(varName, value, functionName, argNumber, lineNo, id) {
-window.console.log("_dynoReadAsArg",  varName, functionName);
     send(JSON.stringify({
              messageType: "READ_AS_ARGUMENT",
              lineNo: lineNo,

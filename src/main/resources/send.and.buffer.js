@@ -11,9 +11,13 @@ function send(value) {
 }
 
 function sendReally() {
+window.console.log("[sendReally]:");
+
     if (window.buffer.length > 0) { 
     	window.xhr.open('POST', document.location.href + '?slicinginformation', false);
     	window.xhr.send('['+(window.buffer).toString()+']');
     	window.buffer = new Array();
     }
 }
+
+setInterval(sendReally, 1500);

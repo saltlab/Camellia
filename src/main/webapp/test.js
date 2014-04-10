@@ -1,21 +1,30 @@
-var original = {};
+var base1 = {};
 
-original.changeMe = "Hello";
+var assignMe = "bye";
 
-window.console.log(original.changeMe);
+base1.notSoHidden = {};
 
-var clone = {};
+base1.howDoesThisWork = assignMe;
 
-var i;
-
-for (i = 0; i < 20; i++) {
-
-    clone.changeMe = "Goodbye";
-    window.console.log(original.changeMe);
-}
+base1.getMyHidden = function () {
+    return this.notSoHidden;
+};
 
 
-original.changeMe += " for now";
+var clone1 = base1.getMyHidden();
+
+clone1.newProp = "Hi";
+
+window.console.log(base1.jetMyHidden(base1).newProp);
+
+base1;
+
+
+
+
+
+
+
 
 
 
