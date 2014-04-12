@@ -1,5 +1,7 @@
 package com.dyno.core.trace;
 
+import java.util.ArrayList;
+
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 @JsonTypeInfo(use=JsonTypeInfo.Id.CLASS, include=JsonTypeInfo.As.PROPERTY, property="@class")
@@ -9,6 +11,8 @@ public class RWOperation implements Comparable<RWOperation> {
 	private int lineNo;
 	private String variable;
 	//private int messageType;
+	private RWOperation parentOperation;
+	private ArrayList<RWOperation> childenOperations;
 
 	public int compareTo(RWOperation arg0) {
 		if (order < arg0.getOrder()) {
@@ -41,5 +45,21 @@ public class RWOperation implements Comparable<RWOperation> {
 
 	public void setVariable(String o) {
 		variable = o;
+	}
+	
+	public void addChild (RWOperation c) {
+		this.childenOperations.add(c);
+	}
+	
+	public ArrayList<RWOperation> getChildren() {
+		return this.childenOperations;
+	}
+	
+	public void setParent(RWOperation p) {
+		this.parentOperation = p;
+	}
+	
+	public RWOperation getParent(){
+		return this.parentOperation;
 	}
 }

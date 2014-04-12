@@ -11,7 +11,7 @@ base1.getMyHidden = function () {
 };
 
 
-var clone1 = base1.getMyHidden();
+var clone1 = base1.notSoHidden;
 
 clone1.newProp = "Hi";
 
@@ -20,6 +20,13 @@ window.console.log(base1.getMyHidden().newProp);
 base1.getMyHidden().newProp = "Hello";
 
 base1;
+
+
+
+
+
+
+
 
 
 
