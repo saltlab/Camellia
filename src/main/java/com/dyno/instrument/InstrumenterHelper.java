@@ -14,112 +14,115 @@ import org.mozilla.javascript.ast.Symbol;
 
 public final class InstrumenterHelper {
 
-	public static Scope getDefiningScope(Name node) {
-		// Variable information
-		String variableName = node.getIdentifier();
-		Scope defScope = node.getDefiningScope();
+    public static Scope getDefiningScope(Name node) {
+        // Variable information
+        String variableName = node.getIdentifier();
+        Scope defScope = node.getDefiningScope();
 
-		boolean found = false;
-		String[] varsInScope;
+        boolean found = false;
+        String[] varsInScope;
 
-		// For scope searching
-		Iterator<Scope> scopeIterator;
-		ArrayList<Scope> sc = null;
+        // For scope searching
+        Iterator<Scope> scopeIterator;
+        ArrayList<Scope> sc = null;
 
-		if (defScope == null) {
-			// Cannot find defining scope when global var used in level 1 function for some reason
-			sc = getScopeChain(node);
-			scopeIterator = sc.iterator();
+        if (defScope == null) {
+            // Cannot find defining scope when global var used in level 1 function for some reason
+            sc = getScopeChain(node);
+            scopeIterator = sc.iterator();
 
-			while (scopeIterator.hasNext() && !found) {
-				// Crawl upwards in scope chain until variable declaration found
-				defScope = scopeIterator.next();
+            while (scopeIterator.hasNext() && !found) {
+                // Crawl upwards in scope chain until variable declaration found
+                defScope = scopeIterator.next();
 
-				// Checking arguments and declarations e.g. 'var x = 0;'
-				varsInScope = getArgumentsAndDeclarations(defScope);
-				
-				for (int i = 0; i < varsInScope.length; i++) {
-					if (varsInScope[i].equals(variableName)) {
-						// If the variable of interest is an argument or declaration, stop searching
-						found = true;
-						break;
-					}
-				}
-			}
+                // Checking arguments and declarations e.g. 'var x = 0;'
+                varsInScope = getArgumentsAndDeclarations(defScope);
 
-			if (!found) {
-				// Declaration not found after crawling scope chain, must be declared globally 
-				// in another .js file
-				System.out.println("[InstrumenterHelper-getDefiningScope]: Variable declaration not found for "
-						+ variableName + ". Assuming global variable");
-				// Go through entire AST and find all writes to variableName, then get data dependencies for each
-				// write and recursively slice
-			}
-		}
-		// returns either a function scope, or script scope
-		return defScope;
-	}
-	
-	public static String getScopeChainAsString(AstNode node) {
-		// AstNode node should be part of a larger Ast Tree
-		
-		ArrayList<Scope> sc = getScopeChain(node);
-		Iterator<Scope> it = sc.iterator();
-		String returnMe = "-";
-		Scope currentScope;
-		
-		while (it.hasNext()) {
-			currentScope = it.next();
-			
-			if (currentScope.getType() == org.mozilla.javascript.Token.FUNCTION) {
-				// Parent function
-				returnMe += getFunctionNodeName((FunctionNode) currentScope);
-			} else {
-				// Top scope (file?)
-				returnMe += "global";
-			}					
-		}
-		System.out.println("[getScopeChainAsString]: returning " + returnMe.substring(1));
-		
-		return returnMe.substring(1);
-	}
+                for (int i = 0; i < varsInScope.length; i++) {
+                    if (varsInScope[i].equals(variableName)) {
+                        // If the variable of interest is an argument or declaration, stop searching
+                        found = true;
+                        break;
+                    }
+                }
+            }
 
-	public static ArrayList<Scope> getScopeChain(AstNode node) {
-		Scope currentScope = node.getEnclosingScope();
-		ArrayList<Scope> scopePath = new ArrayList<Scope>();
+            if (!found) {
+                // Declaration not found after crawling scope chain, must be declared globally 
+                // in another .js file
+                System.out.println("[InstrumenterHelper-getDefiningScope]: Variable declaration not found for "
+                        + variableName + ". Assuming global variable");
+                // Go through entire AST and find all writes to variableName, then get data dependencies for each
+                // write and recursively slice
+            }
+        }
+        // returns either a function scope, or script scope
+        return defScope;
+    }
 
-		while (currentScope != null) {
-			scopePath.add(currentScope);
-			currentScope = currentScope.getEnclosingScope();
-		}  
-		return scopePath;
-	}
+    public static String getScopeChainAsString(AstNode node) {
+        // AstNode node should be part of a larger Ast Tree
 
-	protected static String[] getArgumentsAndDeclarations(Scope scope) {
-		TreeSet<String> result = new TreeSet<String>();
-		Map<String, Symbol> t;
+        ArrayList<Scope> sc = getScopeChain(node);
+        Iterator<Scope> it = sc.iterator();
+        String returnMe = "-";
+        Scope currentScope;
 
-		/* get the symboltable for the current scope */
-		if (scope == null) {
-			return result.toArray(new String[0]);
-		}
+        while (it.hasNext()) {
+            currentScope = it.next();
 
-		t = scope.getSymbolTable();
+            if (currentScope.getType() == org.mozilla.javascript.Token.FUNCTION) {
+                // Parent function
+                returnMe += getFunctionNodeName((FunctionNode) currentScope);
+            } else {
+                // Top scope (file?)
+                returnMe += "global";
+            }					
+        }
+        System.out.println("[getScopeChainAsString]: returning " + returnMe.substring(1));
 
-		if (t != null) {
-			for (String key : t.keySet()) {
-				/* read the symbol */
-				Symbol symbol = t.get(key);
-				/* only add variables and function parameters */
-				if (symbol.getDeclType() == Token.LP || symbol.getDeclType() == Token.VAR) {
-					result.add(symbol.getName());
-				}
-			}
-		}
+        return returnMe.substring(1);
+    }
 
-		return result.toArray(new String[0]);
-	}
-	
+    public static ArrayList<Scope> getScopeChain(AstNode node) {
+        Scope currentScope = node.getEnclosingScope();
+        ArrayList<Scope> scopePath = new ArrayList<Scope>();
+
+        while (currentScope != null) {
+            System.out.println("scope sourcE:");
+            System.out.println(currentScope.toSource());
+            System.out.println(currentScope.getClass().toString());
+            scopePath.add(currentScope);
+            currentScope = currentScope.getEnclosingScope();
+        }  
+        return scopePath;
+    }
+
+    protected static String[] getArgumentsAndDeclarations(Scope scope) {
+        TreeSet<String> result = new TreeSet<String>();
+        Map<String, Symbol> t;
+
+        /* get the symboltable for the current scope */
+        if (scope == null) {
+            return result.toArray(new String[0]);
+        }
+
+        t = scope.getSymbolTable();
+
+        if (t != null) {
+            for (String key : t.keySet()) {
+                /* read the symbol */
+                Symbol symbol = t.get(key);
+                /* only add variables and function parameters */
+                if (symbol.getDeclType() == Token.LP || symbol.getDeclType() == Token.VAR) {
+                    result.add(symbol.getName());
+                }
+            }
+        }
+
+        return result.toArray(new String[0]);
+    }
+
     /**
      * Returns all variables in scope.
      * 
@@ -152,7 +155,7 @@ public final class InstrumenterHelper {
         /* return the result as a String array */
         return result.toArray(new String[0]);
     }
-    
+
     public static String getFunctionNodeName(FunctionNode node){
         AstNode parent = node.getParent();
         String name = node.getName();
@@ -163,22 +166,22 @@ public final class InstrumenterHelper {
         }
         return name;
     }
-    
+
     public static boolean isVariableLocal(String name, FunctionNode node) {
-    	boolean found = false;
-    	
-    	String[] localVariables = getArgumentsAndDeclarations(node);
-    	
-    	for (int i = 0; i < localVariables.length; i++) {
-    		if (localVariables[i].equals(name)) {
-    			found = true;
-    			break;
-    		}
-    	}
-    	
-    	return found;
+        boolean found = false;
+
+        String[] localVariables = getArgumentsAndDeclarations(node);
+
+        for (int i = 0; i < localVariables.length; i++) {
+            if (localVariables[i].equals(name)) {
+                found = true;
+                break;
+            }
+        }
+
+        return found;
     }
 
-	private InstrumenterHelper () {
-	}
+    private InstrumenterHelper () {
+    }
 }

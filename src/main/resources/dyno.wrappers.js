@@ -81,16 +81,26 @@ window.console.log("_dynoReadProp",  baseObject, propAsString);
              variable: baseObject,
              property: propAsString,
              order: counter++,
+             functionFlag: false,
              globalID: id
     }));
 
     return propAsString;
 }
 
-function _dynoFunc(functionName, actualFunction, lineNo) {
+function _dynoFunc(baseObject, propAsString, lineNo, id) {
     // Send info here
+    send(JSON.stringify({
+             messageType: "PROPERTY_READ",
+             lineNo: lineNo,
+             variable: baseObject,
+             property: propAsString,
+             order: counter++,
+             functionFlag: true,
+             globalID: id
+    }));
 
-    return actualFunction;
+    return propAsString;
 }
 
 function _dynoWriteArg(varName, newValue, functionName, argNum, lineNo, id) {

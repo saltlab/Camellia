@@ -1,13 +1,10 @@
 package com.dyno.configuration;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 
 import org.mozilla.javascript.ast.AstRoot;
-import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.Scope;
-import org.openqa.selenium.NotFoundException;
 
 import com.dyno.core.trace.FunctionEnter;
 import com.dyno.core.trace.PropertyRead;
@@ -18,24 +15,7 @@ import com.dyno.instrument.ProxyInstrumenter2;
 
 public class TraceHelper {
 
-	public static int getIndexOf(Collection<RWOperation> trace, RWOperation findMe) throws NotFoundException{
-		int i = 0;
-		Iterator<RWOperation> it = trace.iterator();
-
-		while (it.hasNext()) {
-			if (it.next().getOrder() == findMe.getOrder()) {
-				return i;
-			}
-			i++;
-		}
-
-		// Something is wrong, should be present in trace
-		System.err.println("Read/Write operation not found in trace.");
-		throw new NotFoundException();
-
-	}
-
-	public static int getIndexOfIgnoreOrderNumber(Collection<RWOperation> trace, RWOperation findMe){
+	public static int getIndexOfIgnoreOrderNumber(ArrayList<RWOperation> trace, RWOperation findMe){
 		int i = 0;
 		Iterator<RWOperation> it = trace.iterator();
 		RWOperation next;
@@ -56,7 +36,8 @@ public class TraceHelper {
 
 	}
 
-	public static RWOperation getElementAtIndex(Collection<RWOperation> trace, int index) throws IndexOutOfBoundsException {
+	// OBSOLETE
+	public static RWOperation getElementAtIndex(ArrayList<RWOperation> trace, int index) throws IndexOutOfBoundsException {
 		int i = 0;
 		Iterator<RWOperation> it = trace.iterator();
 		RWOperation next;
@@ -74,14 +55,14 @@ public class TraceHelper {
 		throw new IndexOutOfBoundsException();
 	}
 
-	public static ArrayList<RWOperation> getDataDependencies(Collection<RWOperation> trace, VariableWrite vw) {
-		int i = getIndexOf(trace, vw);
+	public static ArrayList<RWOperation> getDataDependencies(ArrayList<RWOperation> trace, VariableWrite vw) {
+		int i = trace.indexOf(vw);
 		ArrayList<RWOperation> deps = new ArrayList<RWOperation>();
 		RWOperation current;
 		boolean jumpAllowed = false;
 
 		for (int j = i - 1; j >= 0; j--) {
-			current = getElementAtIndex(trace, j);
+			current = trace.get(j);
 
 			// TODO: Might need better criteria for checking if write is dependent on read
 			// (programmer might split assignment operation between mutliple lines)

@@ -15,9 +15,42 @@ var clone1 = base1.getMyHidden();
 
 clone1.newProp = "Hi";
 
-window.console.log(base1.jetMyHidden(base1).newProp);
+window.console.log(base1.getMyHidden().newProp);
+
+base1.getMyHidden().newProp = "Hello";
 
 base1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
