@@ -1,78 +1,10 @@
-var base1 = {};
+var tt = {};
 
-var assignMe = "bye";
+tt.newProp = "Hi";
 
-base1.notSoHidden = {};
+tt.newProp2 = {};
 
-base1.howDoesThisWork = assignMe;
+var vv = tt;
 
-base1.getMyHidden = function () {
-    return this.notSoHidden;
-};
-
-
-var clone1 = base1.notSoHidden;
-
-clone1.newProp = "Hi";
-
-window.console.log(base1.getMyHidden().newProp);
-
-base1.getMyHidden().newProp = "Hello";
-
-base1;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+var zz = tt.newProp2;
 

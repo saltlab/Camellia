@@ -22,6 +22,7 @@ import org.owasp.webscarab.model.Preferences;
 import org.owasp.webscarab.plugin.Framework;
 import org.owasp.webscarab.plugin.proxy.Proxy;
 
+import com.dyno.configuration.AliasAnalyzer;
 import com.dyno.configuration.ProxyConfiguration;
 import com.dyno.configuration.TraceHelper;
 import com.dyno.core.trace.ArgumentRead;
@@ -266,6 +267,8 @@ public class SimpleExample {
 			ArrayList<RWOperation> potentialNewDependencies;
 			boolean found = false;
 
+			AliasAnalyzer aa = new AliasAnalyzer(all);
+
 			// First one:
 			RWOperation begin = new RWOperation();
 			RWOperation next;
@@ -323,10 +326,10 @@ public class SimpleExample {
 												&& ((ArgumentRead) all.get(q)).getFunctionName().equals(((ArgumentWrite) searchingOp).getFunctionName())
 												&& ((ArgumentRead) all.get(q)).getValue().equals(((ArgumentWrite) searchingOp).getValue())) {
 											potentialNewDependencies.add(all.get(q));
-											
+
 											// Add function call/argument pass as PARENT to this argument read
 											nextOp.setParent(all.get(q));
-											
+
 											if (TraceHelper.getIndexOfIgnoreOrderNumber(theSlice, all.get(q)) == -1) {
 												theSlice.add(all.get(q));
 											}
@@ -339,9 +342,8 @@ public class SimpleExample {
 								} else {
 									potentialNewDependencies = TraceHelper.getDataDependencies(all, (VariableWrite) searchingOp);
 
-
 									if (!(searchingOp instanceof VariableWriteAugmentAssign)) {
-										// Previous writes are irrelevant if it was not an augmented assignment i.e. -=, +=
+										// Previous writes are IRRELEVANT if it was NOT an augmented assignment i.e. -=, +=
 										found = true;
 
 										// For now, assume only augmented assignments don't result in complex values
@@ -354,22 +356,25 @@ public class SimpleExample {
 											// Continue search based on RHS of assignment
 											for (int f = 0; f < potentialNewDependencies.size(); f++) {
 												potentialNewDependencies.get(f);
-												
-												
+
+
 												// Find the hard write
-												
-												
-												
-												
-												
-												
-												
-												
-												
-												
-												
-												
-												
+
+												ArrayList<String> aliases = aa.getAllAliases(next, searchingOp);//, all);
+
+
+												System.out.println("=-=-=-=-=-=-=-=-=-=-=-=-=-");
+												System.out.println("ALIASES:");
+												for (int lk = 0; lk < aliases.size(); lk++) {
+													System.out.println(aliases.get(lk));
+												}
+
+
+
+
+
+
+
 
 												// get base of dependency
 												// get writes for dependency (hard and soft/aug)

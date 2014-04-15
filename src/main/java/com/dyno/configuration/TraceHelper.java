@@ -55,7 +55,7 @@ public class TraceHelper {
 		throw new IndexOutOfBoundsException();
 	}
 
-	public static ArrayList<RWOperation> getDataDependencies(ArrayList<RWOperation> trace, VariableWrite vw) {
+	public static ArrayList<RWOperation> getDataDependencies(ArrayList<RWOperation> trace, VariableWrite vw) throws Exception {
 		int i = trace.indexOf(vw);
 		ArrayList<RWOperation> deps = new ArrayList<RWOperation>();
 		RWOperation current;
@@ -66,8 +66,10 @@ public class TraceHelper {
 
 			// TODO: Might need better criteria for checking if write is dependent on read
 			// (programmer might split assignment operation between mutliple lines)
-			if ((current instanceof VariableRead || current instanceof PropertyRead /*|| current instanceof FunctionReturn*/)
-					&& current.getLineNo() == vw.getLineNo()) {
+			if (current instanceof VariableRead && current.getLineNo() == vw.getLineNo()) {
+				deps.add(current);
+			} else if (current instanceof PropertyRead && current.getLineNo() == vw.getLineNo()) {
+				j = getAtomicIndex(trace, (PropertyRead) current);
 				deps.add(current);
 			} else if (current instanceof FunctionEnter) {
 				// Line number is allow to change (!= vw.getLineNo())
@@ -81,30 +83,77 @@ public class TraceHelper {
 		}
 		return deps;
 	}
-	
+
 	public static Scope getDefiningScope(AstRoot ast, String name, int lineNo) {
-	    ProxyInstrumenter2 sc = new ProxyInstrumenter2();
+		ProxyInstrumenter2 sc = new ProxyInstrumenter2();
 
-        sc.setLineNo(lineNo);
-        sc.setVariableName(name); 
+		sc.setLineNo(lineNo);
+		sc.setVariableName(name); 
 
-        ast.visit(sc);
-        
-        System.out.println(name);
-        System.out.println(lineNo);
-                
-        System.out.println(sc.getLastScopeVisited().getLineno());
-        
-        return sc.getLastScopeVisited();
-    }
-	
+		ast.visit(sc);
+
+		System.out.println(name);
+		System.out.println(lineNo);
+
+		System.out.println(sc.getLastScopeVisited().getLineno());
+
+		return sc.getLastScopeVisited();
+	}
+
+	private static int getAtomicIndex (ArrayList<RWOperation> trace, PropertyRead pr) throws Exception {
+		int i = trace.indexOf(pr);
+		String base;
+		String base2;
+		String prop;
+		String prop2;
+		String[] properties;
+		String[] properties2;
+		PropertyRead previousPropRead = pr;
+
+		for (int j = i - 1; j >= 0; j--){
+			if (trace.get(j) instanceof PropertyRead) {
+				base = ((PropertyRead) trace.get(j)).getVariable();
+				prop = ((PropertyRead) trace.get(j)).getProperty();
+				properties = prop.split("\\.");
+
+				for (int k = 0; j < properties.length; k++) {
+					if (properties[k].indexOf("(") != -1) {
+						properties[k] = properties[k].substring(0, properties[k].indexOf("("));
+					}
+					base += "."+properties[k];
+				}
+
+				prop2 = previousPropRead.getProperty();
+				properties2 = prop2.split("\\.");
+				base2 = previousPropRead.getVariable();
+				for (int k = 0; j < properties2.length - 1; k++) {
+					if (properties2[k].indexOf("(") != -1) {
+						properties2[k] = properties2[k].substring(0, properties2[k].indexOf("("));
+					}
+					base2 += "."+properties2[k];
+				}
+
+				if (!base2.equals(base)) {
+					// Same operation still
+					throw new Exception();
+				}
+			} else if (trace.get(j) instanceof VariableRead) {
+				return j;
+			} else {
+				System.out.println("[TraceHelper.getAtomicIndex]: Invalid RWOperation instead of PropertyRead/VariableRead.");
+				throw new Exception();
+			}
+		}
+		return i;
+	}
+
 	public static boolean isComplex(String value) {
 		// Aliases are irrelevant if the assigned type is primitive
 		if (value.equals("[object Number]")
-			|| value.equals("[object String]")
-					|| value.equals("[object Null]")
-					|| value.equals("[object Undefined]")) {
-			 return false;
+				|| value.equals("[object String]")
+				|| value.equals("[object Null]")
+				|| value.equals("[object Undefined]")) {
+			return false;
 		}
 		return true;
 	}
