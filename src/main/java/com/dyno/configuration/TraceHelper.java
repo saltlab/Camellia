@@ -116,7 +116,7 @@ public class TraceHelper {
 				prop = ((PropertyRead) trace.get(j)).getProperty();
 				properties = prop.split("\\.");
 
-				for (int k = 0; j < properties.length; k++) {
+				for (int k = 0; k < properties.length; k++) {
 					if (properties[k].indexOf("(") != -1) {
 						properties[k] = properties[k].substring(0, properties[k].indexOf("("));
 					}
@@ -126,7 +126,7 @@ public class TraceHelper {
 				prop2 = previousPropRead.getProperty();
 				properties2 = prop2.split("\\.");
 				base2 = previousPropRead.getVariable();
-				for (int k = 0; j < properties2.length - 1; k++) {
+				for (int k = 0; k < properties2.length - 1; k++) {
 					if (properties2[k].indexOf("(") != -1) {
 						properties2[k] = properties2[k].substring(0, properties2[k].indexOf("("));
 					}

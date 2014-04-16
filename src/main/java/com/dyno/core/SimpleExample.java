@@ -267,7 +267,7 @@ public class SimpleExample {
 			ArrayList<RWOperation> potentialNewDependencies;
 			boolean found = false;
 
-			AliasAnalyzer aa = new AliasAnalyzer(all);
+			AliasAnalyzer aa = new AliasAnalyzer();
 
 			// First one:
 			RWOperation begin = new RWOperation();
@@ -301,6 +301,9 @@ public class SimpleExample {
 							/*if (searchingOp instanceof VariableWriteAugmentAssign && ((VariableWriteAugmentAssign) searchingOp).getVariable().equals(next.getVariable())) {
 
 							} else*/
+							
+
+							
 							if (searchingOp instanceof VariableWrite && ((VariableWrite) searchingOp).getVariable().equals(next.getVariable())) {
 								potentialNewDependencies = new ArrayList<RWOperation>();
 								/*
@@ -360,14 +363,7 @@ public class SimpleExample {
 
 												// Find the hard write
 
-												ArrayList<String> aliases = aa.getAllAliases(next, searchingOp);//, all);
-
-
-												System.out.println("=-=-=-=-=-=-=-=-=-=-=-=-=-");
-												System.out.println("ALIASES:");
-												for (int lk = 0; lk < aliases.size(); lk++) {
-													System.out.println(aliases.get(lk));
-												}
+											
 
 
 
@@ -417,6 +413,28 @@ public class SimpleExample {
 
 
 											}
+											
+
+										
+											
+											ArrayList<String> aliases = aa.getAllAliases(nextOp, searchingOp, all);
+											
+											for (int ss = all.indexOf(searchingOp); ss < all.indexOf(nextOp); ss++) {
+												if (all.get(ss).getSliceStatus() == true) {
+													// Add to slice
+													if (TraceHelper.getIndexOfIgnoreOrderNumber(theSlice, all.get(ss)) == -1) {
+														theSlice.add(all.get(ss));
+													}
+													all.get(ss).omitFromSlice();
+												}
+											}
+
+
+											System.out.println("=-=-=-=-=-=-=-=-=-=-=-=-=-");
+											System.out.println("ALIASES:");
+											for (int lk = 0; lk < aliases.size(); lk++) {
+												System.out.println(aliases.get(lk));
+											}
 
 											/*	if () {
 
@@ -453,7 +471,25 @@ public class SimpleExample {
 									}
 									break;
 								}
-							} 
+							} else if (searchingOp instanceof VariableWrite && ((VariableWrite) searchingOp).getVariable().indexOf(next.getVariable()) == 0
+									&& ((VariableWrite) searchingOp).getVariable().indexOf(".") != -1) {
+								System.out.println("Property write found");
+								potentialNewDependencies = TraceHelper.getDataDependencies(all, (VariableWrite) searchingOp);
+								
+								for (int d = 0; d < potentialNewDependencies.size(); d++) {
+
+									// New dependency, add it to queue
+									if (readsToBeSliced.indexOf(potentialNewDependencies.get(d)) == -1 
+											&& readsCompleted.indexOf(potentialNewDependencies.get(d)) == -1) {
+										readsToBeSliced.add(potentialNewDependencies.get(d));
+									}
+
+								}
+								if (TraceHelper.getIndexOfIgnoreOrderNumber(theSlice, searchingOp) == -1) {
+									theSlice.add(searchingOp);
+								}
+
+							}
 
 
 						}

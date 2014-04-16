@@ -17,6 +17,7 @@ import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.KeywordLiteral;
 import org.mozilla.javascript.ast.Name;
+import org.mozilla.javascript.ast.PropertyGet;
 import org.mozilla.javascript.ast.Scope;
 
 import com.google.common.io.Resources;
@@ -150,6 +151,9 @@ public class LocalExample {
 					possibleNextSteps.add(new SlicingCriteria(getDefiningScope(ast, (Name) step), ((Name) step).getIdentifier()));
 				} else if (step instanceof KeywordLiteral && step.toSource().equals("this")) {
 					possibleNextSteps.add(new SlicingCriteria(((KeywordLiteral) step).getEnclosingFunction(), "this"));
+				} else if (step instanceof PropertyGet) {
+					System.out.println("Property get as dependecy?");
+					System.out.println(step.toSource());
 				}
 			}
 

@@ -13,7 +13,7 @@ public class RWOperation implements Comparable<RWOperation> {
     private String variable;
     //private int messageType;
     private RWOperation parentOperation;
-    private ArrayList<RWOperation> childenOperations;
+    private ArrayList<RWOperation> childenOperations = new ArrayList<RWOperation>();
 
     public int compareTo(RWOperation arg0) {
         if (order < arg0.getOrder()) {
@@ -67,5 +67,8 @@ public class RWOperation implements Comparable<RWOperation> {
     }
     public void omitFromSlice () {
         this.partOfSlice = false;
+    }
+    public boolean getSliceStatus () {
+    	return this.partOfSlice;
     }
 }

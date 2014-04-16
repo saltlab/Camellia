@@ -22,7 +22,7 @@ public class SlicingCriteria {
 	}
 	
 	public boolean equals (SlicingCriteria compareTo) {
-		if (compareTo.getVariable().equals(variableName)
+		if (compareTo.getVariable().indexOf(variableName) > -1
 				&& compareTo.getScope().equals(startScope)) {
 			return true;
 		} else {

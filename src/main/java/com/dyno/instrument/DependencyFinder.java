@@ -549,12 +549,15 @@ public class DependencyFinder extends AstInstrumenter {
 			// Variable of interest is being written to
 			if (leftSideType == org.mozilla.javascript.Token.NAME) {
 				// Add name to data dependencies (variableName, lineNo)
+				dataDependencies.add((Name) leftSide);
 
 			} else if (leftSideType == org.mozilla.javascript.Token.GETPROP) {
 				// Need to check if there is over lap with CALL (method calls, which do they fall under)
 
 				// Must add base object to data dependencies
 				// LVL add property as data dependency 'this.prop'
+				dataDependencies.addAll(PropertyGetParser.getPropertyDependencies((PropertyGet) leftSide));
+
 			} else {
 				System.out.println("[handleAssignmentOperator]: Unknown left hand side type.");
 			}
