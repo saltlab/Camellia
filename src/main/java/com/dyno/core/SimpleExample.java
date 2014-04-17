@@ -50,6 +50,9 @@ public class SimpleExample {
 	//--server http://www.themaninblue.com/experiment/BunnyHunt/ --file clouds.js --line 30 --variable cloud1
 
 	// --server http://localhost:8080/test.html --file test.js --line 17 --variable original
+	
+	// --server http://localhost:8080/test.html --file test.js --line 22 --variable tt
+
 
 	public static final String SERVER_PREFIX2 = "--server";
 	public static final String SERVER_PREFIX1 = "--s";

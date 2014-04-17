@@ -136,13 +136,6 @@ public class FunctionCallerDependencies extends AstInstrumenter {
 		AstNode target;
 		String targetFunction;
 
-		/*  if (tt == org.mozilla.javascript.Token.GETPROP
-                || tt == org.mozilla.javascript.Token.CALL
-                || tt == org.mozilla.javascript.Token.NAME) {
-            System.out.println(Token.typeToName(node.getType()) + " : " + node.toSource());
-        }*/
-
-
 		if (tt == org.mozilla.javascript.Token.CALL) {
 			// TODO:   uncomment this vv
 			target = ((FunctionCall) node).getTarget();

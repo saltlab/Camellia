@@ -24,10 +24,13 @@ import org.mozilla.javascript.ast.Symbol;
 import org.mozilla.javascript.ast.VariableDeclaration;
 import org.mozilla.javascript.ast.VariableInitializer;
 
+import bsh.This;
+
 import com.dyno.instrument.helpers.FunctionCallParser;
 import com.dyno.instrument.helpers.InfixExpressionParser;
 import com.dyno.instrument.helpers.ObjectLiteralParser;
 import com.dyno.instrument.helpers.PropertyGetParser;
+import com.dyno.units.FunctionArgumentPair;
 
 public class DependencyFinder extends AstInstrumenter {
 
@@ -154,6 +157,12 @@ public class DependencyFinder extends AstInstrumenter {
 			// TODO:
 
 			handleAssignmentOperator((Assignment) node);
+		} else if (tt == org.mozilla.javascript.Token.CALL) {
+			handleFunctionCall((FunctionCall) node);
+		} else if (tt == org.mozilla.javascript.Token.FUNCTION) {
+
+			// TODO: If the name we are interested is is an argument in the declaration, skip the node and children
+			//       since the name will refer to a different object within this function (declaration)
 		}
 
 		return true;  // process kids
@@ -432,6 +441,48 @@ public class DependencyFinder extends AstInstrumenter {
 		}
 	}
 
+	private void handleFunctionCall(FunctionCall node) {
+
+		// Store information on function calls
+		String[] dotSplit;
+
+		AstNode nextArg;
+
+		FunctionArgumentPair fap = new FunctionArgumentPair(node.getTarget().toSource());
+
+
+		// Check arguments passed into function call
+
+		for (int j = 0; j < node.getArguments().size(); j++) {
+			nextArg = node.getArguments().get(j);
+
+			//while (argsIt.hasNext()) {
+			//nextArg = argsIt.next();
+			dotSplit = nextArg.toSource().split("\\.");
+
+			System.out.println(Token.typeToName(nextArg.getType()));
+
+			// Argument is variable of interest
+			if (nextArg.getType() == org.mozilla.javascript.Token.NAME && ((Name) nextArg).getIdentifier().equals(this.variableName)) {
+
+
+				fap.addArgumentToWatch(j);
+			} else if (nextArg.getType() == org.mozilla.javascript.Token.THIS && "this".equals(this.variableName)) {
+
+				fap.addArgumentToWatch(j);
+			} else if (nextArg.getType() == org.mozilla.javascript.Token.GETPROP && dotSplit[0].equals(this.variableName)) {
+
+				fap.addArgumentToWatch(j);
+			}
+
+		}
+		if (fap.getArgumentsOfInterest().size() > 0) {
+			// One of our variables of interest is passed into a function,
+			// we must therefore instrument that function declaration accordingly
+			functionsToInstrument.add(fap);
+		}
+
+	}
 
 
 	private void handleAssignmentOperator(InfixExpression node) {
@@ -566,10 +617,11 @@ public class DependencyFinder extends AstInstrumenter {
 
 	}
 
-	static private ArrayList<AstNode> dependencies = new ArrayList<AstNode>();
+	
+	static private ArrayList<FunctionArgumentPair> functionsToInstrument = new ArrayList<FunctionArgumentPair>();
 
-	public ArrayList<AstNode> getNextSliceStart() {
-		return dependencies;
+	public ArrayList<FunctionArgumentPair> getFunctionsToWatch() {
+		return functionsToInstrument;
 	}
 
 	private String variableName = null;

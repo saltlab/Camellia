@@ -123,11 +123,7 @@ public class ProxyInstrumenter2 extends AstInstrumenter {
 
 	@Override
 	public  boolean visit(AstNode node){
-		if (firstTime) {
-			System.out.println("beginning search for ORIGIN!");
-			System.out.println(variableName);
-			System.out.println(lineNo);
-		}
+
 		firstTime = false;
 
 		boolean continueToChildren = true;
@@ -139,12 +135,9 @@ public class ProxyInstrumenter2 extends AstInstrumenter {
 				&& ((Name) node).getIdentifier().equals(variableName)) {
 			// Starting point of slice
 
-			System.out.println("Found " + variableName);
-			System.out.println("Looking for delcaration now");
 
 			definingScope = InstrumenterHelper.getDefiningScope((Name) node);
 			
-			System.out.println(definingScope);
 
 			if (definingScope.getType() == org.mozilla.javascript.Token.SCRIPT) {
 				// Assume variable is defined in another JavaScript file and is therefore global
@@ -175,12 +168,7 @@ public class ProxyInstrumenter2 extends AstInstrumenter {
                 }
             }*/
 			this.lastScopeVisited = definingScope;
-			System.out.println("FOUND DEFINING SCOPE!");
-			if (definingScope.getType() == org.mozilla.javascript.Token.FUNCTION) {
-				System.out.println("[Function]: " + getFunctionName((FunctionNode) definingScope));
-			} else if (definingScope.getType() == org.mozilla.javascript.Token.SCRIPT) {
-				System.out.println("[Script]");
-			}
+
 			return false;
 
 		} else if (tt == org.mozilla.javascript.Token.THIS
@@ -197,18 +185,11 @@ public class ProxyInstrumenter2 extends AstInstrumenter {
 			}
 
 			this.lastScopeVisited = definingScope;
-			System.out.println("FOUND DEFINING SCOPE!");
-			System.out.println(node.getClass().toString());
-			System.out.println(definingScope.getClass().toString());
-			System.out.println(definingScope instanceof FunctionNode);
 
 			return false;
 		} else if (tt == org.mozilla.javascript.Token.EXPR_VOID
 				|| tt == org.mozilla.javascript.Token.ASSIGN_ADD) {
-			System.out.println("--------------------------");
-			System.out.println(Token.typeToName(tt));
-			System.out.println(node.getLineno());
-			System.out.println(node.getClass().toString());
+		
 			if (tt == org.mozilla.javascript.Token.NAME) {
 				System.out.println(((Name) node).getIdentifier());
 			}

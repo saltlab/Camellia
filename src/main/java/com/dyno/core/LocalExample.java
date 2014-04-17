@@ -25,10 +25,12 @@ import com.google.common.io.Resources;
 import com.dyno.instrument.AstInstrumenter;
 import com.dyno.instrument.DependencyFinder;
 import com.dyno.instrument.FunctionCallerDependencies;
+import com.dyno.instrument.FunctionDeclarationFinder;
 import com.dyno.instrument.FunctionDeclarationInstrumenter;
 import com.dyno.instrument.ProxyInstrumenter2;
 import com.dyno.instrument.ReadWriteReplacer;
 import com.dyno.units.ArgumentPassedIn;
+import com.dyno.units.FunctionArgumentPair;
 import com.dyno.units.SlicingCriteria;
 
 public class LocalExample {
@@ -119,7 +121,7 @@ public class LocalExample {
 			// "UPWARDS"
 			if (justFinished.getScope() instanceof FunctionNode 
 					&& isArgument(justFinished.getVariable(), justFinished.getScope()) > -1) {
-				// Need to find all places where the function is called ad(d argument number __ as a data dependency
+				// Need to find all places where the function is called add argument number __ as a data dependency
 
 				// Shouldn't be any duplicates at this point...remainingSlices are all unique?
 				logTheseArguments.add(new ArgumentPassedIn((FunctionNode) justFinished.getScope(), justFinished.getVariable(), isArgument(justFinished.getVariable(), justFinished.getScope())));
@@ -140,6 +142,35 @@ public class LocalExample {
 
 			// Get next variables dependencies
 			varDeps.addAll(getDataDependencies(ast, justFinished));
+			
+			if (fnDeps.size() > 0) {
+				
+				FunctionDeclarationFinder fdf = new FunctionDeclarationFinder();
+				for (int jj = 0; jj < fnDeps.size(); jj++) {
+					if (!(/*fnDeps.get(jj).getFunctionName().equals("fade")
+							||*/ fnDeps.get(jj).getFunctionName().equals("blink")
+							/*|| fnDeps.get(jj).getFunctionName().equals("clearTimeout")*/)) {
+						continue;
+					}
+					System.out.println(fnDeps.get(jj).getFunctionName());					
+					
+					fdf.setFunctionArgumentPair(fnDeps.get(jj));
+					ast.visit(fdf);
+					
+					ArrayList<AstNode> asd = fdf.getArgumentsNode();
+					Iterator<AstNode> itt = asd.iterator();
+					AstNode next;
+					
+					while (itt.hasNext()) {
+						next = itt.next();
+						System.out.println("~`~`~`~`~`~`~`~`~`~`~`~`");
+						System.out.println(next.toSource());
+						System.out.println(getDefiningScope(ast, (Name) next).toSource());
+					}
+					
+					varDeps.addAll(fdf.getArgumentsNode());
+				}
+			}
 
 			// Check if dependencies are new
 			it = varDeps.iterator();
@@ -156,7 +187,6 @@ public class LocalExample {
 					System.out.println(step.toSource());
 				}
 			}
-
 			// Add the new slicing criteria to queue (method checks against existing)
 			addToQueue(possibleNextSteps);
 		}
@@ -170,7 +200,7 @@ public class LocalExample {
 
 		while (itsc2.hasNext()) {
 			next = itsc2.next();
-			System.out.println(next.getVariable() + " ||  " + Token.typeToName(next.getScope().getType()));
+			System.out.println(next.getVariable() + " ||  " + Token.typeToName(next.getScope().getType()) +  (next.getScope().getType() == org.mozilla.javascript.Token.FUNCTION ? "  | " + ((FunctionNode) next.getScope()).getName() :""));
 		}
 
 		// Which ever finish is used, make sure to initialize the global class counter
@@ -229,13 +259,6 @@ public class LocalExample {
 			fdi.setTargetFunction(currentDeclarationToIntrument.getFunction());
 			fdi.setScopeName(targetFile);
 
-
-			System.out.println(currentDeclarationToIntrument.getArgument());
-			System.out.println(currentDeclarationToIntrument.getArgumentNumber());
-			System.out.println(currentDeclarationToIntrument.getFunction().getName());
-			System.out.println("========");
-
-
 			scopeOfInterest = currentDeclarationToIntrument.getFunction().getEnclosingScope();
 
 			fdi.setTopScope(scopeOfInterest);
@@ -281,12 +304,15 @@ public class LocalExample {
 		// Specified variable was not found function arguments
 		return -1;
 	}
+	
+	private ArrayList<FunctionArgumentPair> fnDeps;
 
 	private ArrayList<AstNode> getDataDependencies (AstRoot ast, SlicingCriteria target) {
 		// DEPENDENCY FIND
 		DependencyFinder df = new DependencyFinder();
 
 		ArrayList<AstNode> deps = new ArrayList<AstNode>();
+		fnDeps = new ArrayList<FunctionArgumentPair>();
 
 		SlicingCriteria newSlice = new SlicingCriteria(target.getScope(), target.getVariable());
 
@@ -313,6 +339,8 @@ public class LocalExample {
 
 		// Get all the related variables to slice iteratively (E.g. LHS/RHS of assignments for initially sliced variable)
 		deps =  df.getDataDependencies();
+		fnDeps = df.getFunctionsToWatch();
+		
 		System.out.println("Size of new vars to slice: " + deps.size());
 
 		return deps;
@@ -374,21 +402,8 @@ public class LocalExample {
 		sc.setScopeName(targetFile);
 		sc.setLineNo(target.getLineno());
 		sc.setVariableName(target.getIdentifier());
-
-		if (target.getIdentifier().equals("this")) {
-			System.out.println(target.getLineno());
-			System.out.println(target.getIdentifier());
-		}
-
-
+		
 		ast.visit(sc);
-
-		try {
-			System.out.println(sc.getLastScopeVisited().getLineno());
-		} catch (NullPointerException e) {
-	        System.out.println(target.getLineno());
-	        System.out.println(target.getIdentifier());
-		}
 		
 		return sc.getLastScopeVisited();
 	}

@@ -562,7 +562,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
             } else {
                 newBody = parent.toSource().replaceFirst("."+node.getIdentifier(), "["+PROPREAD+"(\""+node.getIdentifier()+"\", "+node.getLineno()+")]");
             }
-        } else if (node.getParent().getType() != org.mozilla.javascript.Token.VAR) {
+        } else if (node.getParent().getType() != org.mozilla.javascript.Token.VAR && !isLeftOfAssignment(node)) {
             newBody = VARREAD+"(\'"+node.getIdentifier()+"\',"+ node.getIdentifier()+", " +node.getLineno()+")";
         } else {
             return;
