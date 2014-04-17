@@ -7,10 +7,12 @@ public class SlicingCriteria {
 
 	private Scope startScope;
 	private String variableName;
+	private boolean interTracking = false;
 	
-	public SlicingCriteria(Scope s, String n) {
+	public SlicingCriteria(Scope s, String n, boolean i) {
 		this.startScope = s;
 		this.variableName = n;
+		this.interTracking = i;
 	}
 	
 	public Scope getScope () {
@@ -19,6 +21,14 @@ public class SlicingCriteria {
 	
 	public String getVariable () {
 		return variableName;
+	}
+	
+	public void setInter (boolean t) {
+		this.interTracking = t;
+	}
+	
+	public boolean getInter () {
+		return this.interTracking;
 	}
 	
 	public boolean equals (SlicingCriteria compareTo) {

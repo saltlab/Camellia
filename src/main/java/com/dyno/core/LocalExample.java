@@ -111,12 +111,13 @@ public class LocalExample {
 		start.setLineno(tempLineNo);
 		definingScope = getDefiningScope(ast, start);
 
-		remainingSlices.add(new SlicingCriteria(definingScope, varName));
+		remainingSlices.add(new SlicingCriteria(definingScope, varName, true));
 
 		while (remainingSlices.size() > 0) {
 			varDeps = new ArrayList<AstNode>();
+			possibleNextSteps = new ArrayList<SlicingCriteria>();
 
-			justFinished = new SlicingCriteria(remainingSlices.get(0).getScope(), remainingSlices.get(0).getVariable());
+			justFinished = new SlicingCriteria(remainingSlices.get(0).getScope(), remainingSlices.get(0).getVariable(), remainingSlices.get(0).getInter());
 
 			// "UPWARDS"
 			if (justFinished.getScope() instanceof FunctionNode 
@@ -136,8 +137,9 @@ public class LocalExample {
 
 				fcd.getTopScope().visit(fcd);   
 
+if (justFinished.getInter() == true) {
 				varDeps.addAll(fcd.getDataDependencies());
-				// get enclosing scope of the function delcaration...and find all calls to the function in there
+}		// get enclosing scope of the function delcaration...and find all calls to the function in there
 			}
 
 			// Get next variables dependencies
@@ -147,11 +149,7 @@ public class LocalExample {
 				
 				FunctionDeclarationFinder fdf = new FunctionDeclarationFinder();
 				for (int jj = 0; jj < fnDeps.size(); jj++) {
-					if (!(/*fnDeps.get(jj).getFunctionName().equals("fade")
-							||*/ fnDeps.get(jj).getFunctionName().equals("blink")
-							/*|| fnDeps.get(jj).getFunctionName().equals("clearTimeout")*/)) {
-						continue;
-					}
+					
 					System.out.println(fnDeps.get(jj).getFunctionName());					
 					
 					fdf.setFunctionArgumentPair(fnDeps.get(jj));
@@ -166,22 +164,23 @@ public class LocalExample {
 						System.out.println("~`~`~`~`~`~`~`~`~`~`~`~`");
 						System.out.println(next.toSource());
 						System.out.println(getDefiningScope(ast, (Name) next).toSource());
+						
+						if (next instanceof Name) {
+							possibleNextSteps.add(new SlicingCriteria(getDefiningScope(ast, (Name) next), ((Name) next).getIdentifier(), false));
+						} 					
 					}
-					
-					varDeps.addAll(fdf.getArgumentsNode());
 				}
 			}
 
 			// Check if dependencies are new
 			it = varDeps.iterator();
-			possibleNextSteps = new ArrayList<SlicingCriteria>();
 
 			while (it.hasNext()) {
 				step = it.next();
 				if (step instanceof Name) {
-					possibleNextSteps.add(new SlicingCriteria(getDefiningScope(ast, (Name) step), ((Name) step).getIdentifier()));
+					possibleNextSteps.add(new SlicingCriteria(getDefiningScope(ast, (Name) step), ((Name) step).getIdentifier(), true));
 				} else if (step instanceof KeywordLiteral && step.toSource().equals("this")) {
-					possibleNextSteps.add(new SlicingCriteria(((KeywordLiteral) step).getEnclosingFunction(), "this"));
+					possibleNextSteps.add(new SlicingCriteria(((KeywordLiteral) step).getEnclosingFunction(), "this", true));
 				} else if (step instanceof PropertyGet) {
 					System.out.println("Property get as dependecy?");
 					System.out.println(step.toSource());
@@ -314,7 +313,7 @@ public class LocalExample {
 		ArrayList<AstNode> deps = new ArrayList<AstNode>();
 		fnDeps = new ArrayList<FunctionArgumentPair>();
 
-		SlicingCriteria newSlice = new SlicingCriteria(target.getScope(), target.getVariable());
+		SlicingCriteria newSlice = new SlicingCriteria(target.getScope(), target.getVariable(), true);
 
 		// Set up parameters for instrumentation once scope if known
 		df.setVariableName(target.getVariable());
@@ -359,6 +358,7 @@ public class LocalExample {
 		SlicingCriteria newSlice;
 
 		boolean alreadyInQueue;
+		boolean alreadyInCompletedQueue;
 
 		while (itnew.hasNext()) {
 			newSlice = itnew.next();
@@ -369,11 +369,18 @@ public class LocalExample {
 
 			// Check if the recently discovered related variables had already been known
 			alreadyInQueue = false;
+			alreadyInCompletedQueue = false;
 
 			// Already in queue
 			while (itsc.hasNext()) {
 				queuedSlice = itsc.next();
 				if (queuedSlice.equals(newSlice)) {
+					
+					// Replace old 'downward' only with 'upward and downward'
+					if (newSlice.getInter() == true && queuedSlice.getInter() == false) {
+						remainingSlices.remove(queuedSlice);
+						remainingSlices.add(newSlice);
+					}
 					alreadyInQueue = true;
 					break;
 				}
@@ -383,17 +390,22 @@ public class LocalExample {
 			while (itsc2.hasNext()) {
 				completedSlice = itsc2.next();
 				if (completedSlice.equals(newSlice)) {
-					alreadyInQueue = true;
+					
+					// Re-queue slicing criteria as we are interested in inter function data-flow too (old criteria wasn't)
+					if (newSlice.getInter() == true && completedSlice.getInter() == false) {
+						completedSlices.remove(completedSlice);
+						remainingSlices.add(newSlice);
+					}
+					
+					alreadyInCompletedQueue = true;
 					break;
 				}
 			}
 
 			// Debugging:
-			if (!alreadyInQueue) {
+			if (!alreadyInQueue && !alreadyInCompletedQueue) {
 				remainingSlices.add(newSlice);
 				System.out.println("New Name: " + newSlice.getVariable());
-			} else {
-				System.out.println("Old Name: " + newSlice.getVariable());
 			}
 		}
 	}

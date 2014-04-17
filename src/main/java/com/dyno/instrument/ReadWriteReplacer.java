@@ -548,8 +548,12 @@ public class ReadWriteReplacer extends AstInstrumenter {
             } else if (node.getParent().getType() == org.mozilla.javascript.Token.FUNCTION) {
                 // Don't want to instrument arguments in a function declaration
                 return;
+            } else if (parent.getType() == org.mozilla.javascript.Token.INC || parent.getType() == org.mozilla.javascript.Token.DEC) {
+            	System.out.println(node.toSource());
+            	System.out.println(node.getParent().toSource());
+            	System.out.println(Token.typeToName(node.getParent().getType()));
+                return;
             }
-
         }
 
 
@@ -1269,7 +1273,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
         }
 
         Scope scope = TraceHelper.getDefiningScope(astCrawled, varName, lineNo);
-        SlicingCriteria checkMe = new SlicingCriteria(scope, varName);
+        SlicingCriteria checkMe = new SlicingCriteria(scope, varName, true);
 
         Iterator<SlicingCriteria> it = this.variablesOfInterest.iterator();
         SlicingCriteria next;

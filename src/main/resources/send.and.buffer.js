@@ -5,7 +5,7 @@ var traceCounter = 0;
 
 function send(value) {
 	window.buffer.push(value);
-    if (window.buffer.length > 10) {
+    if (window.buffer.length > 80) {
         sendReally();
     }
 }

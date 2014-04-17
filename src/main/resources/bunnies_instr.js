@@ -411,65 +411,67 @@ function clickStage(event) {
   return false;
 }
 function fade(bunny) {
-  bunny.style.marginRight = "0";
-  bunny.style.marginBottom = "0";
-  bunny.style.marginLeft = "0";
-  removeClass(bunny, "dead");
-  removeClass(bunny, "poison");
-  bunny.target = false;
-  bunny.direction = "up";
-  if (bunny.id == "bunny10") 
+  _dynoWriteArg('bunny', bunny, 'fade', 0, 625);
+  bunny.style.marginRight = _dynoWrite('bunny.style.marginRight', '0', '', 627);
+  bunny.style.marginBottom = _dynoWrite('bunny.style.marginBottom', '0', '', 628);
+  bunny.style.marginLeft = _dynoWrite('bunny.style.marginLeft', '0', '', 629);
+  removeClass(_dynoReadAsArg('bunny', bunny, "removeClass", 0, 630), "dead");
+  removeClass(_dynoReadAsArg('bunny', bunny, "removeClass", 0, 631), "poison");
+  bunny.target = _dynoWrite('bunny.target', false, '', 632);
+  bunny.direction = _dynoWrite('bunny.direction', 'up', '', 633);
+  if (_dynoRead('bunny', bunny, 635)[_dynoReadProp("bunny", "id", 635)] == "bunny10") 
   {
     document.getElementById("bomb1").style.marginLeft = "0px";
-  } else if (bunny.id == "bunny11") 
+  } else if (_dynoRead('bunny', bunny, 639)[_dynoReadProp("bunny", "id", 639)] == "bunny11") 
   {
     document.getElementById("bomb2").style.marginRight = "0px";
   }
   return true;
 }
 function blink(bunny) {
-  var display = bunny.style.display;
+  _dynoWriteArg('bunny', bunny, 'blink', 0, 650);
+  var display = _dynoWrite('display', _dynoRead('bunny', bunny, 652)[_dynoReadProp("bunny", "style", 652)][_dynoReadProp("bunny.style", "display", 652)], 'bunny.style.display', 652);
   if (display == "") 
   {
     display = "block";
   }
   if (display == "none") 
   {
-    bunny.style.display = "block";
+    bunny.style.display = _dynoWrite('bunny.style.display', 'block', '', 661);
   } else {
-    bunny.style.display = "none";
+    bunny.style.display = _dynoWrite('bunny.style.display', 'none', '', 665);
   }
-  if (typeof bunny.blinkCounter == "undefined") 
+  if (typeof _dynoRead('bunny', bunny, 668)[_dynoReadProp("bunny", "blinkCounter", 668)] == "undefined") 
   {
-    bunny.blinkCounter = 0;
+    bunny.blinkCounter = _dynoWrite('bunny.blinkCounter', 0, '', 670);
   }
-  if (bunny.blinkCounter > 5) 
+  if (_dynoRead('bunny', bunny, 673)[_dynoReadProp("bunny", "blinkCounter", 673)] > 5) 
   {
-    bunny.blinkCounter = 0;
-    bunny.style.marginBottom = "0";
-    bunny.style.display = "block";
-    removeClass(bunny, "dead");
-    removeClass(bunny, "poison");
-    if (bunny.id.match(/bomb/)) 
+    bunny.blinkCounter = _dynoWrite('bunny.blinkCounter', 0, '', 675);
+    bunny.style.marginBottom = _dynoWrite('bunny.style.marginBottom', '0', '', 676);
+    bunny.style.display = _dynoWrite('bunny.style.display', 'block', '', 677);
+    removeClass(_dynoReadAsArg('bunny', bunny, "removeClass", 0, 678), "dead");
+    removeClass(_dynoReadAsArg('bunny', bunny, "removeClass", 0, 679), "poison");
+    if (_dynoRead('bunny', bunny, 681)[_dynoReadProp("bunny", "id", 681)][_dynoFunc("bunny.id", "match", 681)](/bomb/)) 
     {
-      bunny.style.marginRight = "0px";
-      bunny.style.marginLeft = "0px";
-      bunny.style.marginTop = "0px";
-      if (bunny.id == "bomb1") 
+      bunny.style.marginRight = _dynoWrite('bunny.style.marginRight', '0px', '', 683);
+      bunny.style.marginLeft = _dynoWrite('bunny.style.marginLeft', '0px', '', 684);
+      bunny.style.marginTop = _dynoWrite('bunny.style.marginTop', '0px', '', 685);
+      if (_dynoRead('bunny', bunny, 687)[_dynoReadProp("bunny", "id", 687)] == "bomb1") 
       {
         document.getElementById("bunny10").target = false;
       } else {
         document.getElementById("bunny11").target = false;
       }
-      removeClass(bunny, "exploded");
+      removeClass(_dynoReadAsArg('bunny', bunny, "removeClass", 0, 696), "exploded");
     } else {
-      bunny.target = false;
-      bunny.direction = "up";
+      bunny.target = _dynoWrite('bunny.target', false, '', 700);
+      bunny.direction = _dynoWrite('bunny.direction', 'up', '', 701);
     }
   } else {
-    bunny.blinkCounter++;
+    _dynoRead('bunny', bunny, 706)[_dynoReadProp("bunny", "blinkCounter", 706)]++;
     setTimeout(function() {
-  blink(bunny);
+  blink(_dynoReadAsArg('bunny', bunny, "blink", 0, 710));
 }, 500);
   }
   return true;
