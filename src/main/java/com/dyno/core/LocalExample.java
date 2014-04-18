@@ -119,6 +119,13 @@ public class LocalExample {
 
 			justFinished = new SlicingCriteria(remainingSlices.get(0).getScope(), remainingSlices.get(0).getVariable(), remainingSlices.get(0).getInter());
 
+			if (remainingSlices.get(0).getScope() == null) {
+				System.out.println(remainingSlices.size());
+				System.out.println(completedSlices.size());
+				System.out.println(remainingSlices.get(0).getVariable());
+				System.out.println(remainingSlices.get(0).getInter());
+			}
+
 			// "UPWARDS"
 			if (justFinished.getScope() instanceof FunctionNode 
 					&& isArgument(justFinished.getVariable(), justFinished.getScope()) > -1) {
@@ -137,34 +144,34 @@ public class LocalExample {
 
 				fcd.getTopScope().visit(fcd);   
 
-if (justFinished.getInter() == true) {
-				varDeps.addAll(fcd.getDataDependencies());
-}		// get enclosing scope of the function delcaration...and find all calls to the function in there
+				if (justFinished.getInter() == true) {
+					varDeps.addAll(fcd.getDataDependencies());
+				}		// get enclosing scope of the function delcaration...and find all calls to the function in there
 			}
 
 			// Get next variables dependencies
 			varDeps.addAll(getDataDependencies(ast, justFinished));
-			
+
 			if (fnDeps.size() > 0) {
-				
+
 				FunctionDeclarationFinder fdf = new FunctionDeclarationFinder();
 				for (int jj = 0; jj < fnDeps.size(); jj++) {
-					
+
 					System.out.println(fnDeps.get(jj).getFunctionName());					
-					
+
 					fdf.setFunctionArgumentPair(fnDeps.get(jj));
 					ast.visit(fdf);
-					
+
 					ArrayList<AstNode> asd = fdf.getArgumentsNode();
 					Iterator<AstNode> itt = asd.iterator();
 					AstNode next;
-					
+
 					while (itt.hasNext()) {
 						next = itt.next();
 						System.out.println("~`~`~`~`~`~`~`~`~`~`~`~`");
 						System.out.println(next.toSource());
 						System.out.println(getDefiningScope(ast, (Name) next).toSource());
-						
+
 						if (next instanceof Name) {
 							possibleNextSteps.add(new SlicingCriteria(getDefiningScope(ast, (Name) next), ((Name) next).getIdentifier(), false));
 						} 					
@@ -178,9 +185,9 @@ if (justFinished.getInter() == true) {
 			while (it.hasNext()) {
 				step = it.next();
 				if (step instanceof Name) {
-					possibleNextSteps.add(new SlicingCriteria(getDefiningScope(ast, (Name) step), ((Name) step).getIdentifier(), true));
+					possibleNextSteps.add(new SlicingCriteria(getDefiningScope(ast, (Name) step), ((Name) step).getIdentifier(), justFinished.getInter()));
 				} else if (step instanceof KeywordLiteral && step.toSource().equals("this")) {
-					possibleNextSteps.add(new SlicingCriteria(((KeywordLiteral) step).getEnclosingFunction(), "this", true));
+					possibleNextSteps.add(new SlicingCriteria(((KeywordLiteral) step).getEnclosingFunction(), "this", justFinished.getInter()));
 				} else if (step instanceof PropertyGet) {
 					System.out.println("Property get as dependecy?");
 					System.out.println(step.toSource());
@@ -303,7 +310,7 @@ if (justFinished.getInter() == true) {
 		// Specified variable was not found function arguments
 		return -1;
 	}
-	
+
 	private ArrayList<FunctionArgumentPair> fnDeps;
 
 	private ArrayList<AstNode> getDataDependencies (AstRoot ast, SlicingCriteria target) {
@@ -339,7 +346,7 @@ if (justFinished.getInter() == true) {
 		// Get all the related variables to slice iteratively (E.g. LHS/RHS of assignments for initially sliced variable)
 		deps =  df.getDataDependencies();
 		fnDeps = df.getFunctionsToWatch();
-		
+
 		System.out.println("Size of new vars to slice: " + deps.size());
 
 		return deps;
@@ -375,11 +382,13 @@ if (justFinished.getInter() == true) {
 			while (itsc.hasNext()) {
 				queuedSlice = itsc.next();
 				if (queuedSlice.equals(newSlice)) {
-					
+
 					// Replace old 'downward' only with 'upward and downward'
 					if (newSlice.getInter() == true && queuedSlice.getInter() == false) {
 						remainingSlices.remove(queuedSlice);
 						remainingSlices.add(newSlice);
+						System.out.println("New Name: " + newSlice.getVariable() + " | " + (newSlice.getScope().getType() == org.mozilla.javascript.Token.FUNCTION? ((FunctionNode) newSlice.getScope()).getName(): ""));
+						System.out.println(newSlice.getInter());
 					}
 					alreadyInQueue = true;
 					break;
@@ -390,13 +399,16 @@ if (justFinished.getInter() == true) {
 			while (itsc2.hasNext()) {
 				completedSlice = itsc2.next();
 				if (completedSlice.equals(newSlice)) {
-					
+
 					// Re-queue slicing criteria as we are interested in inter function data-flow too (old criteria wasn't)
 					if (newSlice.getInter() == true && completedSlice.getInter() == false) {
 						completedSlices.remove(completedSlice);
 						remainingSlices.add(newSlice);
+						System.out.println("New Name: " + newSlice.getVariable() + " | " + (newSlice.getScope().getType() == org.mozilla.javascript.Token.FUNCTION? ((FunctionNode) newSlice.getScope()).getName(): ""));
+						System.out.println(newSlice.getInter());
+
 					}
-					
+
 					alreadyInCompletedQueue = true;
 					break;
 				}
@@ -405,7 +417,9 @@ if (justFinished.getInter() == true) {
 			// Debugging:
 			if (!alreadyInQueue && !alreadyInCompletedQueue) {
 				remainingSlices.add(newSlice);
-				System.out.println("New Name: " + newSlice.getVariable());
+				System.out.println("New Name: " + newSlice.getVariable() + " | " + (newSlice.getScope().getType() == org.mozilla.javascript.Token.FUNCTION? ((FunctionNode) newSlice.getScope()).getName(): ""));
+				System.out.println(newSlice.getInter());
+
 			}
 		}
 	}
@@ -414,9 +428,9 @@ if (justFinished.getInter() == true) {
 		sc.setScopeName(targetFile);
 		sc.setLineNo(target.getLineno());
 		sc.setVariableName(target.getIdentifier());
-		
+
 		ast.visit(sc);
-		
+
 		return sc.getLastScopeVisited();
 	}
 }

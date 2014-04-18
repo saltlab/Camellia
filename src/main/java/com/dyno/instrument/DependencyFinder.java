@@ -598,11 +598,13 @@ public class DependencyFinder extends AstInstrumenter {
 			// RIGHT = variable of interest
 		} else if (varBeingRead.equals(variableName)) {
 			// Variable of interest is being written to
-			if (leftSideType == org.mozilla.javascript.Token.NAME) {
+			if (leftSideType == org.mozilla.javascript.Token.NAME
+					&& node.getType() == org.mozilla.javascript.Token.ASSIGN) {
 				// Add name to data dependencies (variableName, lineNo)
 				dataDependencies.add((Name) leftSide);
 
-			} else if (leftSideType == org.mozilla.javascript.Token.GETPROP) {
+			} else if (leftSideType == org.mozilla.javascript.Token.GETPROP
+					&& node.getType() == org.mozilla.javascript.Token.ASSIGN) {
 				// Need to check if there is over lap with CALL (method calls, which do they fall under)
 
 				// Must add base object to data dependencies
