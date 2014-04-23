@@ -2,22 +2,19 @@ package com.dyno.instrument;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
-import org.mozilla.javascript.ast.FunctionCall;
 import org.mozilla.javascript.ast.FunctionNode;
-import org.mozilla.javascript.ast.KeywordLiteral;
 import org.mozilla.javascript.ast.Name;
+import org.mozilla.javascript.ast.ReturnStatement;
 import org.mozilla.javascript.ast.Scope;
-import com.dyno.instrument.helpers.FunctionCallParser;
 
-public class FunctionDeclarationInstrumenter extends AstInstrumenter {
-	private static final String ARGWRITE = "_dynoWriteArg";
+public class ReturnStatementInstrumenter extends AstInstrumenter {
 	private static final String READFUNCRET = "_dynoReturnValue";
-
 
 	/**
 	 * This is used by the JavaScript node creation functions that follow.
@@ -31,16 +28,11 @@ public class FunctionDeclarationInstrumenter extends AstInstrumenter {
 	private String scopeName = null;
 	private int lineNo = -1;
 
-	/**
-	 * List with regular expressions of variables that should not be instrumented.
-	 */
-	private ArrayList<String> excludeList = new ArrayList<String>();
-
 
 	/**
 	 * Construct without patterns.
 	 */
-	public FunctionDeclarationInstrumenter() {
+	public ReturnStatementInstrumenter() {
 		super();
 	}
 
@@ -50,9 +42,8 @@ public class FunctionDeclarationInstrumenter extends AstInstrumenter {
 	 * @param excludes
 	 *            List with variable patterns to exclude.
 	 */
-	public FunctionDeclarationInstrumenter(ArrayList<String> excludes) {
+	public ReturnStatementInstrumenter(ArrayList<String> excludes) {
 		super(excludes);
-		excludeList = excludes;
 	}
 
 	/**
@@ -77,7 +68,10 @@ public class FunctionDeclarationInstrumenter extends AstInstrumenter {
 				.replaceAll("\\.\\[", "[")
 				.replaceAll("\\;\\\n\\)", ")");
 
-		System.out.println(code);
+		if (this.scopeName.indexOf("string_library") != -1) {
+			System.out.println(code);
+		}
+		
 
 
 
@@ -123,9 +117,6 @@ public class FunctionDeclarationInstrumenter extends AstInstrumenter {
 		this.topMost = s;
 	}
 
-	public void setLineNo(int l) {
-		this.lineNo = l;
-	}
 
 	public Scope getTopScope() {
 		return topMost;
@@ -135,45 +126,32 @@ public class FunctionDeclarationInstrumenter extends AstInstrumenter {
 	public  boolean visit(AstNode node){
 		int tt = node.getType();
 
-		/*	if (tt == org.mozilla.javascript.Token.GETPROP
-				|| tt == org.mozilla.javascript.Token.CALL
-				|| tt == org.mozilla.javascript.Token.NAME) {
-			System.out.println(Token.typeToName(node.getType()) + " : " + node.toSource());
-		}*/
-
-
-		if (tt == org.mozilla.javascript.Token.FUNCTION && node.equals(targetFn)) {
+		if (tt == org.mozilla.javascript.Token.RETURN) {
 			// TODO:
-			handleFunctionDeclaration((FunctionNode) node);
+			handleReturnStatement((ReturnStatement) node);
 		}
 
 		return true;  // process kids
 	}
-	
-	private void handleFunctionDeclaration(FunctionNode node) {
-		
-		ReturnStatementInstrumenter rsi = new ReturnStatementInstrumenter();
-		rsi.setParentFunction(node);
-		rsi.setScopeName(getScopeName());
-		node.visit(rsi);
-		
-		// Store information on function declarations
+
+	private void handleReturnStatement(ReturnStatement node) {
+		// Return statements
+		String newRV;
 		ArrayList<String> wrapperArgs = new ArrayList<String>();
-        wrapperArgs.add(argumentName);
-        wrapperArgs.add(argumentName);
-        wrapperArgs.add("\""+node.getName()+"\"");
-        wrapperArgs.add(argumentNumber+"");
-        wrapperArgs.add(node.getLineno()+"");		
-        wrapperArgs.add("\""+this.getScopeName()+"\"");		
-		node.getBody().addChildToFront(parse(generateWrapper(ARGWRITE, wrapperArgs), node.getLineno()));
 		
-		ArrayList<String> wrapperArgs2 = new ArrayList<String>();
-		wrapperArgs2.add(node.getName());
-		wrapperArgs2.add("undefined");
-		wrapperArgs2.add("\""+getScopeName()+"\"");			
-		wrapperArgs2.add(node.getLineno()+"");			
-		node.getBody().addChildToBack(parse(generateWrapper(READFUNCRET, wrapperArgs2), node.getLineno()));		
+		if (!node.getEnclosingFunction().equals(getParentFunction())
+				|| node.getReturnValue().toSource().indexOf(READFUNCRET) != -1) {
+			return;
+		}
+		//functionName, returnValue, fileName, lineNo,
+        wrapperArgs.add(getParentFunction().getName());
+        wrapperArgs.add(node.getReturnValue().toSource());
+        wrapperArgs.add("\""+getScopeName()+"\"");			
+        wrapperArgs.add(node.getLineno()+"");			
 		
+		newRV = generateWrapper(READFUNCRET, wrapperArgs);
+		node.setReturnValue(parse(newRV, node.getLineno()));
+
 		System.out.println(node.toSource());
 	}
 
@@ -221,10 +199,7 @@ public class FunctionDeclarationInstrumenter extends AstInstrumenter {
 				//	.replaceAll("(\\n)", "\n\n")  // <-- just for spacing, might not be needed
 				.replaceAll("\\.\\[", "[");
 
-		//	System.out.println(isc);
-
 		AstRoot iscNode = rhinoCreateNode(isc);
-
 
 		// Return new instrumented node/code
 		return iscNode;
@@ -266,51 +241,13 @@ public class FunctionDeclarationInstrumenter extends AstInstrumenter {
 		return toBeReturned;
 	}
 
-	private boolean isAnArgument(FunctionCall node, String name) {
-
-		ArrayList<AstNode> argumentNames = FunctionCallParser.getArgumentDependencies(node);
-		Iterator<AstNode> argumentIterator = argumentNames.iterator();
-		AstNode nextArgument;
-		boolean found = false;
-
-		while (argumentIterator.hasNext()) {
-			nextArgument = argumentIterator.next();
-			if (nextArgument instanceof Name && ((Name) nextArgument).getIdentifier().equals(name)) {
-				found = true;
-				break;
-			} else if ((nextArgument instanceof KeywordLiteral) && nextArgument.toSource().equals("this") && name.equals("this")) {
-				found = true;
-				break;
-			}
-		}
-
-		return found;
-	}
-
-	// Argument
-	private String argumentName = null;
-	public void setArgumentName (String name) {
-		this.argumentName = name;
-	}
-	public String getArgumentName () {
-		return this.argumentName;
-	}
-	
-	// Number
-	private int argumentNumber;
-	public void setArgumentNumber (int num) {
-		this.argumentNumber = num;
-	}
-	public int getArgumentNumber () {
-		return this.argumentNumber;
-	}
-	
 	// Function
-	private FunctionNode targetFn = null;
-	public void setTargetFunction (FunctionNode fn) {
-		this.targetFn = fn;
+	private FunctionNode parentFn = null;
+
+	public void setParentFunction (FunctionNode fn) {
+		this.parentFn = fn;
 	}
-	public FunctionNode getTargetFunction () {
-		return this.targetFn;
+	public FunctionNode getParentFunction () {
+		return this.parentFn;
 	}
 }

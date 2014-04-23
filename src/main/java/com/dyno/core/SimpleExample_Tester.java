@@ -22,8 +22,11 @@ import org.owasp.webscarab.model.Preferences;
 import org.owasp.webscarab.plugin.Framework;
 import org.owasp.webscarab.plugin.proxy.Proxy;
 
+import com.dyno.configuration.AliasAnalyzer;
 import com.dyno.configuration.ProxyConfiguration;
 import com.dyno.configuration.TraceHelper;
+import com.dyno.core.trace.ArgumentRead;
+import com.dyno.core.trace.ArgumentWrite;
 import com.dyno.core.trace.PropertyRead;
 import com.dyno.core.trace.RWOperation;
 import com.dyno.core.trace.VariableRead;
@@ -41,6 +44,15 @@ import com.google.common.collect.TreeMultimap;
 import com.crawljax.util.Helper;
 
 public class SimpleExample_Tester {
+
+	// Example arguments:       --server http://www.themaninblue.com/experiment/BunnyHunt/ --file bunnies.js --line 732 --variable positionY
+
+	//--server http://www.themaninblue.com/experiment/BunnyHunt/ --file clouds.js --line 30 --variable cloud1
+
+	// --server http://localhost:8080/test.html --file test.js --line 17 --variable original
+
+	// --server http://localhost:8080/test.html --file test.js --line 22 --variable tt
+
 
 	public static final String SERVER_PREFIX2 = "--server";
 	public static final String SERVER_PREFIX1 = "--s";
@@ -129,6 +141,64 @@ public class SimpleExample_Tester {
 				throw new IllegalArgumentException();
 			} 
 
+			outputFolder = Helper.addFolderSlashIfNeeded("clematis-output");
+
+			JSExecutionTracer tracer = new JSExecutionTracer();
+			tracer.setOutputFolder(outputFolder + "ftrace");
+
+			// Create a new instance of the firefox driver
+			FirefoxProfile profile = new FirefoxProfile();
+			// Instantiate proxy components
+			ProxyConfiguration prox = new ProxyConfiguration();
+
+			// Modifier responsible for parsing Ast tree
+			ProxyInstrumenter s = new ProxyInstrumenter();
+
+			// Add necessary files from resources
+			s.setFileNameToAttach("/dyno.wrappers.js");
+			s.setFileNameToAttach("/send.and.buffer.js");
+
+			// Interface for Ast traversal
+			JSModifyProxyPlugin p = new JSModifyProxyPlugin(s);
+			p.excludeDefaults();
+
+			// Set slicing criteria (as it was passed in by user)
+			p.setTargetFile(FILE);
+			p.setLineNo(LINE);
+			p.setVariableName(VAR);
+
+			Framework framework = new Framework();
+
+			/* set listening port before creating the object to avoid warnings */
+			Preferences.setPreference("Proxy.listeners", "127.0.0.1:" + prox.getPort());
+
+
+			framework.setSession("FileSystem", new File("convo_model"), "");
+
+
+			if (prox != null) {
+				profile.setPreference("network.proxy.http", prox.getHostname());
+				profile.setPreference("network.proxy.http_port", prox.getPort());
+				profile.setPreference("network.proxy.type", prox.getType().toInt());
+				/* use proxy for everything, including localhost */
+				profile.setPreference("network.proxy.no_proxies_on", "");
+			}
+
+			/*
+			 * For enabling Firebug with Clematis Replace '...' with the appropriate path to your
+			 * Firebug installation
+			 */
+			// File file = new
+			// File("/Users/.../Library/Application Support/Firefox/Profiles/zga73n4v.default/extensions/firebug@software.joehewitt.com.xpi");
+			/*
+			 * File file = new File(
+			 * "/Users/Saba/Library/Application Support/Firefox/Profiles/b0dzzwrl.default/extensions/firebug@software.joehewitt.com.xpi"
+			 * ); profile.addExtension(file);
+			 * profile.setPreference("extensions.firebug.currentVersion", "1.8.1"); // Avoid startup
+			 */// screen
+
+
+
 			ObjectMapper mapper = new ObjectMapper();
 			// Register the module that serializes the Guava Multimap
 			mapper.registerModule(new GuavaModule());
@@ -166,6 +236,10 @@ public class SimpleExample_Tester {
 			ArrayList<RWOperation> readsToBeSliced = new ArrayList<RWOperation>();
 			ArrayList<RWOperation> readsCompleted = new ArrayList<RWOperation>();
 			ArrayList<RWOperation> theSlice = new ArrayList<RWOperation>();
+			ArrayList<RWOperation> potentialNewDependencies;
+			boolean found = false;
+
+			AliasAnalyzer aa = new AliasAnalyzer();
 
 			// First one:
 			RWOperation begin = new RWOperation();
@@ -175,31 +249,35 @@ public class SimpleExample_Tester {
 
 			readsToBeSliced.add(begin);
 
+			// 1  -  Get all instances of slicing criteria (all the reads for positionX on line _, etc.)
+			// 2  -  Get last write for that instance
+			// 3  -  Get all dependencies for that last write
+			// 4  - repeat 1 for each new dependency
 			while (readsToBeSliced.size() > 0) {
 				next = readsToBeSliced.get(0);
+				it1 = all.iterator();
 
 				while (it1.hasNext()) {
 					nextOp = it1.next();
 
-					//all.
 					if (nextOp.getLineNo() == next.getLineNo() && nextOp.getVariable().equals(next.getVariable()) && (nextOp instanceof VariableRead || nextOp instanceof PropertyRead)) {
-						System.out.println("Relevant [READ] found!");
-
+						// Relevant [READ] found! --> nextOp
 						index = all.indexOf(nextOp);
 
-						System.out.println(nextOp.getOrder());
-						System.out.println(nextOp.getClass().toString());
 
 						for (int a = index - 1; a >= 0; a--) {
+							found = false;
 							// Checking backwards from READ looking for WRITE
 							searchingOp = all.get(a);
-
 
 							/*if (searchingOp instanceof VariableWriteAugmentAssign && ((VariableWriteAugmentAssign) searchingOp).getVariable().equals(next.getVariable())) {
 
 							} else*/
-							if (searchingOp instanceof VariableWrite && ((VariableWrite) searchingOp).getVariable().equals(next.getVariable())) {
 
+
+
+							if (searchingOp instanceof VariableWrite && ((VariableWrite) searchingOp).getVariable().equals(next.getVariable())) {
+								potentialNewDependencies = new ArrayList<RWOperation>();
 								/*
 								 * TODO: Wednesday, If that write to 'VAR' is a reference (not primitive type), will need 
 								 * to check if the 'right side' of the write/assignment is updated between THIS VariableWrite
@@ -214,7 +292,139 @@ public class SimpleExample_Tester {
 								 */
 
 								//	((VariableWrite) searchingOp).addDataDependencies(TraceHelper.getDataDependencies(all, (VariableWrite) searchingOp));
-								ArrayList<RWOperation> potentialNewDependencies = TraceHelper.getDataDependencies(all, (VariableWrite) searchingOp);
+
+								// UPWARDS
+								if (searchingOp instanceof ArgumentWrite) {
+									// Special case linking arguments from call to declaration
+									for (int q = all.indexOf(searchingOp)-1; q >= 0; q--) {
+										if (all.get(q) instanceof ArgumentRead 
+												&& ((ArgumentRead) all.get(q)).getArgumentNumber() == ((ArgumentWrite) searchingOp).getArgumentNumber()
+												&& ((ArgumentRead) all.get(q)).getFunctionName().equals(((ArgumentWrite) searchingOp).getFunctionName())
+												&& ((ArgumentRead) all.get(q)).getValue().equals(((ArgumentWrite) searchingOp).getValue())) {
+											potentialNewDependencies.add(all.get(q));
+
+											// Add function call/argument pass as PARENT to this argument read
+											nextOp.setParent(all.get(q));
+
+											if (TraceHelper.getIndexOfIgnoreOrderNumber(theSlice, all.get(q)) == -1) {
+												theSlice.add(all.get(q));
+											}
+
+											// Break from looking from Argument read
+											found = true;
+											break;
+										}
+									}
+								} else {
+									potentialNewDependencies = TraceHelper.getDataDependencies(all, (VariableWrite) searchingOp);
+
+									if (!(searchingOp instanceof VariableWriteAugmentAssign)) {
+										// Previous writes are IRRELEVANT if it was NOT an augmented assignment i.e. -=, +=
+										found = true;
+
+										// For now, assume only augmented assignments don't result in complex values
+										if (TraceHelper.isComplex(((VariableWrite) searchingOp).getValue())) {
+
+
+											System.out.println("Is complex");
+											System.out.println(searchingOp.getOrder());
+
+											// Continue search based on RHS of assignment
+											for (int f = 0; f < potentialNewDependencies.size(); f++) {
+												potentialNewDependencies.get(f);
+
+
+												// Find the hard write
+
+
+
+
+
+
+
+
+
+
+												// get base of dependency
+												// get writes for dependency (hard and soft/aug)
+												// when u hit the hard...get the RHS and continue this loop for that depenedency
+
+												// EACH of the above loops, go till the previous hard write for the dependency
+
+												// FIND all aliases assigned from that write to this READ (next nextOP line 301 above)
+
+
+
+												// IF the first right hand side is a base objct...we want all the writes for properties
+												// AND all writes which tamper with the object's properties from parent's aliases
+
+												// IF the right hand side is a propert read...want all changes from that property downwards (which could happen through parent aliases
+
+												// REMEMBER ... aliases for the parent can assess the base object from properties
+
+												/* e.g. var tt = {}
+												 * 
+												 * 		var ttt = tt;
+												 * 
+												 * 		tt.child = {};
+												 * 
+												 * 		
+												 * 
+												 *      var zz = tt.child;
+												 *      
+												 *		ttt.child.new = "yello";      <-- we need to capture this when slicing 'finish' below OR "zz" above OR "tt" above
+												 *
+												 *      var finish = zz;
+												 * 
+												 * 
+												 * 
+												 * 
+												 */
+
+
+												// get all aliases for base
+
+
+											}
+
+
+
+
+											ArrayList<String> aliases = aa.getAllAliases(nextOp, searchingOp, all);
+
+											for (int ss = all.indexOf(searchingOp); ss < all.indexOf(nextOp); ss++) {
+												if (all.get(ss).getSliceStatus() == true) {
+													// Add to slice
+													if (TraceHelper.getIndexOfIgnoreOrderNumber(theSlice, all.get(ss)) == -1) {
+														theSlice.add(all.get(ss));
+													}
+													all.get(ss).omitFromSlice();
+												}
+											}
+
+
+											System.out.println("=-=-=-=-=-=-=-=-=-=-=-=-=-");
+											System.out.println("ALIASES:");
+											for (int lk = 0; lk < aliases.size(); lk++) {
+												System.out.println(aliases.get(lk));
+											}
+
+											/*	if () {
+
+																					}*/
+										}
+
+
+									} else {
+										// Add the augment assign line to the slice and continue looking for previous assign (non-augment)
+
+										if (TraceHelper.getIndexOfIgnoreOrderNumber(theSlice, searchingOp) == -1) {
+											theSlice.add(searchingOp);
+										}
+									}
+
+
+								}
 
 								for (int d = 0; d < potentialNewDependencies.size(); d++) {
 
@@ -226,66 +436,113 @@ public class SimpleExample_Tester {
 
 								}
 
-								System.out.println("Relevant <WRITE> found!");
+								//Relevant <WRITE> found! --> 'searchingOp'
+								// If the line is not part of the slice...add it
+								if (found) {
+									if (TraceHelper.getIndexOfIgnoreOrderNumber(theSlice, searchingOp) == -1) {
+										theSlice.add(searchingOp);
+									}
+									break;
+								}
+							} else if (searchingOp instanceof VariableWrite && ((VariableWrite) searchingOp).getVariable().indexOf(next.getVariable()) == 0
+									&& ((VariableWrite) searchingOp).getVariable().indexOf(".") != -1) {
+								System.out.println("Property write found");
+								potentialNewDependencies = TraceHelper.getDataDependencies(all, (VariableWrite) searchingOp);
 
-								System.out.println(searchingOp.getOrder());
-								System.out.println(searchingOp.getClass().toString());
+								for (int d = 0; d < potentialNewDependencies.size(); d++) {
+
+									// New dependency, add it to queue
+									if (readsToBeSliced.indexOf(potentialNewDependencies.get(d)) == -1 
+											&& readsCompleted.indexOf(potentialNewDependencies.get(d)) == -1) {
+										readsToBeSliced.add(potentialNewDependencies.get(d));
+									}
+
+								}
 								if (TraceHelper.getIndexOfIgnoreOrderNumber(theSlice, searchingOp) == -1) {
 									theSlice.add(searchingOp);
 								}
 
+							} else if (searchingOp instanceof ArgumentRead && ((ArgumentRead) searchingOp).getVariable().indexOf(next.getVariable()) == 0
+									&& TraceHelper.isComplex(((ArgumentRead) searchingOp).getValue())) {
+								
+								for (int q = all.indexOf(searchingOp); q < index; q++) {
+									if (all.get(q) instanceof ArgumentWrite 
+											&& ((ArgumentWrite) all.get(q)).getArgumentNumber() == ((ArgumentRead) searchingOp).getArgumentNumber()
+											&& ((ArgumentWrite) all.get(q)).getFunctionName().equals(((ArgumentRead) searchingOp).getFunctionName())
+											&& ((ArgumentWrite) all.get(q)).getValue().equals(((ArgumentRead) searchingOp).getValue())) {
 
-								Iterator<RWOperation> depCheck = potentialNewDependencies.iterator();
-								RWOperation nextDep;
+										System.out.println(all.get(q).getOrder());
+										
+										ArrayList<String> aliases = aa.getAllAliases(nextOp, all.get(q), all);
+
+										for (int ss = all.indexOf(searchingOp); ss < all.indexOf(nextOp); ss++) {
+											if (all.get(ss).getSliceStatus() == true) {
+												// Add to slice
+												if (TraceHelper.getIndexOfIgnoreOrderNumber(theSlice, all.get(ss)) == -1) {
+													theSlice.add(all.get(ss));
+												}
+												all.get(ss).omitFromSlice();
+											}
+										}
 
 
-
-
-
-								/*		for (int b = a - 1; b >= 0; b--) {
-								searchingOp2 = TraceHelper.getElementAtIndex(all, b);
-
-								if (searchingOp2.getLineNo() == searchingOp.getLineNo()) {
-									System.out.println("Found an operation on the same line as the write");
-
-									System.out.println(searchingOp2.getOrder());
-									System.out.println(searchingOp2.getClass().toString());
-
-								} else { 
-									break;
-								}
-							}*/
-								if (!(searchingOp instanceof VariableWriteAugmentAssign)) {
-									// Previous writes are irrelevant if it was not an augmented assignment i.e. -=, +=
-									break;
+										System.out.println("=-=-=-=-=-=-=-=-=-=-=-=-=-");
+										System.out.println("ALIASES:");
+										for (int lk = 0; lk < aliases.size(); lk++) {
+											System.out.println(aliases.get(lk));
+										}
+									}
 								}
 							} 
+
+
 						}
 
 					}
 
-					// 1  -  Get all instances of slicing criteria (all the reads for positionX on line _, etc.)
 
-
-					// 2  -  Get last write for that instance
-
-					// 3  -  Get all dependencies for that last write
-
-					// 4  - repeat 1 for each new dependency
 				}
 				readsCompleted.add(readsToBeSliced.remove(0));
 			}
 
-			System.out.println(theSlice.size());
+			ArrayList<String> vars = new ArrayList<String>();
+
+			for (int d = 0; d < readsCompleted.size(); d++) {
+				if (vars.indexOf(readsCompleted.get(d).getVariable()) == -1) {
+					vars.add(readsCompleted.get(d).getVariable());
+				}
+			}
+			System.out.println("%%%%%%%%%%%");
+			for (int d = 0; d < vars.size(); d++) {
+				System.out.println(vars.get(d));
+			}
+			System.out.println("%%%%%%%%%%%");
+
+
+			String dataLines = "";
 
 			for (int a = 0; a < theSlice.size(); a++) {
-				System.out.println(theSlice.get(a).getClass());
-				System.out.println(theSlice.get(a).getOrder());
-				System.out.println(theSlice.get(a).getLineNo());
-				System.out.println(theSlice.get(a).getVariable());
+				dataLines += (theSlice.get(a).getLineNo()+1)+",";
 			}
 
-			
+			// Save slice line numbers to file for visualization
+			Helper.directoryCheck(p.getOutputFolder());
+			Helper.checkFolderForFile("src/main/webapp/lineNumbers.txt");
+
+			PrintStream oldOut = System.out;
+			PrintStream outputVisual =
+					new PrintStream("src/main/webapp/lineNumbers.txt");
+
+			System.setOut(outputVisual);
+			System.out.println(dataLines);
+			System.setOut(oldOut);
+
+			System.out.println("------Fin--------");
+			System.out.println(dataLines);
+
+
+			//   story = new Story(domEventTraces, functionTraces, timingTraces, XHRTraces);
+			//   story.setOrderedTraceList(sortTraceObjects());
 
 
 			//   story = new Story(domEventTraces, functionTraces, timingTraces, XHRTraces);

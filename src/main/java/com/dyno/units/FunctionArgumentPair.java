@@ -27,4 +27,11 @@ public class FunctionArgumentPair {
 		return this.functionName;
 	}
 	
+	public boolean equals( FunctionArgumentPair other) {
+		if (this.functionName.equals(other.getFunctionName())) {
+			return true;
+		}
+		return false;
+	}
+	
 }

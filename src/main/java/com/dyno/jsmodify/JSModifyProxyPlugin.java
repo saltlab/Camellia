@@ -43,6 +43,8 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 	private static String targetFile = "";
 	private static int targetLine = -1;
 	private static String targetVariable = "";
+	private static LocalExample le = new LocalExample();
+	private static boolean firstTime = true;
 
 	/**
 	 * Construct without patterns.
@@ -84,6 +86,7 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 		excludeFilenamePatterns.add(".*tabcontent.js?.*");
 		excludeFilenamePatterns.add(".*toolbar.js?.*");
 		excludeFilenamePatterns.add(".*jquery*.js?.*");
+		excludeFilenamePatterns.add(".*ga*.js?.*");
 	}
 
 	public void setTargetFile (String t) {
@@ -114,11 +117,14 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 			}
 		}
 		if (name.indexOf(targetFile) != -1 && (name.indexOf(targetFile) == (name.length() - targetFile.length()))) {
+			firstTime = false;
 			return true;
-		} else if (name.indexOf(targetFile) != -1) {
+		} else if (name.indexOf(targetFile) != -1 && firstTime == true) {
 			System.out.println(name.length());
 			System.out.println(targetFile.length());
 			System.out.println(name.indexOf(targetFile));
+		} else if (firstTime == false) {
+			return true;
 		}
 
 
@@ -143,7 +149,6 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 
 		System.out.println("<<<<");
 		System.out.println("Scope: " + scopename);
-		LocalExample le = new LocalExample();
 
 		scopeNameForExternalUse = scopename;
 
@@ -151,6 +156,10 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 			System.out.println("^^ should not modify");
 			System.out.println(">>>>");
 			return input;
+		} else {
+			
+			System.out.println("OKAY for instrumentation:");
+			System.out.println(scopename);
 		}
 		try {
 			System.out.println(targetFile);

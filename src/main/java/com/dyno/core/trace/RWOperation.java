@@ -11,6 +11,7 @@ public class RWOperation implements Comparable<RWOperation> {
     private boolean partOfSlice = false;
     private int lineNo;
     private String variable;
+    private String file;
     //private int messageType;
     private RWOperation parentOperation;
     private ArrayList<RWOperation> childenOperations = new ArrayList<RWOperation>();
@@ -70,5 +71,12 @@ public class RWOperation implements Comparable<RWOperation> {
     }
     public boolean getSliceStatus () {
     	return this.partOfSlice;
+    }
+    
+    public String getFile() {
+        return this.file;
+    }
+    public void setFile (String f) {
+    	this.file = f;
     }
 }

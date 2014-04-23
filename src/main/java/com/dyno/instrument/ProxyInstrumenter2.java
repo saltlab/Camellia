@@ -113,6 +113,7 @@ public class ProxyInstrumenter2 extends AstInstrumenter {
 	public void setVariableName (String name) {
 		this.variableName = name;
 		firstTime = true;
+		lastScopeVisited = null;
 	}
 
 	public Scope getLastScopeVisited () {

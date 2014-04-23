@@ -95,7 +95,9 @@ public class TraceHelper {
 		System.out.println(name);
 		System.out.println(lineNo);
 
-		System.out.println(sc.getLastScopeVisited().getLineno());
+		if (sc.getLastScopeVisited() != null) {
+			System.out.println(sc.getLastScopeVisited().getLineno());
+		}
 
 		return sc.getLastScopeVisited();
 	}

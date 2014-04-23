@@ -40,6 +40,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
     private static final String VARWRITEAUG = "_dynoWriteAug";
     private static final String VARWRITEPROP = "_dynoWriteProp";
     private static final String VARWRITEFUNCRET = "_dynoWriteReturnValue";
+    private static final String READFUNCRET = "_dynoReturnValue";
     private static final String PROPREAD = "_dynoReadProp";
     private static final String FUNCCALL = "_dynoFunc";
 
@@ -471,7 +472,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
                     newAlias = "\""+ ((FunctionCall) rightSide).getTarget().toSource() +"\"";
                 }
 
-                newBody = (VARWRITE+"(\""+leftSide.toSource()+"\", " +rightSide.toSource()+ " , "+ newAlias +", "+node.getLineno()+")");
+                newBody = (VARWRITE+"(\""+leftSide.toSource()+"\", " +rightSide.toSource()+ " , "+ newAlias +", "+node.getLineno()+", \""+this.getScopeName()+"\")");
 
                 /*System.out.println("Variable declaration:");
 				System.out.println(((Name) leftSide).getIdentifier() + " at line number: " + node.getLineno());
@@ -484,7 +485,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
 
                 System.out.println("Right side of declarations is variable of interest");
 
-                newBody = (VARWRITE+"(\""+leftSide.toSource()+"\", "+rightSide.toSource()+", \"" +rightSide.toSource().replaceAll("\\\"", "'")+ "\" ,"+node.getLineno()+")");
+                newBody = (VARWRITE+"(\""+leftSide.toSource()+"\", "+rightSide.toSource()+", \"" +rightSide.toSource().replaceAll("\\\"", "'")+ "\" ,"+node.getLineno()+", \""+this.getScopeName()+"\")");
 
                 // TODO: Add left side to interesting variables
                 Name related = new Name();
@@ -497,7 +498,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
 
                 System.out.println("Right side of declarations is variable of interest (PROP)");
 
-                newBody = (VARWRITE+"(\""+leftSide.toSource()+"\", " +rightSide.toSource()+ ", \"" +rightSide.toSource().replaceAll("\\\"", "'")+ "\" ,"+node.getLineno()+")");
+                newBody = (VARWRITE+"(\""+leftSide.toSource()+"\", " +rightSide.toSource()+ ", \"" +rightSide.toSource().replaceAll("\\\"", "'")+ "\" ,"+node.getLineno()+", \""+this.getScopeName()+"\")");
 
                 // TODO: Add left side to interesting variables
                 Name related = new Name();
@@ -562,12 +563,12 @@ public class ReadWriteReplacer extends AstInstrumenter {
 
             // If leading name/label e.g. 'document' in 'document.getElement()'
             if (parent.toSource().split("\\.")[0].equals(node.getIdentifier())) {
-                newBody = VARREAD+"(\'"+node.getIdentifier()+"\',"+ node.getIdentifier() +", "+node.getLineno()+")";
+                newBody = VARREAD+"(\'"+node.getIdentifier()+"\',"+ node.getIdentifier() +", "+node.getLineno()+", \"" +this.getScopeName()+"\")";
             } else {
-                newBody = parent.toSource().replaceFirst("."+node.getIdentifier(), "["+PROPREAD+"(\""+node.getIdentifier()+"\", "+node.getLineno()+")]");
+                newBody = parent.toSource().replaceFirst("."+node.getIdentifier(), "["+PROPREAD+"(\""+node.getIdentifier()+"\", "+node.getLineno()+", \"" +this.getScopeName()+"\")]");
             }
         } else if (node.getParent().getType() != org.mozilla.javascript.Token.VAR && !isLeftOfAssignment(node)) {
-            newBody = VARREAD+"(\'"+node.getIdentifier()+"\',"+ node.getIdentifier()+", " +node.getLineno()+")";
+            newBody = VARREAD+"(\'"+node.getIdentifier()+"\',"+ node.getIdentifier()+", " +node.getLineno()+", \"" +this.getScopeName()+"\")";
         } else {
             return;
         }
@@ -586,12 +587,12 @@ public class ReadWriteReplacer extends AstInstrumenter {
             // If leading name/label e.g. 'document' in 'document.getElement()'
             if (parent.toSource().split("\\.")[0].equals(node.getIdentifier())) {
 
-                newBody = ARGREAD+"(\'"+node.getIdentifier()+"\',"+ node.getIdentifier() +",\""+functionName+ "\"," +index+", "+node.getLineno()+")";
+                newBody = ARGREAD+"(\'"+node.getIdentifier()+"\',"+ node.getIdentifier() +",\""+functionName+ "\"," +index+", "+node.getLineno()+", \""+this.getScopeName()+"\")";
             } /*else {
 				newBody = parent.toSource().replaceFirst("."+node.getIdentifier(), "["+ARGREAD+"(\""+node.getIdentifier()+"\", "+index+ ", "+node.getLineno()+")]");
 			}*/
         } else if (node.getParent().getType() != org.mozilla.javascript.Token.VAR) {
-            newBody = ARGREAD+"(\'"+node.getIdentifier()+"\',"+ node.getIdentifier()+",\""+functionName+ "\","+index+", " +node.getLineno()+")";
+            newBody = ARGREAD+"(\'"+node.getIdentifier()+"\',"+ node.getIdentifier()+",\""+functionName+ "\","+index+", " +node.getLineno()+", \""+this.getScopeName()+"\")";
         } else {
             return;
         }
@@ -633,12 +634,14 @@ public class ReadWriteReplacer extends AstInstrumenter {
             newBody = "["+FUNCCALL+"(\""
                     +node.getTarget().toSource()+"\", \""
                     +node.getProperty().toSource()+"\", "
-                    +node.getLineno()+")]";
+                    +node.getLineno()
+                    +", \"" +this.getScopeName()+"\")]";
         } else if (!isLeftOfAssignment(node)) {
             newBody = "["+PROPREAD+"(\""
                     +node.getTarget().toSource()+"\", \""
                     +node.getProperty().toSource()+"\", "
-                    +node.getLineno()+")]";
+                    +node.getLineno()
+                    +", \"" +this.getScopeName()+"\")]";
         }
 
 
@@ -758,7 +761,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
                 wrapperArgs.add(rightSide.toSource());
                 wrapperArgs.add("\""+getFunctionName((FunctionNode) rightSide)+"\"");
                 wrapperArgs.add(node.getLineno()+"");
-
+                wrapperArgs.add("\""+this.getScopeName()+"\"");
                 newBody = generateWrapper(VARWRITE, wrapperArgs);
             } else if ((rightRightSideType == org.mozilla.javascript.Token.STRING 
                     || rightRightSideType == org.mozilla.javascript.Token.NUMBER
@@ -804,7 +807,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
                     wrapperArgs.add("\"\"");
                 }
                 wrapperArgs.add(node.getLineno()+"");
-
+                wrapperArgs.add("\""+this.getScopeName()+"\"");
 
                 if (rightRightSideType == org.mozilla.javascript.Token.ADD
                         || rightRightSideType == org.mozilla.javascript.Token.SUB) {
@@ -835,6 +838,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
                 wrapperArgs.add(varBeingWritten);
                 wrapperArgs.add(rightSide.toSource());
                 wrapperArgs.add("\"\"");
+                wrapperArgs.add("\""+this.getScopeName()+"\"");
 
                 wrapperArgs.add(node.getLineno()+"");
 
@@ -844,6 +848,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
                 wrapperArgs.add(varBeingWritten);
                 wrapperArgs.add(rightSide.toSource());
                 wrapperArgs.add("\"\"");
+                wrapperArgs.add("\""+this.getScopeName()+"\"");
 
                 wrapperArgs.add(node.getLineno()+"");
 
@@ -857,8 +862,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
                 wrapperArgs.add("\""+((FunctionCall) rightSide).getTarget().toSource()+"\"");
 
                 wrapperArgs.add(node.getLineno()+"");
-
-                System.out.println(((FunctionCall) rightSide).getTarget().toSource());
+                wrapperArgs.add("\""+this.getScopeName()+"\"");
 
                 newBody = generateWrapper(VARWRITEFUNCRET, wrapperArgs);
             } else if (rightRightSideType == org.mozilla.javascript.Token.NEW) {
@@ -866,7 +870,8 @@ public class ReadWriteReplacer extends AstInstrumenter {
                 wrapperArgs.add(rightSide.toSource());
                 wrapperArgs.add("\"\"");
                 wrapperArgs.add(node.getLineno()+"");
-
+                wrapperArgs.add("\""+this.getScopeName()+"\"");
+                
                 newBody = ("("+VARWRITE+"(\""+varBeingWritten+"\", "+rightSide.toSource()+",\"\","+node.getLineno()+"), "+rightSide.toSource()+")");
             } else if (rightRightSideType == org.mozilla.javascript.Token.CALL
                     && ((FunctionCall) rightSide).getTarget().toSource().indexOf(TOOLNAME) != -1) {
@@ -990,7 +995,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
                 // adding support for this
 
 
-                newBody = ARGREAD+"(\'this\', this,\""+targetMethod+ "\"," +i+", "+node.getLineno()+")";
+                newBody = ARGREAD+"(\'this\', this,\""+targetMethod+ "\"," +i+", "+node.getLineno()+", \""+this.getScopeName()+"\")";
 
                 nextArg = parse(newBody, node.getLineno());
                 System.out.println("NEXTARG: " + nextArg.toSource());
@@ -1013,7 +1018,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
 
                 //	newBody = "("+VARWRITEFUNCRET+"('"+((FunctionCall) nextArg).getTarget().toSource()+"')," + newBody;
 
-                newBody = ARGREAD+"(\'"+untouchedID+"\',"+ nextArg.toSource() +",\""+targetMethod+ "\"," +i+", "+node.getLineno()+")";
+                newBody = ARGREAD+"(\'"+untouchedID+"\',"+ nextArg.toSource() +",\""+targetMethod+ "\"," +i+", "+node.getLineno()+", \""+this.getScopeName()+"\")";
 
 
                 nextArg = parse(newBody, node.getLineno());
@@ -1039,7 +1044,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
             } else if (org.mozilla.javascript.Token.CALL == nextArg.getType()
                     && isAnArgument(node)) {
 
-                newBody = nextArg.toSource() + ")";
+                newBody = nextArg.toSource() + ", \"" + this.getScopeName() + "\")";
 
                 newBody = "("+VARWRITEFUNCRET+"('"+((FunctionCall) nextArg).getTarget().toSource()+"')," + newBody;
 

@@ -5,6 +5,7 @@ import java.util.Iterator;
 
 import org.openqa.selenium.NotFoundException;
 
+import com.dyno.core.trace.ArgumentWrite;
 import com.dyno.core.trace.PropertyRead;
 import com.dyno.core.trace.RWOperation;
 import com.dyno.core.trace.VariableRead;
@@ -60,9 +61,6 @@ public class AliasAnalyzer {
 						//						returnMe.addAll(getAllAliases(read, trace.get(i)));
 
 
-						if (trace.get(i).getVariable().indexOf("xx") == 0) {
-							System.out.println("wow");
-						}
 
 						newEnd = getNextWrite(trace.get(i), /*bottom,*/ trace);
 
@@ -117,7 +115,15 @@ public class AliasAnalyzer {
 
 		return allAliases;
 	}
-
+	
+	public void getInterFunctionChanges(ArgumentWrite top, ArrayList<RWOperation> trace) {
+		
+		for (int yy = trace.indexOf(top); yy < trace.size(); yy++) {
+			
+		}
+		
+		
+	}
 
 	private RWOperation getNextWrite(RWOperation start, ArrayList<RWOperation> trace) {
 		RWOperation next;

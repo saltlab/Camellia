@@ -46,7 +46,9 @@ public class LocalExample {
 	private static ProxyInstrumenter2 sc = new ProxyInstrumenter2();
 
 	private static ArrayList<SlicingCriteria> remainingSlices = new ArrayList<SlicingCriteria>();
+	private static ArrayList<SlicingCriteria> remainingSlices2 = new ArrayList<SlicingCriteria>();
 	private static ArrayList<SlicingCriteria> completedSlices = new ArrayList<SlicingCriteria>();
+	private static ArrayList<FunctionArgumentPair> declarationsToInstrument = new ArrayList<FunctionArgumentPair>();
 
 	public void main(String[] args) {
 		URL urlOfTarget = AstInstrumenter.class.getResource(targetFile);
@@ -80,6 +82,16 @@ public class LocalExample {
 	}
 
 	public String instrument(String input, String scopename) throws Exception {
+
+
+
+		boolean shortInstr = false;
+
+		// Not the start file, only look for funciton declarations and global variables
+		if (!scopename.equals(this.targetFile)) {
+			shortInstr = true;
+		}
+
 		AstRoot ast = null;
 		Scope scopeOfInterest = null;
 
@@ -87,13 +99,14 @@ public class LocalExample {
 		Name start = new Name();
 		SlicingCriteria justFinished;
 		ArrayList<AstNode> varDeps;
+		FunctionDeclarationFinder fdf;
 
 		// TODO: TESTING THIS
 		ArrayList<ArgumentPassedIn> logTheseArguments = new ArrayList<ArgumentPassedIn>();
 
 		Scope definingScope;
 
-		ArrayList<SlicingCriteria> possibleNextSteps;
+		ArrayList<SlicingCriteria> possibleNextSteps = new ArrayList<SlicingCriteria>();
 		Iterator<AstNode> it;
 		AstNode step;
 
@@ -111,7 +124,44 @@ public class LocalExample {
 		start.setLineno(tempLineNo);
 		definingScope = getDefiningScope(ast, start);
 
-		remainingSlices.add(new SlicingCriteria(definingScope, varName, true));
+		System.out.println("[LocalExample]:  " + scopename);
+		System.out.println(this.targetFile);
+		
+		if (definingScope != null) {
+			remainingSlices.add(new SlicingCriteria(definingScope, varName, true));
+		}
+
+		if (shortInstr == true) {
+
+			// Global
+			for (int zr = 0; zr < remainingSlices2.size(); zr++) {
+				if (remainingSlices2.get(zr).getScope().getType() == org.mozilla.javascript.Token.SCRIPT) {
+					possibleNextSteps.add(remainingSlices2.get(zr));
+				}
+			}
+
+			// Function declarations (global?)
+			fdf = new FunctionDeclarationFinder();
+			for (int jj = 0; jj < declarationsToInstrument.size(); jj++) {
+				fdf.setFunctionArgumentPair(declarationsToInstrument.get(jj));
+
+				ast.visit(fdf);
+
+				ArrayList<AstNode> asd = fdf.getArgumentsNode();
+				Iterator<AstNode> itt = asd.iterator();
+				AstNode next;
+
+				while (itt.hasNext()) {
+					next = itt.next();
+
+					if (next instanceof Name) {
+						possibleNextSteps.add(new SlicingCriteria(getDefiningScope(ast, (Name) next), ((Name) next).getIdentifier(), false));
+					} 					
+				}
+			}
+			addToQueue(possibleNextSteps);
+
+		}
 
 		while (remainingSlices.size() > 0) {
 			varDeps = new ArrayList<AstNode>();
@@ -146,20 +196,48 @@ public class LocalExample {
 
 				if (justFinished.getInter() == true) {
 					varDeps.addAll(fcd.getDataDependencies());
+
+
+					for (int pp = 0; pp < fcd.getDataDependencies().size(); pp++) {
+						// variable arguments passed to this function of interest elsewhere
+						System.out.println(Token.typeToName(fcd.getDataDependencies().get(pp).getType()));
+					}
+
+
 				}		// get enclosing scope of the function delcaration...and find all calls to the function in there
 			}
 
 			// Get next variables dependencies
 			varDeps.addAll(getDataDependencies(ast, justFinished));
 
+
+			// DOWNWARDS
 			if (fnDeps.size() > 0) {
 
-				FunctionDeclarationFinder fdf = new FunctionDeclarationFinder();
+				fdf = new FunctionDeclarationFinder();
 				for (int jj = 0; jj < fnDeps.size(); jj++) {
 
 					System.out.println(fnDeps.get(jj).getFunctionName());					
 
 					fdf.setFunctionArgumentPair(fnDeps.get(jj));
+
+					boolean declarationAlreadyWatched = false;
+					// If funciton already on watch list, add the argument if it is not watched
+					for (int ty = 0; ty < declarationsToInstrument.size(); ty++) {
+						if (declarationsToInstrument.get(ty).getFunctionName().equals(fnDeps.get(jj).getFunctionName()) ) {
+							declarationAlreadyWatched = true;
+							for (int yw = 0; yw < fnDeps.get(jj).getArgumentsOfInterest().size(); yw++) {
+								if (declarationsToInstrument.get(ty).getArgumentsOfInterest().indexOf(fnDeps.get(jj).getArgumentsOfInterest().get(yw)) == -1) {
+									declarationsToInstrument.get(ty).addArgumentToWatch(fnDeps.get(jj).getArgumentsOfInterest().get(yw));
+								}
+							}
+						}
+					}
+					// If this is a new function to watch, add it to the list (no prior entry)
+					if (!declarationAlreadyWatched) {
+						declarationsToInstrument.add(fnDeps.get(jj));
+					}
+
 					ast.visit(fdf);
 
 					ArrayList<AstNode> asd = fdf.getArgumentsNode();
@@ -245,7 +323,7 @@ public class LocalExample {
 		//inst.setRoot(ast);  see below line
 		System.out.println(ast);
 		inst.setVariablesOfInterest(completedSlices, ast);
-		inst.setScopeName(targetFile);          
+		inst.setScopeName(scopename);          
 		inst.start(new String(input));
 
 		ast.visit(inst);
@@ -263,7 +341,7 @@ public class LocalExample {
 			fdi.setArgumentName(currentDeclarationToIntrument.getArgument());
 			fdi.setArgumentNumber(currentDeclarationToIntrument.getArgumentNumber());
 			fdi.setTargetFunction(currentDeclarationToIntrument.getFunction());
-			fdi.setScopeName(targetFile);
+			fdi.setScopeName(scopename);
 
 			scopeOfInterest = currentDeclarationToIntrument.getFunction().getEnclosingScope();
 
@@ -278,9 +356,13 @@ public class LocalExample {
 
 		System.out.println(ast.toSource());
 
-
 		/* clean up */
 		Context.exit();
+
+		remainingSlices2.addAll(completedSlices);
+
+		completedSlices = new ArrayList<SlicingCriteria>();
+		remainingSlices = new ArrayList<SlicingCriteria>();
 
 		return ast.toSource();
 	}

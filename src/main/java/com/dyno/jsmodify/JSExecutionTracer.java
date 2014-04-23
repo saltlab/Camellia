@@ -134,6 +134,10 @@ public class JSExecutionTracer {
 						buffer.getJSONObject(i).put("@class",
 								"com.dyno.core.trace.PropertyRead");
 						JSONLabel = "\"PropertyRead\":";
+					} else if (mType.contains("RETURN_VALUE")) {
+						buffer.getJSONObject(i).put("@class",
+								"com.dyno.core.trace.ReturnValueWrite");
+						JSONLabel = "\"ReturnStatementValue\":";
 					} else {
 						buffer.getJSONObject(i).put("@class",
 								"com.dyno.core.trace.Unknown");

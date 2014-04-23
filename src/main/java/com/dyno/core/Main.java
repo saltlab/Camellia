@@ -49,7 +49,7 @@ public class Main {
     		// Rename to server example?
     		
     		
-    		SimpleExample.main(args);
+    		SimpleExample_Tester.main(args);
     		
     		
     		
