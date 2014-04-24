@@ -14,8 +14,8 @@
 </pre>
 <script type="text/javascript"> 
     var client = new XMLHttpRequest();
-    client.open('GET', 'string_library.js');
-    //client.open('GET', 'bunnies.js');
+    //client.open('GET', 'string_library.js');
+    client.open('GET', 'bunnies.js');
     client.onreadystatechange = function() {
         document.getElementById('code_code').innerHTML = client.responseText; 
 

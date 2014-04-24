@@ -262,11 +262,9 @@ public class SimpleExample_Tester {
 					if (nextOp.getLineNo() == next.getLineNo() && nextOp.getVariable().equals(next.getVariable()) && (nextOp instanceof VariableRead || nextOp instanceof PropertyRead)) {
 						// Relevant [READ] found! --> nextOp
 
-						potentialNewDependencies = computeBackwardSlice(null, nextOp, nextOp.getVariable(), all, true);
+						computeBackwardSlice(null, nextOp, nextOp.getVariable(), all, true);
 
-						for (int g = 0; g < potentialNewDependencies.size(); g++) {
-							System.out.println(potentialNewDependencies.get(g).getVariable());
-						}
+					
 
 					}
 				}
@@ -351,21 +349,19 @@ public class SimpleExample_Tester {
 	}
 
 
-	private ArrayList<RWOperation> computeBackwardSlice(RWOperation top, RWOperation bottom, String name, ArrayList<RWOperation> all, boolean contained) {
-		AliasAnalyzer aa = new AliasAnalyzer();
+	private void computeBackwardSlice(RWOperation top, RWOperation bottom, String name, ArrayList<RWOperation> all, boolean contained) {
 		int i = (top == null ? 0 : all.indexOf(top));
 		RWOperation next = null;
 		RWOperation nestedTop, nestedBottom;
 		boolean found = false;
-		ArrayList<RWOperation> potentialNewDependencies = new ArrayList<RWOperation>();
-		
-		
+
+
 		System.out.println(name);
 		System.out.println("Top: " + i);
 		System.out.println("Bottom: " + bottom.getOrder());
 		System.out.println("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-");
 
-		for (int j = all.indexOf(bottom); j >= i; j--) {
+		for (int j = all.indexOf(bottom) - 1; j >= i; j--) {
 			next = all.get(j);
 
 			/** 1 (ONE): Cut out function calls **/
@@ -392,6 +388,17 @@ public class SimpleExample_Tester {
 									&& ((ArgumentWrite) all.get(q)).getArgumentNumber() == ((ArgumentRead) all.get(p)).getArgumentNumber()) {
 								alias = ((ArgumentWrite) all.get(q)).getVariable();
 
+
+								System.out.println("Function name: " + ((ArgumentWrite) all.get(q)).getFunctionName());
+
+								System.out.println("READ ARG:");
+								System.out.println(all.get(p).getVariable());
+								System.out.println(all.get(p).getOrder());
+
+								System.out.println("WRITE ARG:");
+								System.out.println(all.get(q).getVariable());
+								System.out.println(all.get(q).getOrder());
+
 								//TODO: implement 'computeForwardSlice'
 								// Compute forward slice of reference/argument
 								computeForwardSlice(all.get(q), nestedBottom, alias, all);
@@ -399,15 +406,15 @@ public class SimpleExample_Tester {
 								if (all.get(q).getChildren().size() > 0) {
 									for (int o = q; o <= all.indexOf(nestedBottom); o++) {
 										if (all.get(o).getSliceStatus() == true) {
-											
+
 											all.get(o).omitFromSlice();
 											all.get(o).clearChildren();
 											all.get(o).setParent(null);
-											
-											if (theSlice.indexOf(all.get(o)) == -1) {
+
+											if (TraceHelper.getIndexOfIgnoreOrderNumber(theSlice, all.get(o)) == -1) {
 												theSlice.add(all.get(o));
 											}
-											
+
 											if (all.get(o) instanceof VariableWrite) {
 												// NEW, TEST THIS
 												// Need to slice all the dependencies for this write (this update through alias)
@@ -418,14 +425,14 @@ public class SimpleExample_Tester {
 													e.printStackTrace();
 												}
 												for (int r = 0; r < deps.size(); r++) {
-													//computeBackwardSlice(null, bottom, all.get(o).getVariable(), all, true);
+													computeBackwardSlice(null, deps.get(r), deps.get(r).getVariable(), all, true);
 												}
 											}
 										}
 									}
 								}
 
-								
+
 
 
 								break;
@@ -439,10 +446,32 @@ public class SimpleExample_Tester {
 				}
 				/** 2 (TWO): Return value from function is used in write-of-interest **/
 			} else if (next instanceof ReturnValueWrite
-					&& next.getVariable().indexOf(name) == 0) {
+					// Decide between indexOf and equals...below 'else if' uses equals.
+					&& next.getVariable().indexOf(name) == 0) {		
+				
+				if (TraceHelper.getIndexOfIgnoreOrderNumber(theSlice, next) == -1) {
+					theSlice.add(next);
+				}
+				
+				// Need to backwards slice both the dependencies on the call line (arguments) AND the return statement from the function
+
+				
+				// Backwards slice on arguments and base object (if class method)
+				ArrayList<RWOperation> deps = null;
+				try {
+					deps = TraceHelper.getDataDependencies(all, (ReturnValueWrite) next);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				for (int z = 0; z < deps.size(); z++) {
+					computeBackwardSlice(null, all.get(all.indexOf(deps.get(z))-1), deps.get(z).getVariable(), all, true);
+				}
+
+
 				// Compute backwards slice on return statement dependencies
 				for (int r = all.indexOf(next); r >= i; r--) {
 					if (all.get(r) instanceof ReturnStatementValue
+							// Might need to change the below line, currently 'ReturnStatementValue' doesn't save the function name (Apr. 23)
 							&& ((ReturnStatementValue) all.get(r)).getFunctionName().equals(((ReturnValueWrite) next).getFunctionName())) {
 						nestedTop = TraceHelper.getBeginningOfFunction((ReturnStatementValue) all.get(r), all);
 
@@ -451,6 +480,7 @@ public class SimpleExample_Tester {
 
 						for (int w = 0; w < rsDependencies.size(); w++) {
 							// TODO: What if an argument influenced the return value? --> do we need to allow slicing to exit the function?
+							// NOT being run yet
 							computeBackwardSlice(nestedTop, all.get(r), rsDependencies.get(w), all, true /* or false ????*/);
 						}
 					}
@@ -473,7 +503,8 @@ public class SimpleExample_Tester {
 							}
 
 							// Allowed to look through the parent/calling function for argument slice
-							computeBackwardSlice(null, all.get(q), all.get(q).getVariable(), all, true);
+							// GOOD TO GO
+							computeBackwardSlice(null, all.get(q-1), all.get(q).getVariable(), all, true);
 
 
 							// Break from looking from Argument read
@@ -483,12 +514,15 @@ public class SimpleExample_Tester {
 					}
 				} else {
 					// Regular hard write (not argument write)
-
+					ArrayList<RWOperation> deps = null;
 					try {
-						potentialNewDependencies.addAll(TraceHelper.getDataDependencies(all, (VariableWrite) next));
+						deps = TraceHelper.getDataDependencies(all, (VariableWrite) next);
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
+					}
+					for (int z = 0; z < deps.size(); z++) {
+						computeBackwardSlice(null, all.get(all.indexOf(deps.get(z))-1), deps.get(z).getVariable(), all, true);
 					}
 
 					if (!(next instanceof VariableWriteAugmentAssign)) {
@@ -516,11 +550,17 @@ public class SimpleExample_Tester {
 				/** 3.2 (OLD): Basic slicing **/
 			} else if (next instanceof VariableWrite && ((VariableWrite) next).getVariable().indexOf(next.getVariable()) == 0
 					&& ((VariableWrite) next).getVariable().indexOf(".") != -1) {
+				
+				// Backwards slice the right side! (Apr. 23)
+				ArrayList<RWOperation> deps = null;
 				try {
-					potentialNewDependencies.addAll(TraceHelper.getDataDependencies(all, (VariableWrite) next));
+					deps = TraceHelper.getDataDependencies(all, (VariableWrite) next);
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
+				}
+				for (int z = 0; z < deps.size(); z++) {
+					computeBackwardSlice(null, all.get(all.indexOf(deps.get(z))-1), deps.get(z).getVariable(), all, true);
 				}
 
 
@@ -579,7 +619,14 @@ public class SimpleExample_Tester {
 											e.printStackTrace();
 										}
 										for (int r = 0; r < deps.size(); r++) {
-											computeBackwardSlice(null, bottom, all.get(o).getVariable(), all, true);
+
+											System.out.println(deps.get(r).getOrder());
+											System.out.println(deps.get(r).getClass());
+											System.out.println(deps.get(r).getVariable());
+
+
+											// CANT be computing slice from bottom
+											computeBackwardSlice(null, all.get(all.indexOf(deps.get(r))-1), deps.get(r).getVariable(), all, true);
 										}
 									}
 								}
@@ -604,7 +651,6 @@ public class SimpleExample_Tester {
 			}
 		}
 
-		return potentialNewDependencies;
 	}
 
 	private void computeForwardSlice(RWOperation top, RWOperation bottom, String name, ArrayList<RWOperation> all) {

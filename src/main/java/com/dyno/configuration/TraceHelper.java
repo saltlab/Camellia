@@ -12,6 +12,7 @@ import com.dyno.core.trace.FunctionEnter;
 import com.dyno.core.trace.PropertyRead;
 import com.dyno.core.trace.RWOperation;
 import com.dyno.core.trace.ReturnStatementValue;
+import com.dyno.core.trace.ReturnValueWrite;
 import com.dyno.core.trace.VariableRead;
 import com.dyno.core.trace.VariableWrite;
 import com.dyno.instrument.ProxyInstrumenter2;
@@ -71,12 +72,18 @@ public class TraceHelper {
             // (programmer might split assignment operation between mutliple lines)
             if (current instanceof VariableRead && current.getLineNo() == vw.getLineNo()) {
                 deps.add(current);
+                jumpAllowed = false;
             } else if (current instanceof PropertyRead && current.getLineNo() == vw.getLineNo()) {
                 j = getAtomicIndex(trace, (PropertyRead) current);
                 deps.add(current);
-            } else if (current instanceof FunctionEnter) {
+                jumpAllowed = false;
+            } else if (current instanceof ReturnStatementValue) {
                 // Line number is allow to change (!= vw.getLineNo())
 
+            	
+            	j = trace.indexOf(getBeginningOfFunction((ReturnStatementValue) current, trace));
+            	
+            	
                 // set a flag?
                 jumpAllowed = true;
 
