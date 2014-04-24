@@ -277,21 +277,34 @@ public class SimpleExample_Tester {
 
 			//Save slice line numbers to file for visualization
 			Helper.directoryCheck(p.getOutputFolder());
+			Helper.directoryCheck(Helper.addFolderSlashIfNeeded(p.getOutputFolder() + "source"));
+			Helper.directoryCheck(Helper.addFolderSlashIfNeeded(p.getOutputFolder() + "lines"));
 			PrintStream oldOut = System.out;
 
 			for (int a = 0; a < theSlice.size(); a++) {
-
-				Helper.checkFolderForFile("src/main/webapp" + theSlice.get(a).getFileName().replace(".js", ".txt"));
-				PrintStream outputVisual =
-						new PrintStream("src/main/webapp" + theSlice.get(a).getFileName().replace(".js", ".txt"));
+				Helper.checkFolderForFile("src/main/webapp/lines" + theSlice.get(a).getFileName().replace(".js", ".txt"));
+				PrintStream outputVisual = new PrintStream("src/main/webapp/lines" + theSlice.get(a).getFileName().replace(".js", ".txt"));
 				System.setOut(outputVisual);
 				System.out.println(theSlice.get(a).getLinesAsString());
-
 			}
-
+			
+			String allFiles = "";
+			String nextFileName = "";
+			for (int a = 0; a < theSlice.size(); a++) {
+				nextFileName = theSlice.get(a).getFileName();
+				if(nextFileName.contains(".js")) {
+					nextFileName = nextFileName.substring(0, nextFileName.lastIndexOf(".js"));
+				}
+				nextFileName = nextFileName.replaceAll("\\/", "");
+				allFiles += nextFileName + " ";
+			}
+			allFiles = allFiles.substring(0, allFiles.lastIndexOf(" "));
+			Helper.checkFolderForFile("src/main/webapp/" + "allFiles.txt");
+			PrintStream outputVisual2 = new PrintStream("src/main/webapp/" + "allFiles.txt");
+			System.setOut(outputVisual2);
+			System.out.println(allFiles);
+			
 			System.setOut(oldOut);
-			//       System.out.println(dataLines);
-
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(1);

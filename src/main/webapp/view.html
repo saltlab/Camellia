@@ -7,29 +7,69 @@
     <script src="javascript/prism.js"></script>
 </head>
 <body style="overflow-x:hidden">
-
+<h1 id="fileNameGoesHere"></h1>
+<button id='prevFile'> Previous </button>
+<button id='nextFile'> Next </button>
 <pre id="code_pre" class="line-numbers  language-javascript" data-line="">
 <code id="code_code" class="  language-javascript">
 </code>
 </pre>
 <script type="text/javascript"> 
-    var whichFile = 'string_library';
-    //var whichFile = 'bunnies';
+    var files = new Array();
+    var fileIndex = -1;
 
-    var client = new XMLHttpRequest();
-    client.open('GET', whichFile+'.js');
-    client.onreadystatechange = function() {
-        document.getElementById('code_code').innerHTML = client.responseText; 
+    // Get list of all relevant JavaScript files in slice, display first file/slice piece
+    var getWhichFile = new XMLHttpRequest();
+    getWhichFile.open('GET', 'allFiles.txt');
+    getWhichFile.onreadystatechange = function() {
+        // When ready/response received, display
+        if (this.readyState == 4) {
+            var splitMe = getWhichFile.responseText; 
+            // Split by spaces
+            files = splitMe.split(' ');
 
-        // Next, retrieve the line numbers for the slice
-        var lineNumbers = new XMLHttpRequest();
-        lineNumbers.open('GET', whichFile+'.txt');
-        lineNumbers.onreadystatechange = function() {
-            $('#code_pre').attr("data-line", lineNumbers.responseText);
-            Prism.highlightElement($('#code_code')[0]);
-        };
-        lineNumbers.send();
+            if (files.length > 0) {
+                changeFile(null, true); 
+            }    
+        }
     }
-    client.send();
+    getWhichFile.send();
+
+    function changeFile(event, next) {
+        if (next == true) {
+            fileIndex++;
+        } else {
+            fileIndex--;
+        }
+
+        if (fileIndex >= files.length) {
+            fileIndex = 0;
+        } else if (fileIndex < 0) {
+            fileIndex = files.length - 1;
+        }
+
+        var client = new XMLHttpRequest();
+        client.open('GET', 'source/'+files[fileIndex]+'.js');
+        client.onreadystatechange = function() {
+            document.getElementById('code_code').innerHTML = client.responseText; 
+
+            // Next, retrieve the line numbers for the slice
+            var lineNumbers = new XMLHttpRequest();
+            lineNumbers.open('GET', 'lines/'+files[fileIndex]+'.txt');
+            lineNumbers.onreadystatechange = function() {
+                $('#code_pre').attr("data-line", lineNumbers.responseText);
+                Prism.highlightElement($('#code_code')[0]);
+            };
+            lineNumbers.send();
+            document.getElementById('fileNameGoesHere').innerHTML = files[fileIndex] + '.js';
+        }
+        client.send();
+    }
+    $('#prevFile').click(function (e) {
+        changeFile(e, false);
+    });
+    $('#nextFile').click(function (e) {
+        changeFile(e, true);
+    });
 </script> 
 </body></html>

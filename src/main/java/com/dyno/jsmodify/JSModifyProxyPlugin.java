@@ -172,12 +172,13 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 
 			// Save original JavaScript files/nodes
 			Helper.directoryCheck(getOutputFolder());
-			Helper.checkFolderForFile("src/main/webapp/" + getFilename());
+			Helper.directoryCheck(getOutputFolder()+"source/");
+			Helper.checkFolderForFile("src/main/webapp/source/" + getFilename());
 
 			setFileName(scopename);
 			PrintStream oldOut = System.out;
 			PrintStream outputVisual =
-					new PrintStream("src/main/webapp/" + getFilename());
+					new PrintStream("src/main/webapp/source/" + getFilename());
 
 			// Save the original JavaScript file for displaying later
 			System.setOut(outputVisual);
