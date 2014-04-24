@@ -226,8 +226,6 @@ public class SimpleExample_Tester {
 
 			ArrayList<RWOperation> readsToBeSliced = new ArrayList<RWOperation>();
 			ArrayList<RWOperation> readsCompleted = new ArrayList<RWOperation>();
-			ArrayList<RWOperation> potentialNewDependencies;
-
 
 			// First one:
 			RWOperation begin = new RWOperation();
@@ -236,11 +234,6 @@ public class SimpleExample_Tester {
 			begin.setVariable(VAR);
 
 			readsToBeSliced.add(begin);
-
-
-
-
-
 
 			// 1  -  Get all instances of slicing criteria (all the reads for positionX on line _, etc.)
 			// 2  -  Get last write for that instance
@@ -265,7 +258,6 @@ public class SimpleExample_Tester {
 				readsCompleted.add(readsToBeSliced.remove(0));
 			}
 
-
 			ArrayList<String> vars = new ArrayList<String>();
 
 			for (int d = 0; d < readsCompleted.size(); d++) {
@@ -273,7 +265,6 @@ public class SimpleExample_Tester {
 					vars.add(readsCompleted.get(d).getVariable());
 				}
 			}
-
 
 			//Save slice line numbers to file for visualization
 			Helper.directoryCheck(p.getOutputFolder());
