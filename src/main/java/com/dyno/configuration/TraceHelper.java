@@ -35,9 +35,21 @@ public class TraceHelper {
 
             i++;
         }
-
         return -1;
-
+    }
+    
+    public static FileLineNumber getFileLineMapping(String fileName, ArrayList<FileLineNumber> a) {
+        Iterator<FileLineNumber> ir = a.iterator();
+        FileLineNumber next;
+        
+        while (ir.hasNext()) {
+            next = ir.next();
+            
+            if (next.getFileName().equals(fileName)) {
+                return next;
+            }
+        }
+        return null;
     }
 
     // OBSOLETE

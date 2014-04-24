@@ -21,7 +21,7 @@
 
         // Next, retrieve the line numbers for the slice
         var lineNumbers = new XMLHttpRequest();
-        lineNumbers.open('GET', 'lineNumbers.txt');
+        lineNumbers.open('GET', 'bunnies.txt');
         lineNumbers.onreadystatechange = function() {
             $('#code_pre').attr("data-line", lineNumbers.responseText);
             Prism.highlightElement($('#code_code')[0]);
