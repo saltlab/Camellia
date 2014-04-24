@@ -48,9 +48,9 @@ public class Main {
     	if (isServer) {
     		// Rename to server example?
     		
+    		SimpleExample_Tester s = new SimpleExample_Tester();
     		
-    		SimpleExample_Tester.main(args);
-    		
+    		s.main(args);
     		
     		
     		//SimpleExample_Tester.main(args);

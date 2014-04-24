@@ -5,6 +5,7 @@ import java.util.Iterator;
 
 import org.openqa.selenium.NotFoundException;
 
+import com.dyno.core.trace.ArgumentRead;
 import com.dyno.core.trace.ArgumentWrite;
 import com.dyno.core.trace.PropertyRead;
 import com.dyno.core.trace.RWOperation;
@@ -62,7 +63,7 @@ public class AliasAnalyzer {
 
 
 
-						newEnd = getNextWrite(trace.get(i), /*bottom,*/ trace);
+						newEnd = getNextWrite(trace.get(i), end, trace);
 
 
 						if (trace.get(i).getChildren().size() > 0) {
@@ -115,38 +116,29 @@ public class AliasAnalyzer {
 
 		return allAliases;
 	}
-	
+
 	public void getInterFunctionChanges(ArgumentWrite top, ArrayList<RWOperation> trace) {
-		
+
 		for (int yy = trace.indexOf(top); yy < trace.size(); yy++) {
-			
+
 		}
-		
-		
+
+
 	}
 
-	private RWOperation getNextWrite(RWOperation start, ArrayList<RWOperation> trace) {
+	public static RWOperation getNextWrite(RWOperation start, RWOperation bottom, ArrayList<RWOperation> trace) {
 		RWOperation next;
-		Iterator<RWOperation> it;
 		String[] brokenDown = getPropChain(start.getVariable());
 		String[] brokenDown2;
 
-		System.out.println("=--=-=-=-=-=-=-=-=-=-=-=-");
-		System.out.println(start.getOrder());
-		System.out.println(start.getVariable());
-		System.out.println("=--=-=-=-=-=-=-=-=-=-=-=-");
-		System.out.println(this.end.getOrder());
-		System.out.println(this.end.getVariable());
-
-
 		/* TODO APRIL 15. if start.getVariable has a . in it.....look for last write for each parent property and base */
-		if (getPropChain(start.getVariable()).length > 1) {
+		/*	if (getPropChain(start.getVariable()).length > 1) {
 			getPrevWrite(start, trace);
-		}
+		}*/
 
 		for (int i = 0; i < brokenDown.length; i++) {
 
-			for (int j = trace.indexOf(start) + 1; j <= trace.indexOf(end); j++) {
+			for (int j = trace.indexOf(start) + 1; j <= trace.indexOf(bottom); j++) {
 				next = trace.get(j);
 
 				if (next instanceof VariableWrite) {
@@ -169,6 +161,41 @@ public class AliasAnalyzer {
 						return next;
 
 					}
+				} else if (next instanceof ArgumentWrite) {
+					// Skip over nested function calls
+					j = trace.indexOf(TraceHelper.getEndOfFunction((ArgumentWrite) next, trace));
+				} else if (next instanceof ArgumentRead
+						// If a reference is passed to a new function
+						&& TraceHelper.isComplex(((ArgumentRead) next).getValue())) {
+
+					brokenDown2 = getPropChain(((ArgumentRead) next).getVariable());
+					if (compareStringArray(brokenDown2, brokenDown)) {
+						// New write is more specific and equal
+
+						for (int k = j; k < trace.indexOf(bottom); k++) {
+							if (trace.get(k) instanceof ArgumentWrite
+									&& ((ArgumentWrite) trace.get(k)).getArgumentNumber() == ((ArgumentRead) next).getArgumentNumber()
+									&& ((ArgumentWrite) trace.get(k)).getValue().equals(((ArgumentRead) next).getValue())
+									&& ((ArgumentWrite) trace.get(k)).getFunctionName().equals(((ArgumentRead) next).getFunctionName())) {
+								
+								getNextWrite(trace.get(k), TraceHelper.getEndOfFunction((ArgumentWrite) trace.get(k), trace), trace);
+								
+								if (trace.get(k).getChildren().size() > 0) {
+									// Mid-body argument read ---parent---> top argument write
+									next.setParent(start);
+									start.addChild(next);
+									
+									// Nested argument write ---parent---> Mid-body argument read
+									trace.get(k).setParent(next);
+									next.addChild(trace.get(k));
+									
+									next.includeInSlice();
+									start.includeInSlice();
+									trace.get(k).includeInSlice();
+								}
+							}
+						}
+					}
 
 				}
 			}
@@ -176,7 +203,7 @@ public class AliasAnalyzer {
 		return null;
 	}
 
-	private void getPrevWrite(RWOperation start, ArrayList<RWOperation> trace) {
+	public static void getPrevWrite(RWOperation start, ArrayList<RWOperation> trace) {
 		RWOperation next;
 		Iterator<RWOperation> it;
 		String[] brokenDown = getPropChain(start.getVariable());
@@ -207,7 +234,7 @@ public class AliasAnalyzer {
 		}
 	}
 
-	private String[] getPropChain (String s) {
+	private static String[] getPropChain (String s) {
 		String[] properties;
 		properties = s.split("\\.");
 
@@ -219,7 +246,7 @@ public class AliasAnalyzer {
 		return properties;
 	}
 
-	private boolean compareStringArray(String[] longer, String[] shorter) {
+	private static boolean compareStringArray(String[] longer, String[] shorter) {
 
 		for (int i = 0; i < shorter.length; i++) {
 			if (!shorter[i].equals(longer[i])) {

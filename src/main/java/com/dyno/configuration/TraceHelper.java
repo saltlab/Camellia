@@ -163,7 +163,7 @@ public class TraceHelper {
         return true;
     }
 
-    public static RWOperation getEndOfFunction(ArgumentRead enter, ArrayList<RWOperation> trace) {
+    public static RWOperation getEndOfFunction(ArgumentWrite enter, ArrayList<RWOperation> trace) {
         // PRE: ArgumentRead enter (first argument) must have an ArgumentWrite succeeding it for guaranteed 
         //      correct behavior
         RWOperation next;
@@ -179,7 +179,8 @@ public class TraceHelper {
                 } else {
                     depth--;
                 }
-            } else if (next instanceof ArgumentWrite) {
+            } else if (next instanceof ArgumentWrite
+            		&& enter.getFunctionName().equals(((ArgumentWrite) next).getFunctionName())) {
                 // Group or single 'ArgumentWrite' means a function is entered
                 int j;
                 for (j = i; j < trace.size(); j++) {
@@ -193,9 +194,46 @@ public class TraceHelper {
             }
         }
 
-
         return null;
     }
+    
+    public static RWOperation getBeginningOfFunction(ReturnStatementValue exit, ArrayList<RWOperation> trace) {
+        RWOperation next;
+        int depth = -1;
 
+        for (int i = trace.indexOf(exit); i >= 0; i--) {
+            next = trace.get(i);
 
+            if (next instanceof ReturnStatementValue
+                    && exit.getFunctionName().equals(((ReturnStatementValue) next).getFunctionName())) {
+                depth++;
+            } else if (next instanceof ArgumentWrite
+            		&& exit.getFunctionName().equals(((ArgumentWrite) next).getFunctionName())) {
+                // Group or single 'ArgumentWrite' means a function is entered
+                int j;
+                for (j = i; j > 0; j--) {
+                    if (!(trace.get(j) instanceof ArgumentWrite)) {
+                        break;
+                    }
+                }
+                if (depth == 0) {
+                	return trace.get(j);
+                }
+                // Continue search for entrance to function
+                depth--;
+                i = j + 1;
+            }
+        }
+        return null;
+    }
+    
+    public static ArrayList<String> getReturnDependencies(ArrayList<RWOperation> trace, ReturnStatementValue rs) {
+    	ArrayList<String> names = new ArrayList<String>();
+    	
+    	//TODO:
+    	
+    	return names;
+    }
+    
+    
 }
