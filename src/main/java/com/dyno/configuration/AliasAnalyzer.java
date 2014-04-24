@@ -193,6 +193,11 @@ public class AliasAnalyzer {
 									start.includeInSlice();
 									trace.get(k).includeInSlice();
 								}
+								
+								j = trace.indexOf(TraceHelper.getEndOfFunction((ArgumentWrite) trace.get(k), trace));
+
+								break;
+
 							}
 						}
 					}

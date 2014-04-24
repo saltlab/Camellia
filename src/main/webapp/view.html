@@ -13,15 +13,17 @@
 </code>
 </pre>
 <script type="text/javascript"> 
+    var whichFile = 'string_library';
+    //var whichFile = 'bunnies';
+
     var client = new XMLHttpRequest();
-    //client.open('GET', 'string_library.js');
-    client.open('GET', 'bunnies.js');
+    client.open('GET', whichFile+'.js');
     client.onreadystatechange = function() {
         document.getElementById('code_code').innerHTML = client.responseText; 
 
         // Next, retrieve the line numbers for the slice
         var lineNumbers = new XMLHttpRequest();
-        lineNumbers.open('GET', 'bunnies.txt');
+        lineNumbers.open('GET', whichFile+'.txt');
         lineNumbers.onreadystatechange = function() {
             $('#code_pre').attr("data-line", lineNumbers.responseText);
             Prism.highlightElement($('#code_code')[0]);

@@ -197,6 +197,14 @@ public class ReadWriteReplacer extends AstInstrumenter {
                 || tt == org.mozilla.javascript.Token.ASSIGN_ADD
                 || tt == org.mozilla.javascript.Token.ASSIGN_SUB) {
             // TODO:
+        	if (tt == org.mozilla.javascript.Token.ASSIGN_ADD
+                    || tt == org.mozilla.javascript.Token.ASSIGN_SUB) {
+        		System.out.println(node.toSource());
+        		System.out.println(node.getLineno());
+        		System.out.println(scopeName);
+        		System.out.println(node.toSource());
+        	}
+        	
             handleAssignmentOperator((Assignment) node);
         } else if (tt == org.mozilla.javascript.Token.CALL
                 && !((FunctionCall) node).getTarget().toSource().contains(TOOLNAME)) {
@@ -835,29 +843,39 @@ public class ReadWriteReplacer extends AstInstrumenter {
             } else if (rightRightSideType == org.mozilla.javascript.Token.ADD) {
                 // Need to iterate through all add items so we can backwards slice from those
                 // These include string concats
-                wrapperArgs.add(varBeingWritten);
+                wrapperArgs.add(leftSide.toSource());
                 wrapperArgs.add(rightSide.toSource());
                 wrapperArgs.add("\"\"");
+                wrapperArgs.add(node.getLineno()+"");
                 wrapperArgs.add("\""+this.getScopeName()+"\"");
 
-                wrapperArgs.add(node.getLineno()+"");
-
-                newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), generateWrapper(VARWRITE, wrapperArgs));
+                newBody = generateWrapper(VARWRITE, wrapperArgs);
+                if (node.getType() == org.mozilla.javascript.Token.ASSIGN) {
+                    newBody = generateWrapper(VARWRITE, wrapperArgs);
+                } else {
+                    // ASSIGN_ADD, ASSIGN_SUB
+                    newBody = generateWrapper(VARWRITEAUG, wrapperArgs);
+                }   
             } else if (rightRightSideType == org.mozilla.javascript.Token.SUB) { 
                 // Need to iterate through all items involve din the subtraction
-                wrapperArgs.add(varBeingWritten);
+                wrapperArgs.add(leftSide.toSource());
                 wrapperArgs.add(rightSide.toSource());
                 wrapperArgs.add("\"\"");
+                wrapperArgs.add(node.getLineno()+"");
                 wrapperArgs.add("\""+this.getScopeName()+"\"");
 
-                wrapperArgs.add(node.getLineno()+"");
-
-                newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), generateWrapper(VARWRITE, wrapperArgs));
+                newBody = generateWrapper(VARWRITE, wrapperArgs);
+                if (node.getType() == org.mozilla.javascript.Token.ASSIGN) {
+                    newBody = generateWrapper(VARWRITE, wrapperArgs);
+                } else {
+                    // ASSIGN_ADD, ASSIGN_SUB
+                    newBody = generateWrapper(VARWRITEAUG, wrapperArgs);
+                } 
             } else if (rightRightSideType == org.mozilla.javascript.Token.CALL
                     && ((FunctionCall) rightSide).getTarget().toSource().indexOf(TOOLNAME) == -1) {
                 // Need to iterate through arguments to get data depends
                 // Function being called may provide the control flow? and return type (therefore include the return statement in the slice?)
-                wrapperArgs.add(varBeingWritten);
+                wrapperArgs.add(leftSide.toSource());
                 wrapperArgs.add(rightSide.toSource());
                 wrapperArgs.add("\""+((FunctionCall) rightSide).getTarget().toSource()+"\"");
 
@@ -865,14 +883,15 @@ public class ReadWriteReplacer extends AstInstrumenter {
                 wrapperArgs.add("\""+this.getScopeName()+"\"");
 
                 newBody = generateWrapper(VARWRITEFUNCRET, wrapperArgs);
+                
             } else if (rightRightSideType == org.mozilla.javascript.Token.NEW) {
-                wrapperArgs.add(varBeingWritten);
+                wrapperArgs.add(leftSide.toSource());
                 wrapperArgs.add(rightSide.toSource());
                 wrapperArgs.add("\"\"");
                 wrapperArgs.add(node.getLineno()+"");
                 wrapperArgs.add("\""+this.getScopeName()+"\"");
                 
-                newBody = ("("+VARWRITE+"(\""+varBeingWritten+"\", "+rightSide.toSource()+",\"\","+node.getLineno()+"), "+rightSide.toSource()+")");
+                newBody = ("("+VARWRITE+"(\""+leftSide.toSource()+"\", "+rightSide.toSource()+",\"\","+node.getLineno()+"), "+rightSide.toSource()+")");
             } else if (rightRightSideType == org.mozilla.javascript.Token.CALL
                     && ((FunctionCall) rightSide).getTarget().toSource().indexOf(TOOLNAME) != -1) {
                 return;
