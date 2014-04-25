@@ -57,7 +57,14 @@
             var lineNumbers = new XMLHttpRequest();
             lineNumbers.open('GET', 'lines/'+files[fileIndex]+'.txt');
             lineNumbers.onreadystatechange = function() {
-                $('#code_pre').attr("data-line", lineNumbers.responseText);
+                // Lines to be highlighted
+                var highlightThese = lineNumbers.responseText;
+
+                // Darken them more
+                highlightThese += highlightThese;
+                highlightThese += highlightThese;
+
+                $('#code_pre').attr("data-line", highlightThese);
                 Prism.highlightElement($('#code_code')[0]);
             };
             lineNumbers.send();

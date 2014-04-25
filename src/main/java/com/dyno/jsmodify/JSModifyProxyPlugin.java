@@ -110,6 +110,8 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 	}
 
 	private boolean shouldModify(String name) {
+		System.out.println(name);
+		
 		/* try all patterns and if 1 matches, return false */
 		for (String pattern : excludeFilenamePatterns) {
 			if (name.matches(pattern)) {
@@ -181,8 +183,10 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 					new PrintStream("src/main/webapp/source/" + getFilename());
 
 			// Save the original JavaScript file for displaying later
+			
+			String HTMLReadyCode = input.replaceAll("<", "&lt;");
 			System.setOut(outputVisual);
-			System.out.println(input);
+			System.out.println(HTMLReadyCode);
 			System.setOut(oldOut);
 
 			String ast = le.instrument(input, "/"+getFilename());

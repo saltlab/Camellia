@@ -21,6 +21,7 @@ import org.mozilla.javascript.ast.ObjectLiteral;
 import org.mozilla.javascript.ast.PropertyGet;
 import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.Symbol;
+import org.mozilla.javascript.ast.UnaryExpression;
 import org.mozilla.javascript.ast.VariableDeclaration;
 import org.mozilla.javascript.ast.VariableInitializer;
 
@@ -28,6 +29,7 @@ import bsh.This;
 
 import com.dyno.instrument.helpers.FunctionCallParser;
 import com.dyno.instrument.helpers.InfixExpressionParser;
+import com.dyno.instrument.helpers.NotParser;
 import com.dyno.instrument.helpers.ObjectLiteralParser;
 import com.dyno.instrument.helpers.PropertyGetParser;
 import com.dyno.units.FunctionArgumentPair;
@@ -545,6 +547,13 @@ public class DependencyFinder extends AstInstrumenter {
 
 				dataDependencies.add((Name) rightSide);
 
+			} else if (rightSideType == org.mozilla.javascript.Token.NOT
+					/*||*/) {
+				
+				
+				dataDependencies.addAll(NotParser.getNotDependencies((UnaryExpression) rightSide));
+
+				
 			} else if (rightSideType == org.mozilla.javascript.Token.GETPROP) {
 				// Need to check if there is over lap with CALL (method calls, which do they fall under)
 
@@ -619,7 +628,7 @@ public class DependencyFinder extends AstInstrumenter {
 
 	}
 
-	
+
 	static private ArrayList<FunctionArgumentPair> functionsToInstrument = new ArrayList<FunctionArgumentPair>();
 
 	public ArrayList<FunctionArgumentPair> getFunctionsToWatch() {
