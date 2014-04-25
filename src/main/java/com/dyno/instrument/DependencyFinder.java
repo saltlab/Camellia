@@ -382,12 +382,14 @@ public class DependencyFinder extends AstInstrumenter {
 		AstNode rightSide;
 		AstNode newRightSide;
 		String newBody;
+		int rightSideType;
 
 		while (varIt.hasNext()) {			
 			nextInitializer = varIt.next();
 			leftSide = nextInitializer.getTarget();
 			rightSide = nextInitializer.getInitializer();
-
+			rightSideType = rightSide.getType();
+			
 			if (rightSide == null) {
 				// Variable declaration without assignment e.g. "var i;"
 				continue;
@@ -397,11 +399,33 @@ public class DependencyFinder extends AstInstrumenter {
 
 
 			if (leftSide.getType() == org.mozilla.javascript.Token.NAME && ((Name) leftSide).getIdentifier().equals(variableName)) {
-				//	newBody = ("("+VARWRITE+"(\""+leftSide.toSource()+"\", "+node.getLineno()+"), "+rightSide.toSource()+")");
-
-
-				//dataDependencies.add((Name) leftSide);
-
+				if (rightSideType == org.mozilla.javascript.Token.FUNCTION) {
+					// No data dependencies added
+				} else if (rightSideType == org.mozilla.javascript.Token.CALL) {
+					dataDependencies.addAll(FunctionCallParser.getArgumentDependencies((FunctionCall) rightSide));
+				} else if (rightSideType == org.mozilla.javascript.Token.NAME) {
+					dataDependencies.add((Name) rightSide);
+				} else if (rightSideType == org.mozilla.javascript.Token.NOT
+						/*||*/) {
+					dataDependencies.addAll(NotParser.getNotDependencies((UnaryExpression) rightSide));
+				} else if (rightSideType == org.mozilla.javascript.Token.GETPROP) {
+					// Need to check if there is over lap with CALL (method calls, which do they fall under)
+					dataDependencies.addAll(PropertyGetParser.getPropertyDependencies((PropertyGet) rightSide));
+				} else if (rightSideType == org.mozilla.javascript.Token.ADD) {
+					dataDependencies.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) rightSide));
+				} else if (rightSideType == org.mozilla.javascript.Token.SUB) {
+					dataDependencies.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) rightSide));
+				} else if (rightSideType == org.mozilla.javascript.Token.NEG) {
+				} else if (rightSideType == org.mozilla.javascript.Token.POS) {
+				} else if (rightSideType == org.mozilla.javascript.Token.OBJECTLIT) {
+					dataDependencies.addAll(ObjectLiteralParser.getArgumentDependencies((ObjectLiteral) rightSide));
+				} else if (rightSideType == org.mozilla.javascript.Token.STRING
+						|| rightSideType == org.mozilla.javascript.Token.NUMBER
+						|| rightSideType == org.mozilla.javascript.Token.NULL
+						|| rightSideType == org.mozilla.javascript.Token.FALSE
+						|| rightSideType == org.mozilla.javascript.Token.TRUE) {
+					// Don't care, no new dependencies
+				}
 			} else if (rightSide.getType() == org.mozilla.javascript.Token.NAME 
 					&& ((Name) rightSide).getIdentifier().equals(variableName)) {
 
@@ -525,6 +549,9 @@ public class DependencyFinder extends AstInstrumenter {
 			System.out.println(rightSide.toSource());
 		}
 
+		if (node.getLineno() == 581)  {
+			System.out.println(node.toSource());
+		}
 
 		// LHS = variable of interest
 		if (varBeingWritten.equals(variableName)) {
@@ -536,7 +563,6 @@ public class DependencyFinder extends AstInstrumenter {
 			} else if (rightSideType == org.mozilla.javascript.Token.CALL) {
 				// Must slice return statement of function (could be defined elsewhere)
 				// Must add arguments (see handleFunctionCall
-
 
 				dataDependencies.addAll(FunctionCallParser.getArgumentDependencies((FunctionCall) rightSide));
 

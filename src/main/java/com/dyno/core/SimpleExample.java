@@ -314,30 +314,34 @@ public class SimpleExample {
 			Helper.directoryCheck(Helper.addFolderSlashIfNeeded(p.getOutputFolder() + "lines"));
 			PrintStream oldOut = System.out;
 
-			for (int a = 0; a < theSlice.size(); a++) {
-				Helper.checkFolderForFile("src/main/webapp/lines" + theSlice.get(a).getFileName().replace(".js", ".txt"));
-				PrintStream outputVisual = new PrintStream("src/main/webapp/lines" + theSlice.get(a).getFileName().replace(".js", ".txt"));
-				System.setOut(outputVisual);
-				System.out.println(theSlice.get(a).getLinesAsString());
-			}
-
-			String allFiles = "";
-			String nextFileName = "";
-			for (int a = 0; a < theSlice.size(); a++) {
-				nextFileName = theSlice.get(a).getFileName();
-				if(nextFileName.contains(".js")) {
-					nextFileName = nextFileName.substring(0, nextFileName.lastIndexOf(".js"));
+			if (theSlice.size() > 0) {
+				for (int a = 0; a < theSlice.size(); a++) {
+					Helper.checkFolderForFile("src/main/webapp/lines" + theSlice.get(a).getFileName().replace(".js", ".txt"));
+					PrintStream outputVisual = new PrintStream("src/main/webapp/lines" + theSlice.get(a).getFileName().replace(".js", ".txt"));
+					System.setOut(outputVisual);
+					System.out.println(theSlice.get(a).getLinesAsString());
 				}
-				nextFileName = nextFileName.replaceAll("\\/", "");
-				allFiles += nextFileName + " ";
-			}
-			allFiles = allFiles.substring(0, allFiles.lastIndexOf(" "));
-			Helper.checkFolderForFile("src/main/webapp/" + "allFiles.txt");
-			PrintStream outputVisual2 = new PrintStream("src/main/webapp/" + "allFiles.txt");
-			System.setOut(outputVisual2);
-			System.out.println(allFiles);
 
-			System.setOut(oldOut);
+				String allFiles = "";
+				String nextFileName = "";
+				for (int a = 0; a < theSlice.size(); a++) {
+					nextFileName = theSlice.get(a).getFileName();
+					if(nextFileName.contains(".js")) {
+						nextFileName = nextFileName.substring(0, nextFileName.lastIndexOf(".js"));
+					}
+					nextFileName = nextFileName.replaceAll("\\/", "");
+					allFiles += nextFileName + " ";
+				}
+				allFiles = allFiles.substring(0, allFiles.lastIndexOf(" "));
+				Helper.checkFolderForFile("src/main/webapp/" + "allFiles.txt");
+				PrintStream outputVisual2 = new PrintStream("src/main/webapp/" + "allFiles.txt");
+				System.setOut(outputVisual2);
+				System.out.println(allFiles);
+				System.setOut(oldOut);
+			} else {
+				System.out.println("Application not exercised enough! No slice produced.");
+			}
+			
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -631,8 +635,25 @@ public class SimpleExample {
 
 				// RHS Reading
 				for (int b = 0; b < dependencies.size(); b++) {
+					if (dependencies.get(b) instanceof VariableRead && top == null) {
+						System.out.println(dependencies.get(b).getOrder());
+						System.out.println(dependencies.get(b).getLineNo());
+						System.out.println(dependencies.get(b).getClass());
+						System.out.println(dependencies.get(b).getVariable());
+						System.out.println("=-=-=-=-=-=-=-=-=-");
+						System.out.println(next.getOrder());
+						System.out.println(next.getLineNo());
+						System.out.println(next.getClass());
+						System.out.println(next.getVariable());
+					}
+					
+					// If the variable read on the right side is the variable being CURRENTLY sliced, and its value is
+					// non-primitive...possible new alias created (by reference) check for updates via this alias...
+					// Makes the assumption that the RHS is only 1 other variable (a NAME or PROPERTYGET)...
+					// Object.merge etc. outside the scope for now.
 					if (dependencies.get(b) instanceof VariableRead
-							&& dependencies.get(b).getVariable().indexOf(top.getVariable()) == 0) {
+							&& TraceHelper.isComplex(((VariableRead) dependencies.get(b)).getValue())
+							&& dependencies.get(b).getVariable().indexOf(name) == 0) {
 
 						//	if (trace.get(i).getVariable().indexOf(".") == -1) {
 						// Variable write
