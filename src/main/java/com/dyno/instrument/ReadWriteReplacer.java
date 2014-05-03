@@ -551,7 +551,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
 		}
 
 		if (node.getParent() != null) {
-			if (isLeftOfAssignment(node)) {
+			if (isLeftOfAssignment(node) && node.getParent() instanceof InfixExpression) {
 				if (((InfixExpression) node.getParent()).getLeft().equals(node)) {
 					// Don't want to instrument LHS of assignment since it messes up the assignment 
 					// (function return value cant be assigned a value)

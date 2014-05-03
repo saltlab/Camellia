@@ -111,6 +111,7 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 
 	private boolean shouldModify(String name) {
 		System.out.println(name);
+		System.out.println(targetFile);
 		
 		/* try all patterns and if 1 matches, return false */
 		for (String pattern : excludeFilenamePatterns) {
@@ -151,6 +152,11 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 
 		System.out.println("<<<<");
 		System.out.println("Scope: " + scopename);
+		
+		if (scopename.contains("preload")) {
+			System.out.println(scopename);
+			System.out.println(targetFile);
+		}
 
 		scopeNameForExternalUse = scopename;
 
