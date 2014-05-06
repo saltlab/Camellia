@@ -24,6 +24,7 @@ import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.ReturnStatement;
 import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.Symbol;
+import org.mozilla.javascript.ast.UnaryExpression;
 import org.mozilla.javascript.ast.VariableDeclaration;
 import org.mozilla.javascript.ast.VariableInitializer;
 
@@ -164,24 +165,6 @@ public class ReadWriteReplacer extends AstInstrumenter {
 	public  boolean visit(AstNode node){
 		int tt = node.getType();
 
-		if (node.getLineno() == 17) { 
-			System.out.println("Me:");
-			System.out.println(Token.typeToName(node.getType()));
-			System.out.println(node.toSource());
-			if (node.getParent() != null) {
-				System.out.println("Par:");
-				System.out.println(Token.typeToName(node.getParent().getType()));
-				System.out.println(node.getParent().getClass().toString());
-				System.out.println(node.getParent().toSource());
-			}
-		}
-		if (fromHere) {
-			System.out.println("Investigate this:!");
-			System.out.println(Token.typeToName(node.getType()));
-			System.out.println(node.toSource());
-		}
-
-
 		if (tt == org.mozilla.javascript.Token.GETPROP) {
 			// TODO:
 			handleProperty((PropertyGet) node);
@@ -221,6 +204,10 @@ public class ReadWriteReplacer extends AstInstrumenter {
 			handleGetElem((ElementGet) node);
 		} else if (tt == org.mozilla.javascript.Token.CATCH) {
 			handleCatch((CatchClause) node);
+		} else if (tt == org.mozilla.javascript.Token.INC
+				|| tt == org.mozilla.javascript.Token.DEC) {
+			handleUnaryExpression((UnaryExpression) node);
+			return false;
 		}
 
 		return true;  // process kids
@@ -280,9 +267,13 @@ public class ReadWriteReplacer extends AstInstrumenter {
 				.replaceAll("\\;\\n+\\,", ",")
 				.replaceAll("\\ \\.", " ")
 				.replaceAll("(\\n\\;\\n)", "\n\n")
+				.replaceAll("\\;\\n\\+\\+", "++")
+				.replaceAll("\\;\\n\\-\\-", "--")
 				.replaceAll("\\)\\;\\n+\\)\\;", "));")
 				//	.replaceAll("(\\n)", "\n\n")  // <-- just for spacing, might not be needed
 				.replaceAll("\\.\\[", "[");
+		
+	
 
 		System.out.println(isc);
 
@@ -564,6 +555,16 @@ public class ReadWriteReplacer extends AstInstrumenter {
 				System.out.println(node.toSource());
 				System.out.println(node.getParent().toSource());
 				System.out.println(Token.typeToName(node.getParent().getType()));
+				
+//_dynoWrite('ss_cur', 0, '', 3, '/phorm.js');
+				newBody = VARWRITE+"(\'"+node.getIdentifier()+"\',"+ node.toSource()+", " +node.getLineno()+", \"" +this.getScopeName()+"\")";
+
+				/*parent.set
+				node.setIdentifier(newBody);*/
+				System.out.println(newBody);
+
+				System.out.println(parent.getClass());
+				
 				return;
 			}
 		}
@@ -1161,6 +1162,21 @@ public class ReadWriteReplacer extends AstInstrumenter {
 		if (newTarget != null) {
 			node.setTarget(newTarget);
 		}*/
+	}
+	
+	
+	private void handleUnaryExpression(UnaryExpression node) {
+		AstNode operand = node.getOperand();
+		
+		String newBody = VARWRITE+"(\'"+operand.toSource()+"\',"+ operand.toSource()+", \'\'," +node.getLineno()+", \"" +this.getScopeName()+"\"), "+operand.toSource();
+
+		/*parent.set
+		node.setIdentifier(newBody);*/
+		System.out.println(newBody);
+
+		//System.out.println(parent.getClass());
+		node.setOperand(parse(newBody, node.getLineno()));
+		
 	}
 
 	private void handleReturn(ReturnStatement node) {
