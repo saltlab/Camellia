@@ -156,19 +156,34 @@ public class FunctionDeclarationInstrumenter extends AstInstrumenter {
 		rsi.setParentFunction(node);
 		rsi.setScopeName(getScopeName());
 		node.visit(rsi);
+		String name = node.getName();
+		AstNode parent = node.getParent();
+		
+		if (node.getFunctionType() == FunctionNode.FUNCTION_EXPRESSION) {
+            // Complicated Case
+            if (node.getName() == "" && parent.getType() == org.mozilla.javascript.Token.COLON) {
+                // Assignment Expression                    
+                name = node.getParent().toSource().substring(0,node.getParent().toSource().indexOf(node.toSource()));
+                name = name.substring(0,name.indexOf(":"));
+            } else if (node.getName() == "" && parent.getType() == org.mozilla.javascript.Token.ASSIGN) {
+                name = node.getParent().toSource().substring(0,node.getParent().toSource().indexOf(node.toSource()));
+                name = name.substring(name.lastIndexOf(".")+1,name.indexOf("="));
+            }
+            name = name.trim();
+        } 
 		
 		// Store information on function declarations
 		ArrayList<String> wrapperArgs = new ArrayList<String>();
         wrapperArgs.add(argumentName);
         wrapperArgs.add(argumentName);
-        wrapperArgs.add("\""+node.getName()+"\"");
+        wrapperArgs.add("\""+name+"\"");
         wrapperArgs.add(argumentNumber+"");
         wrapperArgs.add(node.getLineno()+"");		
         wrapperArgs.add("\""+this.getScopeName()+"\"");		
 		node.getBody().addChildToFront(parse(generateWrapper(ARGWRITE, wrapperArgs), node.getLineno()));
 		
 		ArrayList<String> wrapperArgs2 = new ArrayList<String>();
-		wrapperArgs2.add(node.getName());
+		wrapperArgs2.add(name);
 		wrapperArgs2.add("undefined");
 		wrapperArgs2.add("\""+getScopeName()+"\"");			
 		wrapperArgs2.add(node.getLineno()+"");			

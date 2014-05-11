@@ -37,14 +37,14 @@ public class TraceHelper {
         }
         return -1;
     }
-    
+
     public static FileLineNumber getFileLineMapping(String fileName, ArrayList<FileLineNumber> a) {
         Iterator<FileLineNumber> ir = a.iterator();
         FileLineNumber next;
-        
+
         while (ir.hasNext()) {
             next = ir.next();
-            
+
             if (next.getFileName().equals(fileName)) {
                 return next;
             }
@@ -92,10 +92,10 @@ public class TraceHelper {
             } else if (current instanceof ReturnStatementValue) {
                 // Line number is allow to change (!= vw.getLineNo())
 
-            	
-            	j = trace.indexOf(getBeginningOfFunction((ReturnStatementValue) current, trace));
-            	
-            	
+
+                j = trace.indexOf(getBeginningOfFunction((ReturnStatementValue) current, trace));
+
+
                 // set a flag?
                 jumpAllowed = true;
 
@@ -157,8 +157,11 @@ public class TraceHelper {
                     base2 += "."+properties2[k];
                 }
 
-                if (!base2.equals(base)) {
+                // if (!base2.equals(base)) {
+                if (base2.indexOf(base) != 0) {
                     // Same operation still
+                    System.out.println(base);
+                    System.out.println(base2);
                     throw new Exception();
                 }
             } else if (trace.get(j) instanceof VariableRead) {
@@ -199,7 +202,7 @@ public class TraceHelper {
                     depth--;
                 }
             } else if (next instanceof ArgumentWrite
-            		&& enter.getFunctionName().equals(((ArgumentWrite) next).getFunctionName())) {
+                    && enter.getFunctionName().equals(((ArgumentWrite) next).getFunctionName())) {
                 // Group or single 'ArgumentWrite' means a function is entered
                 int j;
                 for (j = i; j < trace.size(); j++) {
@@ -215,7 +218,7 @@ public class TraceHelper {
 
         return null;
     }
-    
+
     public static RWOperation getBeginningOfFunction(ReturnStatementValue exit, ArrayList<RWOperation> trace) {
         RWOperation next;
         int depth = -1;
@@ -227,7 +230,7 @@ public class TraceHelper {
                     && exit.getFunctionName().equals(((ReturnStatementValue) next).getFunctionName())) {
                 depth++;
             } else if (next instanceof ArgumentWrite
-            		&& exit.getFunctionName().equals(((ArgumentWrite) next).getFunctionName())) {
+                    && exit.getFunctionName().equals(((ArgumentWrite) next).getFunctionName())) {
                 // Group or single 'ArgumentWrite' means a function is entered
                 int j;
                 for (j = i; j > 0; j--) {
@@ -236,7 +239,7 @@ public class TraceHelper {
                     }
                 }
                 if (depth == 0) {
-                	return trace.get(j);
+                    return trace.get(j);
                 }
                 // Continue search for entrance to function
                 depth--;
@@ -245,14 +248,14 @@ public class TraceHelper {
         }
         return null;
     }
-    
+
     public static ArrayList<String> getReturnDependencies(ArrayList<RWOperation> trace, ReturnStatementValue rs) {
-    	ArrayList<String> names = new ArrayList<String>();
-    	
-    	//TODO:
-    	
-    	return names;
+        ArrayList<String> names = new ArrayList<String>();
+
+        //TODO:
+
+        return names;
     }
-    
-    
+
+
 }
