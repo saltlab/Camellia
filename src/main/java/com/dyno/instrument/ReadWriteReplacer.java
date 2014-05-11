@@ -100,15 +100,21 @@ public class ReadWriteReplacer extends AstInstrumenter {
 
 
 		code = code.replaceAll("\\;\\\n\\ \\,", ",")
-				.replaceAll("\"", "\'")
+				//.replaceAll("\"", "\'")
 				.replaceAll("\\.\\[", "[")
 				.replaceAll("\\;\\\n\\)", ")");
 
 		System.out.println(code);
 
+		AstRoot returnMe = null;
+		try {
+			returnMe = p.parse(code, null, lineNo);
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println(code);
+		}
 
-
-		return p.parse(code, null, lineNo);
+		return returnMe;
 	}
 
 	/**
@@ -165,6 +171,11 @@ public class ReadWriteReplacer extends AstInstrumenter {
 	public  boolean visit(AstNode node){
 		int tt = node.getType();
 
+		if (node.toSource().indexOf("currentPage") == 2) {
+			System.out.println(node.toSource());
+			System.out.println(Token.typeToName(tt));
+		}
+
 		if (tt == org.mozilla.javascript.Token.GETPROP) {
 			// TODO:
 			handleProperty((PropertyGet) node);
@@ -187,7 +198,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
 				&& !((FunctionCall) node).getTarget().toSource().contains(TOOLNAME)) {
 			// TODO:
 
-				handleFunctionCall((FunctionCall) node);
+			handleFunctionCall((FunctionCall) node);
 		} else if (tt == org.mozilla.javascript.Token.CALL) {
 
 			System.out.println(((FunctionCall) node).getTarget().toSource());
@@ -265,15 +276,17 @@ public class ReadWriteReplacer extends AstInstrumenter {
 				.replaceAll("\\;\\n+\\;", ";")
 				.replaceAll("\\;\\n+\\.", ".")
 				.replaceAll("\\;\\n+\\,", ",")
+				.replaceAll("\\;\\n+\\)", ")")
 				.replaceAll("\\ \\.", " ")
 				.replaceAll("(\\n\\;\\n)", "\n\n")
 				.replaceAll("\\;\\n\\+\\+", "++")
 				.replaceAll("\\;\\n\\-\\-", "--")
 				.replaceAll("\\)\\;\\n+\\)\\;", "));")
+				.replaceAll("\\\\t", "    ")
 				//	.replaceAll("(\\n)", "\n\n")  // <-- just for spacing, might not be needed
 				.replaceAll("\\.\\[", "[");
-		
-	
+
+
 
 		System.out.println(isc);
 
@@ -555,8 +568,8 @@ public class ReadWriteReplacer extends AstInstrumenter {
 				System.out.println(node.toSource());
 				System.out.println(node.getParent().toSource());
 				System.out.println(Token.typeToName(node.getParent().getType()));
-				
-//_dynoWrite('ss_cur', 0, '', 3, '/phorm.js');
+
+				//_dynoWrite('ss_cur', 0, '', 3, '/phorm.js');
 				newBody = VARWRITE+"(\'"+node.getIdentifier()+"\',"+ node.toSource()+", " +node.getLineno()+", \"" +this.getScopeName()+"\")";
 
 				/*parent.set
@@ -564,7 +577,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
 				System.out.println(newBody);
 
 				System.out.println(parent.getClass());
-				
+
 				return;
 			}
 		}
@@ -646,9 +659,9 @@ public class ReadWriteReplacer extends AstInstrumenter {
 				&& node.getParent().toSource().indexOf(node.toSource()) == 0) {
 			newBody = "["+FUNCCALL+"(\""
 					+node.getTarget().toSource()+"\", \""
-							+node.getProperty().toSource()+"\", "
-							+node.getLineno()
-							+", \"" +this.getScopeName()+"\")]";
+					+node.getProperty().toSource()+"\", "
+					+node.getLineno()
+					+", \"" +this.getScopeName()+"\")]";
 		} else if (!isLeftOfAssignment(node)) {
 			newBody = "["+PROPREAD+"(\""
 					+node.getTarget().toSource()+"\", \""
@@ -1048,7 +1061,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
 
 				//	newBody = "("+VARWRITEFUNCRET+"('"+((FunctionCall) nextArg).getTarget().toSource()+"')," + newBody;
 
-				newBody = ARGREAD+"(\'"+untouchedID+"\',"+ nextArg.toSource() +",\""+targetMethod+ "\"," +i+", "+node.getLineno()+", \""+this.getScopeName()+"\")";
+				newBody = ARGREAD+"(\'"+untouchedID.replace("\'", "\"")+"\',"+ nextArg.toSource() +",\""+targetMethod+ "\"," +i+", "+node.getLineno()+", \""+this.getScopeName()+"\")";
 
 
 				nextArg = parse(newBody, node.getLineno());
@@ -1163,12 +1176,17 @@ public class ReadWriteReplacer extends AstInstrumenter {
 			node.setTarget(newTarget);
 		}*/
 	}
-	
-	
+
+
 	private void handleUnaryExpression(UnaryExpression node) {
 		AstNode operand = node.getOperand();
-		
-		String newBody = VARWRITE+"(\'"+operand.toSource()+"\',"+ operand.toSource()+", \'\'," +node.getLineno()+", \"" +this.getScopeName()+"\"), "+operand.toSource();
+		String newBody;
+
+		if (node.toSource().indexOf("++") == 0 || node.toSource().indexOf("--") == 0) {
+			newBody = operand.toSource()+", "+VARWRITE+"(\'"+operand.toSource()+"\',"+ operand.toSource()+", \'\'," +node.getLineno()+", \"" +this.getScopeName()+"\")";
+		} else {
+			newBody = VARWRITE+"(\'"+operand.toSource()+"\',"+ operand.toSource()+", \'\'," +node.getLineno()+", \"" +this.getScopeName()+"\"), "+operand.toSource();
+		}
 
 		/*parent.set
 		node.setIdentifier(newBody);*/
@@ -1176,7 +1194,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
 
 		//System.out.println(parent.getClass());
 		node.setOperand(parse(newBody, node.getLineno()));
-		
+
 	}
 
 	private void handleReturn(ReturnStatement node) {

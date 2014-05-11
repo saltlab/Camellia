@@ -87,6 +87,16 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 		excludeFilenamePatterns.add(".*toolbar.js?.*");
 		excludeFilenamePatterns.add(".*jquery*.js?.*");
 		excludeFilenamePatterns.add(".*ga*.js?.*");
+
+		// Don't instrument obfuscated code?
+		excludeFilenamePatterns.add(".*min*.js?.*");
+		excludeFilenamePatterns.add(".*bootstrap-tooltip*.js?.*");
+		excludeFilenamePatterns.add(".*bootstrap-popover*.js?.*");
+		excludeFilenamePatterns.add(".*handlebars*.js?.*");
+		excludeFilenamePatterns.add(".*caramel.handlebars.client*.js?.*");
+		excludeFilenamePatterns.add(".*caramel-client*.js?.*");
+		excludeFilenamePatterns.add(".*assets*.js?.*");
+		excludeFilenamePatterns.add(".*asset-core*.js?.*");
 	}
 
 	public void setTargetFile (String t) {

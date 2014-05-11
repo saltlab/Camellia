@@ -125,6 +125,7 @@ public class LocalExample {
 		definingScope = getDefiningScope(ast, start);
 
 		System.out.println("[LocalExample]:  " + scopename);
+		System.out.println("[definingScope]:  " + definingScope);
 		System.out.println(this.targetFile);
 		
 		if (definingScope != null) {
