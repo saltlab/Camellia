@@ -1,0 +1,9 @@
+
+    if (store.asset) {
+        store.asset = {};
+    }
+    store.asset = {
+        type: "gadget",
+        paging : {"url" : "/assets/gadget/?sort=recent&page=", "sort" : "recent", "tag" : null, "size" : 12.0}
+    };
+
