@@ -81,11 +81,11 @@ public class ActualInstrumentation extends AstInstrumenter{
 	 *            The JavaScript source code to parse.
 	 * @return The AST node.
 	 */
-	public AstRoot parse(String code) {
+	public AstRoot parse(String code, int lineno) {
 		Parser p = new Parser(compilerEnvirons, errorReporter);
 
 		//System.out.println(code);
-		return p.parse(code, null, 0);
+		return p.parse(code, null, lineno);
 	}
 
 	/**

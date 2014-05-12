@@ -71,11 +71,11 @@ public class FunctionCallerDependencies extends AstInstrumenter {
 	 *            The JavaScript source code to parse.
 	 * @return The AST node.
 	 */
-	public AstRoot parse(String code) {
+	public AstRoot parse(String code, int lineno) {
 		Parser p = new Parser(compilerEnvirons, errorReporter);
 
 		//System.out.println(code);
-		return p.parse(code, null, 0);
+		return p.parse(code, null, lineno);
 	}
 
 	/**
@@ -251,7 +251,7 @@ public class FunctionCallerDependencies extends AstInstrumenter {
 		/* post to the proxy server */
 		code = "send(new Array('" + getScopeName() + "." + name + "', '" + postfix + "'));";
 
-		return parse(code);
+		return parse(code, lineNo);
 	}
 
 	@Override
