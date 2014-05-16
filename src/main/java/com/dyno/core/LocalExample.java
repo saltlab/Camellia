@@ -116,7 +116,12 @@ public class LocalExample {
         Context cx = Context.enter();
 
         /* create a new parser */
-        Parser rhinoParser = new Parser(new CompilerEnvirons(), cx.getErrorReporter());
+        CompilerEnvirons compilerEnvirons =  new CompilerEnvirons();
+        compilerEnvirons.setRecordingLocalJsDocComments(true);
+        compilerEnvirons.setAllowSharpComments(true);
+        compilerEnvirons.setRecordingComments(true);
+        compilerEnvirons.setOptimizationLevel(0);
+        Parser rhinoParser = new Parser(compilerEnvirons, cx.getErrorReporter());
 
         /* parse some script and save it in AST */
         ast = rhinoParser.parse(new String(input), scopename, 0);

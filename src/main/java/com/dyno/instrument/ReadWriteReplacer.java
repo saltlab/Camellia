@@ -93,6 +93,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
         compilerEnvirons.setRecordingLocalJsDocComments(true);
         compilerEnvirons.setAllowSharpComments(true);
         compilerEnvirons.setRecordingComments(true);
+        compilerEnvirons.setOptimizationLevel(-1);
         Parser p = new Parser(compilerEnvirons, errorReporter);
 
         System.out.println("[parsing compilerEnvirons]: ");
@@ -171,10 +172,11 @@ public class ReadWriteReplacer extends AstInstrumenter {
     public  boolean visit(AstNode node){
         int tt = node.getType();
 
-        if (node.toSource().indexOf("currentPage") == 2) {
+        if (tt == org.mozilla.javascript.Token.CALL && node.getLineno() > 38) {
             System.out.println(node.toSource());
-            System.out.println(Token.typeToName(tt));
+            System.out.println(node.getLineno());
         }
+
 
         if (tt == org.mozilla.javascript.Token.GETPROP) {
             // TODO:
