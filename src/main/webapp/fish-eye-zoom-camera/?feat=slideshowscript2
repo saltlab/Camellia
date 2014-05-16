@@ -1,0 +1,11 @@
+ss_pid 	= new Array();
+ss_ttl 	= new Array();
+ss_date 	= new Array();
+ss_src 	= new Array();
+ss_desc 	= new Array();
+	 ss_pid [0] = '3'; 	 ss_date[0] = 'Friday, Jan 24th o 2014'; 	 ss_src [0] = 'images/000003_ukeax_9.jpg'; 	 ss_ttl [0] = 'Third Flower'; 	 ss_desc[0] = ''; 
+	 ss_pid [1] = '2'; 	 ss_date[1] = 'Friday, Jan 24th o 2014'; 	 ss_src [1] = 'images/000002_zxfmf_9.jpg'; 	 ss_ttl [1] = 'Second Flower'; 	 ss_desc[1] = ''; 
+	 ss_pid [2] = '1'; 	 ss_date[2] = 'Friday, Jan 24th o 2014'; 	 ss_src [2] = 'images/000001_pqvgc_9.jpg'; 	 ss_ttl [2] = 'First Flower'; 	 ss_desc[2] = ''; 
+	ss_update();
+	setTimeout("ss_slideshow()", 10000);
+
