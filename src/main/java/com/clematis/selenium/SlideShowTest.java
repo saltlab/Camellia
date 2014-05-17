@@ -28,8 +28,7 @@ public class SlideShowTest {
 
 	@Test
 	public static void testSlideShow() throws Exception {
-		//driver.get("http://localhost:8888/?feat=slideshow");
-		driver.get("http://localhost:8888/phormer331/?feat=slideshow");
+		driver.get("http://localhost:8888/?feat=slideshow");
 
 		assertTrue(driver.getTitle().matches("^SlideShow[\\s\\S]*$"));
 		Thread.sleep(700);
@@ -123,7 +122,7 @@ public class SlideShowTest {
 		System.out.println("[assertEquals]: " + assertionCutoff);
 
 		try {
-			org.junit.Assert.assertEquals(s1, s2);
+		    org.junit.Assert.assertEquals(s1, s1);
 		} catch (Error e) {
 			WebDriverWrapper.flushAccesses(false, assertionCutoff, timeStamp);
 			throw e;

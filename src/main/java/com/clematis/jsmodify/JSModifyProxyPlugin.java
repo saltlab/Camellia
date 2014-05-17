@@ -311,9 +311,7 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 	 * @return The modified response.
 	 */
 	private Response createResponse(Response response, Request request) {
-		return response;
-	}
-	private Response createResponse2(Response response, Request request) {
+	    System.out.println("[createResponse]");
 		Element newNodeToAdd;
 		ArrayList<String> scriptNodesToCreate;
 

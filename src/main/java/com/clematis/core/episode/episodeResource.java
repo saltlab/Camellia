@@ -21,7 +21,6 @@ import javax.ws.rs.core.MediaType;
 
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
-import org.omg.CORBA.INITIALIZE;
 
 import com.clematis.core.trace.DOMElementValueTrace;
 import com.clematis.core.trace.DOMEventTrace;
