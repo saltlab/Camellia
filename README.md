@@ -1,4 +1,4 @@
-DynoSlicer
+Camillia
 ==========
 
-Dynamic program slicing for JavaScript
+Assists localization of faults detected by DOM-based test cases (e.g. Selenium).
