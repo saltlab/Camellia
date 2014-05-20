@@ -1,4 +1,4 @@
-Camillia
+Camellia
 ==========
 
 Camellia assists developers in identifying the origins of DOM-based test failures (e.g. Selenium) for web applications. Through a combination of automated selective code transformation and dynamic backwards slicing, Camellia is able to link assertion failures to an application's responsible JavaScript code. The selective instrumentation is based on a static analysis algorithm and allows our tool to mantain a low runtime overhead while collecting a more concise execution trace. In addition to easing the fault localizaiton process, Camellia also helps developers understand existing test cases.
