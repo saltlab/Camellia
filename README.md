@@ -5,7 +5,7 @@ Camellia assists developers in identifying the origins of DOM-based test failure
 
 After exercising a target web application, Camellia generates an interactive  visualization that relates each test case assertion to the related asynchronous events (DOM events, timing events, etc.), executed JavaScript code, and DOM mutations.
 
-More technical documentation to come on [wiki](https://github.com/saltlab/camellia/wiki).
+More technical documentation to come on our [wiki](https://github.com/saltlab/camellia/wiki).
 
 ## Using Camellia
 
