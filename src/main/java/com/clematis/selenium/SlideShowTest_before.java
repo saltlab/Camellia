@@ -1,4 +1,4 @@
-package phormer.test;
+package com.clematis.selenium;
 
 import java.util.concurrent.TimeUnit;
 import org.junit.*;
@@ -6,7 +6,7 @@ import static org.junit.Assert.*;
 import org.openqa.selenium.*;
 import org.openqa.selenium.firefox.FirefoxDriver;
 
-public class SlideShowTest {
+public class SlideShowTest_before {
 	private WebDriver driver;
 	//private String baseUrl;
 	private StringBuffer verificationErrors = new StringBuffer();

@@ -105,7 +105,6 @@ public class SimpleExample {
                 e.printStackTrace();
             }
 
-
             if (driver instanceof JavascriptExecutor) {
                 System.out.println("doing sendRecordStop");
                 ((JavascriptExecutor) driver).executeScript("sendRecordStop();");
