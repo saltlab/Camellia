@@ -72,12 +72,10 @@ function stopRecording() {
 function FCW() {
 	var date = Date.now();
 	
-    if (arguments.length == 2) {
-//    	console.log("Function call ++++++++++ " + arguments[0]);
-        send(JSON.stringify({messageType: "FUNCTION_CALL", timeStamp: date, targetFunction: arguments[0], lineNo: arguments[1], counter: traceCounter++}));
+    if (arguments.length == 3) {
+        send(JSON.stringify({messageType: "FUNCTION_CALL", timeStamp: date, targetFunction: arguments[0], scopeName: arguments[1], lineNo: arguments[2], counter: traceCounter++}));
     } else {
-//    	console.log("Function call ++++++++++ " + arguments[1]);
-        send(JSON.stringify({messageType: "FUNCTION_CALL", timeStamp: date, targetFunction: arguments[1], lineNo: arguments[2], counter: traceCounter++}));
+        send(JSON.stringify({messageType: "FUNCTION_CALL", timeStamp: date, targetFunction: arguments[1], scopeName: arguments[2], lineNo: arguments[3], counter: traceCounter++}));
     }
 	return arguments[0];
 }

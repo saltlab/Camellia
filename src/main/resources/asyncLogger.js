@@ -532,7 +532,7 @@ Document.prototype.getElementById= function(id) {
     send(JSON.stringify({
         messageType: "DOM_ACCESS",
         timeStamp: date,
-        accessor: "getElementsByClassName",
+        accessor: "getElementById",
         parameter: id,
         counter: traceCounter++,
         xpath: getPathTo(r),
@@ -550,7 +550,7 @@ Document.prototype.getElementsByName= function(id) {
     send(JSON.stringify({
         messageType: "DOM_ACCESS",
         timeStamp: date,
-        accessor: "getElementsByClassName",
+        accessor: "getElementsByName",
         parameter: id,
         counter: traceCounter++,
         xpath: getPathTo(r),
@@ -568,7 +568,7 @@ Document.prototype.getElementsByTagName= function(id) {
     send(JSON.stringify({
         messageType: "DOM_ACCESS",
         timeStamp: date,
-        accessor: "getElementsByClassName",
+        accessor: "getElementsByTagName",
         parameter: id,
         counter: traceCounter++,
         xpath: getPathTo(r),

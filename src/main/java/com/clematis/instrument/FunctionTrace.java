@@ -417,7 +417,7 @@ public class FunctionTrace extends AstInstrumenter {
 				return;
 			}
 			
-			String newBody = target.toSource().replaceFirst(targetBody, "FCW("+targetBody+",'"+targetBody+"',"+lineNo+")");
+			String newBody = target.toSource().replaceFirst(targetBody, "FCW("+targetBody+",'"+targetBody+"', \""+getScopeName()+"\","+lineNo+")");
 			System.out.println("--- NAME: " + newBody);
 			newTarget = parse(newBody, lineNo);
 
@@ -434,7 +434,7 @@ public class FunctionTrace extends AstInstrumenter {
 			
 			StringBuilder b = new StringBuilder(target.toSource());
 			b.replace( target.toSource().lastIndexOf("."+targetBody),  
-					target.toSource().lastIndexOf("."+targetBody) + ("."+targetBody).length(), "[FCW(\""+targetBody+"\", "+lineNo+")]" );
+					target.toSource().lastIndexOf("."+targetBody) + ("."+targetBody).length(), "[FCW(\""+targetBody+"\", \""+getScopeName()+"\", "+lineNo+")]" );
 			String newBody = b.toString();
 			
 			
