@@ -42,6 +42,7 @@ import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Name;
 
 import com.camellia.core.Main;
+import com.camellia.core.SimpleExample2;
 import com.clematis.core.WebDriverWrapper;
 import com.clematis.core.episode.Episode;
 import com.clematis.core.episode.Story;
@@ -239,7 +240,7 @@ public class JSExecutionTracer {
 		return result;
 	}
 
-	public static void postCrawling() {
+	public static String[] postCrawling() {
 		try {
 			// Add closing bracket
 			PrintStream oldOut = System.out;
@@ -251,9 +252,10 @@ public class JSExecutionTracer {
 			/* close the output file */
 			output.close();
 
-			extraxtTraceObjects();
+			return extraxtTraceObjects();
 		} catch (Exception e) {
 			e.printStackTrace();
+			return new String[8];
 		}
 	}
 
@@ -261,8 +263,9 @@ public class JSExecutionTracer {
 	 * This method parses the JSON file containing the trace objects and extracts the objects
 	 */
 	@SuppressWarnings("unchecked")
-	private static void extraxtTraceObjects() {
-
+	private static String[] extraxtTraceObjects() {
+		String[] args = new String[8];
+		
 		try {
 			// Declarations for reading back the written assertion summary
 			String s;
@@ -603,7 +606,8 @@ public class JSExecutionTracer {
 			System.out.println(".....................................");
 			System.out.println("-----------------------------------");
 			Iterator<Name> finalIt = slicingCriteria.iterator();
-			Name nameNext;
+			Name nameNext = null;
+
 			while (finalIt.hasNext()) {
 				nameNext = finalIt.next();
 				System.out.println(nameNext.toSource() + ", line @:  " + nameNext.getLineno());
@@ -611,13 +615,26 @@ public class JSExecutionTracer {
 			System.out.println(".....................................");
 			System.out.println("-----------------------------------");
 
-			Main camellia = new Main();
-			String[] args = new String[4];
-			
-			
+
+			if (nameNext != null) {
+				args[0] = "--server";
+				args[1] = "N/A";
+				args[2] = "--file";
+				args[3] = "phorm.js";
+				args[4] = "--line";
+				args[5] = (nameNext.getLineno()-1) + "";
+				args[6] = "--variable";
+				args[7] = nameNext.getIdentifier();
+
+				System.out.println("Arguments to camellia");
+				for (int i = 0; i < 8; i++) {
+					System.out.print(args[i] + " ");
+				}
+				System.out.println("......");
+
+			}
+
 			// Make sure other browser session is killed here, will make new one to run test case for slicing portion
-			
-			camellia.runMain(args);
 
 			JSepisodes.close();
 
@@ -627,7 +644,9 @@ public class JSExecutionTracer {
 			writeStoryToDisk();
 		} catch (Exception e) {
 			e.printStackTrace();
+			return args;
 		}
+		return args;
 	}
 
 	public static void designSequenceDiagram(Episode e, PrintStream jSepisodes) {

@@ -65,6 +65,11 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 
 	private static String outputFolder = "";
 	private static String jsFilename = "";
+	private static String[] args;
+	
+	public String[] getArgs() {
+		return this.args;
+	}
 
 	private static int loadEventCounter;
 
@@ -311,7 +316,7 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 	 * @return The modified response.
 	 */
 	private Response createResponse(Response response, Request request) {
-	    System.out.println("[createResponse]");
+		System.out.println("[createResponse]");
 		Element newNodeToAdd;
 		ArrayList<String> scriptNodesToCreate;
 
@@ -355,7 +360,7 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 
 		if (request.getURL().toString().contains("?stoprecord")) {
 			areWeRecording = false;
-			JSExecutionTracer.postCrawling();
+			args = JSExecutionTracer.postCrawling();
 			return response;
 		}
 

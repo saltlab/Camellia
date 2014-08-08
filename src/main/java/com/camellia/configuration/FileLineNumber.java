@@ -6,6 +6,15 @@ public class FileLineNumber {
 
     private String fileName = "";
     private ArrayList<Integer> lines = new ArrayList<Integer>();
+    private ArrayList<String> lvl2Functions = new ArrayList<String>();
+    
+    public void addLevel2FunctionName(String n) {
+    	this.lvl2Functions.add(n);
+    }
+    
+    public ArrayList<String> getLevel2FunctionNames() {
+    	return this.lvl2Functions;
+    }
 
     public FileLineNumber(String f) {
         this.fileName = f;

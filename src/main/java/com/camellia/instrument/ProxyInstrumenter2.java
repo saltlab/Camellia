@@ -194,6 +194,11 @@ public class ProxyInstrumenter2 extends AstInstrumenter {
 			if (tt == org.mozilla.javascript.Token.NAME) {
 				System.out.println(((Name) node).getIdentifier());
 			}
+		} else if (tt == org.mozilla.javascript.Token.NAME
+				//&& node.getLineno() == lineNo
+				&& ((Name) node).getIdentifier().equals(variableName)) {
+			System.out.println(((Name) node).getIdentifier());
+			System.out.println(node.getLineno());
 		}
 
 		return continueToChildren;  // process kids

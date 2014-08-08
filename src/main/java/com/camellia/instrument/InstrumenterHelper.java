@@ -89,9 +89,6 @@ public final class InstrumenterHelper {
         ArrayList<Scope> scopePath = new ArrayList<Scope>();
 
         while (currentScope != null) {
-            System.out.println("scope sourcE:");
-            System.out.println(currentScope.toSource());
-            System.out.println(currentScope.getClass().toString());
             scopePath.add(currentScope);
             currentScope = currentScope.getEnclosingScope();
         }  
