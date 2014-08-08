@@ -39,7 +39,9 @@ import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.ast.Name;
 
+import com.camellia.core.Main;
 import com.clematis.core.WebDriverWrapper;
 import com.clematis.core.episode.Episode;
 import com.clematis.core.episode.Story;
@@ -95,6 +97,9 @@ public class JSExecutionTracer {
 	private static ObjectMapper mapper = new ObjectMapper();
 	static String theTime;
 	private static int counter = 0;
+
+	// Camellia linkage
+	private static ArrayList<Name> slicingCriteria = new ArrayList<Name>();
 
 	// Counter synchronizing code
 	private static long pageLoadBuffer = 0;
@@ -428,7 +433,7 @@ public class JSExecutionTracer {
 						@SuppressWarnings("unchecked")
 						Iterator<String> elKeys = singleAssertionSummary.getJSONObject("elements").keys();
 
-						
+
 						// <<  cross EPISODE JS ACCESS with Selenium assertion ACCESSE(S)  >>
 
 						while (elKeys.hasNext()) {
@@ -483,10 +488,10 @@ public class JSExecutionTracer {
 											System.out.println("closest call: " + ((FunctionCall) episodeTrace.get(ff)).getTargetFunction() + "   " + ((FunctionCall) episodeTrace.get(ff)).getCounter());
 											System.out.println("Line number to slice?:  " + ((FunctionCall) episodeTrace.get(ff)).getLineNo());
 											System.out.println(".....................................");
-											
 
-											
-											
+
+
+
 											File getSliceCriteria = new File("src/main/webapp/fish-eye-zoom-camera/"+((FunctionCall) episodeTrace.get(ff)).getScopeName());
 											FileReader fr2 = new FileReader(getSliceCriteria);
 											BufferedReader br2 = new BufferedReader(fr2); 
@@ -503,52 +508,49 @@ public class JSExecutionTracer {
 													webAppCode += s2;
 													break;
 												}
-												
+
 											}
 											br2.close();
-											
-									        /* initialize JavaScript context */
-									        Context cx = Context.enter();
 
-									        /* create a new parser */
-									        CompilerEnvirons compilerEnvirons =  new CompilerEnvirons();
-									        compilerEnvirons.setRecordingLocalJsDocComments(true);
-									        compilerEnvirons.setAllowSharpComments(true);
-									        compilerEnvirons.setRecordingComments(true);
-									        compilerEnvirons.setOptimizationLevel(0);
-									        Parser rhinoParser = new Parser(compilerEnvirons, cx.getErrorReporter());
+											/* initialize JavaScript context */
+											Context cx = Context.enter();
 
-									        /* parse some script and save it in AST */
-									        AstRoot ast = rhinoParser.parse(new String(webAppCode), ((FunctionCall) episodeTrace.get(ff)).getScopeName(), 0);
-														
-									        
-									        int lineType = ast.getType();
+											/* create a new parser */
+											CompilerEnvirons compilerEnvirons =  new CompilerEnvirons();
+											compilerEnvirons.setRecordingLocalJsDocComments(true);
+											compilerEnvirons.setAllowSharpComments(true);
+											compilerEnvirons.setRecordingComments(true);
+											compilerEnvirons.setOptimizationLevel(0);
+											Parser rhinoParser = new Parser(compilerEnvirons, cx.getErrorReporter());
 
-									        System.out.println(Token.typeToName(lineType));
-									        
-											if (lineType == org.mozilla.javascript.Token.ASSIGN) {
-												//handleFunctionDeclaration((FunctionNode) node);
-											}
-									        
+											/* parse some script and save it in AST */
+											System.out.println(webAppCode);
+											AstRoot ast = rhinoParser.parse(new String(webAppCode), ((FunctionCall) episodeTrace.get(ff)).getScopeName(), 0);
+
+
+											int lineType = ast.getType();
+
+
 											SlicingCriteriaExtractor sce = new SlicingCriteriaExtractor();
 											ast.visit(sce);
-											
+
 											Iterator<AstNode> it = sce.getDependencies().iterator();
+											AstNode next;
 											while (it.hasNext()) {
-												System.out.println(it.next().toSource());
+												next = it.next();
+												System.out.println(next.toSource());
+												if (next instanceof Name) {
+													next.setLineno(lineCounter);
+													slicingCriteria.add((Name) next);
+												}
 											}
 											sce.clearDependencies();
-											
+
 											break;
 										}
 									}
-									
-									
 
 
-
-									System.out.println(".....................................");
-									System.out.println("-----------------------------------");
 
 
 
@@ -597,6 +599,26 @@ public class JSExecutionTracer {
 				}
 				episodeNumber++;
 			}
+
+			System.out.println(".....................................");
+			System.out.println("-----------------------------------");
+			Iterator<Name> finalIt = slicingCriteria.iterator();
+			Name nameNext;
+			while (finalIt.hasNext()) {
+				nameNext = finalIt.next();
+				System.out.println(nameNext.toSource() + ", line @:  " + nameNext.getLineno());
+			}
+			System.out.println(".....................................");
+			System.out.println("-----------------------------------");
+
+			Main camellia = new Main();
+			String[] args = new String[4];
+			
+			
+			// Make sure other browser session is killed here, will make new one to run test case for slicing portion
+			
+			camellia.runMain(args);
+
 			JSepisodes.close();
 
 			// Create graph containing all episodes with embedded sequence diagrams

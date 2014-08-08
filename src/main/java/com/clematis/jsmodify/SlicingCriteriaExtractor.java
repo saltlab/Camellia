@@ -18,7 +18,7 @@ public class SlicingCriteriaExtractor extends AstInstrumenter {
 	 */
 	private CompilerEnvirons compilerEnvirons = new CompilerEnvirons();
 	private ErrorReporter errorReporter = compilerEnvirons.getErrorReporter();
-	private ArrayList deps = new ArrayList<AstNode>();
+	private ArrayList<AstNode> deps = new ArrayList<AstNode>();
 
 	/**
 	 * Construct without patterns.
@@ -56,7 +56,7 @@ public class SlicingCriteriaExtractor extends AstInstrumenter {
 		int tt = node.getType();
 
 		if (tt == org.mozilla.javascript.Token.ASSIGN) {
-			deps.addAll(InfixExpressionParser.getOperandDependencies(((InfixExpression)node)));
+			deps.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) node, false));
 			return false;
 		} else {
 			return true;  // process kids

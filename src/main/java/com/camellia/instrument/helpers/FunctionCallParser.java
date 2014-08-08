@@ -31,11 +31,11 @@ public class FunctionCallParser {
 			switch (nextArg.getType()) {
 			case org.mozilla.javascript.Token.ADD:  
 
-				a.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) nextArg));
+				a.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) nextArg, true));
 				break;
 			case org.mozilla.javascript.Token.SUB:
 
-				a.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) nextArg));
+				a.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) nextArg, true));
 				break;
 			case org.mozilla.javascript.Token.CALL:  
 

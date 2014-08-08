@@ -17,11 +17,12 @@ import com.camellia.instrument.AstInstrumenter;
 
 public class InfixExpressionParser {//extends AstInstrumenter {
 
+
 	public InfixExpressionParser () {
 
 	}
 
-	public static ArrayList<AstNode> /* ArrayList<AstNode> */ getOperandDependencies(InfixExpression node) {
+	public static ArrayList<AstNode> /* ArrayList<AstNode> */ getOperandDependencies(InfixExpression node, boolean addLeft) {
 
 		ArrayList<AstNode> d = new ArrayList<AstNode>();
 		ArrayList<AstNode> operands = new ArrayList<AstNode>();
@@ -31,7 +32,9 @@ public class InfixExpressionParser {//extends AstInstrumenter {
 		// Un-used right now
 		//int operationType = node.getOperator();
 
-		operands.add(node.getLeft());
+		if (addLeft) {
+			operands.add(node.getLeft());
+		}
 		operands.add(node.getRight());
 
 		it = operands.iterator();
@@ -41,10 +44,10 @@ public class InfixExpressionParser {//extends AstInstrumenter {
 			switch (operand.getType()) {
 			case org.mozilla.javascript.Token.ADD:  
 				// Call recursively (e.g. var a = b + c + d)
-				d.addAll(getOperandDependencies((InfixExpression) operand));
+				d.addAll(getOperandDependencies((InfixExpression) operand, true));
 				break;
 			case org.mozilla.javascript.Token.SUB:
-				d.addAll(getOperandDependencies((InfixExpression) operand));
+				d.addAll(getOperandDependencies((InfixExpression) operand, true));
 
 				break;
 			case org.mozilla.javascript.Token.NAME:  

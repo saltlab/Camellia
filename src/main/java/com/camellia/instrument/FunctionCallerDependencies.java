@@ -193,11 +193,11 @@ public class FunctionCallerDependencies extends AstInstrumenter {
 					// Investigate how to get all variables in the add/concatination
 
 					InfixExpression addOperation = ((InfixExpression) currentArgument);
-					dataDependencies.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) currentArgument));
+					dataDependencies.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) currentArgument, true));
 				} else if (argumentType == org.mozilla.javascript.Token.SUB) {
 
 					InfixExpression subOperation = ((InfixExpression) currentArgument);
-					dataDependencies.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) currentArgument));
+					dataDependencies.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) currentArgument, true));
 					// Investigate how to get all variables in the sub
 				} else if (argumentType == org.mozilla.javascript.Token.NEG) {
 

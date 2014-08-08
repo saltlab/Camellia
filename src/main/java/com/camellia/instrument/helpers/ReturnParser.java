@@ -37,10 +37,10 @@ public class ReturnParser {
 			p.addAll(FunctionCallParser.getArgumentDependencies((FunctionCall) returnValue));
 			break;
 		case org.mozilla.javascript.Token.ADD:
-			p.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) returnValue));
+			p.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) returnValue, true));
 			break;
 		case org.mozilla.javascript.Token.SUB:
-			InfixExpressionParser.getOperandDependencies((InfixExpression) returnValue);
+			InfixExpressionParser.getOperandDependencies((InfixExpression) returnValue, true);
 			break;
 		default:
 			System.out.println("[InfixExpression]: Error parsing Infix Expression. Unknown operand type. (getNames())");

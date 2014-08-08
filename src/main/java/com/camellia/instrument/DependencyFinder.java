@@ -412,9 +412,9 @@ public class DependencyFinder extends AstInstrumenter {
 					// Need to check if there is over lap with CALL (method calls, which do they fall under)
 					dataDependencies.addAll(PropertyGetParser.getPropertyDependencies((PropertyGet) rightSide));
 				} else if (rightSideType == org.mozilla.javascript.Token.ADD) {
-					dataDependencies.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) rightSide));
+					dataDependencies.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) rightSide, true));
 				} else if (rightSideType == org.mozilla.javascript.Token.SUB) {
-					dataDependencies.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) rightSide));
+					dataDependencies.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) rightSide, true));
 				} else if (rightSideType == org.mozilla.javascript.Token.NEG) {
 				} else if (rightSideType == org.mozilla.javascript.Token.POS) {
 				} else if (rightSideType == org.mozilla.javascript.Token.OBJECTLIT) {
@@ -600,13 +600,13 @@ public class DependencyFinder extends AstInstrumenter {
 				System.out.println("Right: " + Token.typeToName(addOperation.getRight().getType()));
 				System.out.println("Left: " + Token.typeToName(addOperation.getLeft().getType()));
 
-				dataDependencies.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) rightSide));
+				dataDependencies.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) rightSide, true));
 
 
 			} else if (rightSideType == org.mozilla.javascript.Token.SUB) {
 				InfixExpression subOperation = ((InfixExpression) rightSide);
 
-				dataDependencies.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) rightSide));
+				dataDependencies.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) rightSide, true));
 
 				// Investigate how to get all variables in the sub
 			} else if (rightSideType == org.mozilla.javascript.Token.NEG) {

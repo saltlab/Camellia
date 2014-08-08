@@ -36,13 +36,13 @@ public class Main {
         new Main().runMain(args);
     }
 	
-	void runMain(String[] args) throws IOException {
+	public void runMain(String[] args) throws IOException {
         parse(args);
         initialize();
         runDynoSlicer(args);
     }
 
-    public void runDynoSlicer(String[] args) {
+    private void runDynoSlicer(String[] args) {
     	LocalExample le = new LocalExample(); 
     	
     	if (isServer) {
