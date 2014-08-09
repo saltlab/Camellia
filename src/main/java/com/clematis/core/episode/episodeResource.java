@@ -770,19 +770,8 @@ public class episodeResource {
 	public JSONArray getFailureLevel1() {
 
 		try {
-			File file = new File("domAccesses.json");
-			FileReader fr = new FileReader(file);
-			BufferedReader br = new BufferedReader(fr); 
-			String ss = "";
-			String fileContents = "";
 
-			// Read assertion accesses and results from file and instantiate JSONObject
-			while((ss = br.readLine()) != null) {
-				fileContents += ss + "\n";
-			}
-			br.close();
-
-			JSONObject testCaseSummary = new JSONObject(fileContents);
+			JSONObject testCaseSummary = getTestCaseSummary();
 			Iterator<String> keys = testCaseSummary.keys();
 			String nextString = "";
 			JSONObject nextAssertion;
@@ -796,14 +785,81 @@ public class episodeResource {
 					return nextAssertion.getJSONArray("level2");
 				}
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
 		} catch (JSONException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
 		return new JSONArray();
+	}
+
+	@GET
+	@Path("/assertion/failure/domelement")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject getDependentElement() {
+		JSONObject returnMe = new JSONObject();
+
+		try {
+			JSONObject testCaseSummary = getTestCaseSummary();
+			Iterator<String> keys = testCaseSummary.keys();
+			String nextString = "";
+			JSONObject nextAssertion;
+
+			while (keys.hasNext()) {
+				nextString = keys.next();
+				nextAssertion = testCaseSummary.getJSONObject(nextString);
+				// Found the failure
+				if (nextAssertion.has("outcome") && nextAssertion.get("outcome").equals("false")) {
+					// Latest access/element returned is the dependency
+					JSONObject elements = nextAssertion.getJSONObject("elements");
+					Iterator<String> elementIDs = elements.keys();
+					int currentCounter = -1;
+					String nextID = "";
+
+					while (elementIDs.hasNext()) {
+						nextID = elementIDs.next();
+						if (elements.getJSONObject(nextID).getInt("counter") > currentCounter) {
+							currentCounter = elements.getJSONObject(nextID).getInt("counter");
+							returnMe = elements.getJSONObject(nextID);
+						}
+					}
+
+				}
+			}
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if (returnMe.has("counter")) {
+			returnMe.remove("counter");
+		}
+
+		return returnMe;
+	}
+
+	private JSONObject getTestCaseSummary() {
+		try {
+			File file = new File("domAccesses.json");
+			FileReader fr = new FileReader(file);
+			BufferedReader br = new BufferedReader(fr); 
+			String ss = "";
+			String fileContents = "";
+
+			// Read assertion accesses and results from file and instantiate JSONObject
+			while((ss = br.readLine()) != null) {
+				fileContents += ss + "\n";
+			}
+			br.close();
+
+			return new JSONObject(fileContents);
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return new JSONObject();
 	}
 
 }

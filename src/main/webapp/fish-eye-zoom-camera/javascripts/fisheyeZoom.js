@@ -567,6 +567,10 @@ for (var i = 0, n = cells.length; i < n; i++) {
                 var url3 = 'http://localhost:8080/rest/clematis-api/assertion/failure/Level1';
                 var trace = new Array;
                 var tempDiv = document.createElement("div");
+                                      var tempDiv_source = document.createElement("div");
+                                      var tbl_source = document.createElement("table");
+
+
                 var myBr = document.createElement('br');
                 var tbl = document.createElement("table");
                 var tblBody = document.createElement("tbody");
@@ -642,7 +646,6 @@ for (var i = 0, n = cells.length; i < n; i++) {
                                       // DOMEvent
                                       cells_source[1].appendChild(document.createTextNode("eventType"));
                                       cells_source[2].appendChild(document.createTextNode("targetElement id"));
-                                      cells_source[3].appendChild(document.createTextNode("Assertion"));
                                       cells_source[3].setAttribute('class', 'cell_source');
                                       $(episodeContents[i]).addClass('cell_assertion_fail').removeClass('cell_to', 'cell_xhr', 'cell_dom');
                                       
@@ -653,6 +656,7 @@ for (var i = 0, n = cells.length; i < n; i++) {
                                       tblBody_source.appendChild(rows_source[0]);
                                       tblBody_source.appendChild(rows_source[2]);
                                       
+                                      // Add assertion's related JavaScript functions to visualization
                                       $.ajax({
                                              type: 'GET',
                                              url: url3,
@@ -687,6 +691,38 @@ for (var i = 0, n = cells.length; i < n; i++) {
                                              tempDiv.appendChild(tbl);
                                              }
                                              });
+                                      
+
+                                      // Add assertion's DOM dependency to the visualization
+                                      $.ajax({
+                                             type: 'GET',
+                                             url: 'http://localhost:8080/rest/clematis-api/assertion/failure/domelement',
+                                             dataType: "json",
+                                             async: false,
+                                             success: function renderList4(data) {
+                                             
+                                             cells_source[3].appendChild(document.createTextNode(JSON.stringify(data, null, 4)));
+
+                                             }
+                                             });
+
+                                      
+                                      
+                                      
+                                      
+                                      
+                                      
+                                      
+                                      
+                                      
+                                      
+                                      tbl_source.setAttribute("border", "0");
+                                      tbl_source.appendChild(tblBody_source);
+                                      tempDiv_source.appendChild(tbl_source);
+                                      cell1SZ[i].appendChild(tempDiv_source);
+                                      
+                                      
+                                      
                                       cell2SZ[i].appendChild(tempDiv);
                                       jsPlumb.detachEveryConnection();
                                       $(divs[i]).replaceWith(episodeContents[i]);
@@ -695,6 +731,7 @@ for (var i = 0, n = cells.length; i < n; i++) {
                                       zoomLevel1[i] = false;
                                       $(episodeContents[i]).replaceWith(divs[i]);
                                       cell2SZ[i].removeChild(cell2SZ[i].lastChild);
+                                      cell1SZ[i].removeChild(cell1SZ[i].lastChild);
                                       var counterForLinks = 0;
                                       for (var x = 0; x < zoomLevel1.length; x++) {
                                       if (zoomLevel1[x] == false) {
