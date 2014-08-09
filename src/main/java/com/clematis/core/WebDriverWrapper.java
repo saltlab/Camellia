@@ -15,6 +15,8 @@ import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.remote.ErrorHandler.UnknownServerException;
 import org.openqa.selenium.JavascriptExecutor;
 
+import com.clematis.jsmodify.JSExecutionTracer;
+
 public class WebDriverWrapper extends org.openqa.selenium.firefox.FirefoxDriver {
 
 	public static Vector<JSONObject> directAccesses = new Vector<JSONObject>();
@@ -65,6 +67,7 @@ public class WebDriverWrapper extends org.openqa.selenium.firefox.FirefoxDriver 
 				try {
 					JSONObject addMe = new JSONObject((String)((JavascriptExecutor) this).executeScript(
 							"if (JsonML !== undefined) {"+
+									"window.console.log('current counter  ' + traceCounter);"+
 									"var parentNodeValue = JsonML.fromHTML(arguments[0]);"+
 									"parentNodeValue[1].tagName = parentNodeValue[0].toLowerCase();"+
 									"parentNodeValue[1].child = parentNodeValue[2];"+
@@ -75,6 +78,8 @@ public class WebDriverWrapper extends org.openqa.selenium.firefox.FirefoxDriver 
 									"return null;"+
 									"}",
 									foundIt));
+					addMe.put("counter", addMe.getInt("counter") + JSExecutionTracer.getPageLoadBuffer());
+
 					if (addMe != null) {
 						foundElements.add(addMe);
 					}
@@ -131,6 +136,7 @@ public class WebDriverWrapper extends org.openqa.selenium.firefox.FirefoxDriver 
 			try {
 				JSONObject addMe = new JSONObject((String)((JavascriptExecutor) this).executeScript(
 						"if (JsonML !== undefined) {"+
+								"window.console.log('current counter  ' + traceCounter);"+
 								"var parentNodeValue = JsonML.fromHTML(arguments[0]);"+
 								"parentNodeValue[1].tagName = parentNodeValue[0].toLowerCase();"+
 								"parentNodeValue[1].child = parentNodeValue[2];"+
@@ -141,6 +147,7 @@ public class WebDriverWrapper extends org.openqa.selenium.firefox.FirefoxDriver 
 								"return null;"+
 								"}",
 								foundIt));
+				addMe.put("counter", addMe.getInt("counter") + JSExecutionTracer.getPageLoadBuffer());
 				if (addMe != null) {
 					foundElements.add(addMe);
 				}

@@ -337,7 +337,8 @@ public class SimpleExample2 {
 					Helper.checkFolderForFile("src/main/webapp/lines" + theSlice.get(a).getFileName().replace(".js", ".txt"));
 					PrintStream outputVisual = new PrintStream("src/main/webapp/lines" + theSlice.get(a).getFileName().replace(".js", ".txt"));
 					System.setOut(outputVisual);
-					System.out.println(theSlice.get(a).getLinesAsString());
+					int accessLine = LINE+1;
+					System.out.println(theSlice.get(a).getLinesAsString()+accessLine+",");
 				}
 
 				String allFiles = "";

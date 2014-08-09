@@ -19,7 +19,7 @@ public class SlideShowTest_before {
 
 	@Test
 	public void testSlideShow() throws Exception {
-		driver.get("http://localhost/?feat=slideshow");
+		driver.get("http://localhost:8888/?feat=slideshow");
 		assertTrue(driver.getTitle().matches("^SlideShow[\\s\\S]*$"));
 		driver.findElement(By.id("ss_playpause_link")).click();
 		try {
@@ -44,8 +44,6 @@ public class SlideShowTest_before {
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
-		driver.findElement(By.linkText("Back")).click();
-		assertEquals("TestGallery1", driver.getTitle());
 	}
 
 	@After
@@ -53,6 +51,7 @@ public class SlideShowTest_before {
 		driver.quit();
 		String verificationErrorString = verificationErrors.toString();
 		if (!"".equals(verificationErrorString)) {
+			System.out.println(verificationErrorString);
 			fail(verificationErrorString);
 		}
 	}

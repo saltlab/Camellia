@@ -391,9 +391,11 @@ public class JSExecutionTracer {
 			 * 
 			 * 
 			 */
-			int epNum = 0;
+			int epNum = -1;
 			// << EPISODE ITERATE >>
 			for (Episode e : story.getEpisodes()) {
+				epNum++;
+
 				if (e.getSource() instanceof SeleniumAssertionTrace) {
 					// Add in an empty episodes
 					designSequenceDiagram(e, JSepisodes);
@@ -402,7 +404,6 @@ public class JSExecutionTracer {
 				}
 				System.out.println("++++++++++++++++++++++++++++++++");
 				System.out.println("EPISODE:  " + epNum);
-				epNum++;
 				episodeMutations = e.getDom();
 				episodeDomAccesses = e.getDomAccesses();
 				episodeTrace = e.getTrace().getTrace();
@@ -413,17 +414,32 @@ public class JSExecutionTracer {
 				assertions = testCaseSummary.keys();
 				// <<  ASSERTION ITERATE  >> 
 				while (assertions.hasNext()) {
+					
 					assertionID = assertions.next();
 					System.out.println("=================================");
 					System.out.println("ASSERTION:  " + assertionID);
 
 
 					singleAssertionSummary = testCaseSummary.getJSONObject(assertionID);
+					
+					// August 8th, CHANGE
+					// Only showing mapping between failing assertions and previous events (Level 0)
+					if (singleAssertionSummary.has("outcome") &&  singleAssertionSummary.get("outcome").equals("true")) {
+						continue;
+					}
 
+					if (epNum == 8) {
+						System.out.println("interesting!");
+					}
+					
 					// FINDING RELEVANT Mutations
 					// <<  MUTATION ITERATE  >>
 					relatedMutations = getRelevantTraceInformation(singleAssertionSummary.getJSONObject("elements"), e.getDom());
-
+					
+					if (epNum == 8) {
+						System.out.println(relatedMutations.size());
+					}
+					
 					// 1. Find parent episode of all mutants in "relatedMutations"
 					// ^^ Dont need to find this? already known? see above loop
 					if (relatedMutations.size() > 0) {
@@ -1158,6 +1174,7 @@ public class JSExecutionTracer {
 		int m = 0;
 		while (elKeys.hasNext()){
 			currentEl = new JSONObject(assertionAccesses.getJSONObject(elKeys.next()).toString());
+			System.out.println(currentEl);
 			seleniumAccessCounter = currentEl.getInt("counter");
 			currentEl.remove("counter");
 

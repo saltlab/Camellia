@@ -62,10 +62,10 @@ public class SlideShowTest {
 		}
 		Thread.sleep(1200);
 		driver.findElement(Byy.linkText("Previous")).click();
-		Thread.sleep(700);
+		Thread.sleep(3000);
 
 		try {
-			assertEquals("2", driver.findElement(Byy.cssSelector("span#ss_n")).getText());
+			assertEquals("1", driver.findElement(Byy.cssSelector("span#ss_n")).getText());
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
