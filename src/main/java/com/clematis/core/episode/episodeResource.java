@@ -1,13 +1,16 @@
 package com.clematis.core.episode;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -19,6 +22,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
@@ -56,12 +60,12 @@ public class episodeResource {
 
 	private Story s1;
 	private Story s2;
-	
+
 	private long lastModified = -1;
-	
+
 	private File f1 = null;
 	private File f2 = null;
-	
+
 	private ObjectMapper mapper = new ObjectMapper();
 	private Map<String, Episode> episodeMap = new HashMap<String, Episode>(200);
 	private Map<String, Episode> episodeMap2 = new HashMap<String, Episode>(200);
@@ -87,15 +91,15 @@ public class episodeResource {
 		configureObjectMapper();
 		try {
 			f2 = new File("story.json");
-			
+
 			// Used cached/saved story, no need to reinitialize
 			if (f2.lastModified() == lastModified) {
 				return "successfully intialized story";
 			}
-			
+
 			this.s1 = mapper.readValue(f2,
 					Story.class);
-			
+
 			/*	this.s2 = mapper.readValue(new File("story2.json"),
 					Story.class);*/
 			lastModified = f2.lastModified();
@@ -757,6 +761,49 @@ public class episodeResource {
 		}
 
 		return sourceDiff;
+	}
+
+
+	@GET
+	@Path("/assertion/failure/Level1")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONArray getFailureLevel1() {
+
+		try {
+			File file = new File("domAccesses.json");
+			FileReader fr = new FileReader(file);
+			BufferedReader br = new BufferedReader(fr); 
+			String ss = "";
+			String fileContents = "";
+
+			// Read assertion accesses and results from file and instantiate JSONObject
+			while((ss = br.readLine()) != null) {
+				fileContents += ss + "\n";
+			}
+			br.close();
+
+			JSONObject testCaseSummary = new JSONObject(fileContents);
+			Iterator<String> keys = testCaseSummary.keys();
+			String nextString = "";
+			JSONObject nextAssertion;
+
+			while (keys.hasNext()) {
+				nextString = keys.next();
+				nextAssertion = testCaseSummary.getJSONObject(nextString);
+				// Found the failure
+				if (nextAssertion.has("outcome") && nextAssertion.get("outcome").equals("false")) {
+					// Should have level 2 function names added to the summary at this point
+					return nextAssertion.getJSONArray("level2");
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return new JSONArray();
 	}
 
 }

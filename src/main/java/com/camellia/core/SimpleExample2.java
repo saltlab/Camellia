@@ -3,6 +3,7 @@ package com.camellia.core;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -12,6 +13,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
+import org.json.JSONObject;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Parser;
@@ -52,6 +54,7 @@ import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
 
+import com.clematis.core.WebDriverWrapper;
 import com.clematis.core.trace.FunctionCall;
 import com.clematis.selenium.SlideShowTest_forSlicer;
 import com.crawljax.util.Helper;
@@ -335,10 +338,6 @@ public class SimpleExample2 {
 					PrintStream outputVisual = new PrintStream("src/main/webapp/lines" + theSlice.get(a).getFileName().replace(".js", ".txt"));
 					System.setOut(outputVisual);
 					System.out.println(theSlice.get(a).getLinesAsString());
-
-
-
-
 				}
 
 				String allFiles = "";
@@ -357,6 +356,46 @@ public class SimpleExample2 {
 				System.setOut(outputVisual2);
 				System.out.println(allFiles);
 				System.setOut(oldOut);
+
+				// Line numbers and file names have been recorded to disk (above). Now add level 2 function names to domAccesses aka test case summary
+				File file = new File("domAccesses.json");
+				FileReader fr = new FileReader(file);
+				BufferedReader br = new BufferedReader(fr); 
+				String ss = "";
+				String fileContents = "";
+
+				// Read assertion accesses and results from file and instantiate JSONObject
+				while((ss = br.readLine()) != null) {
+					fileContents += ss + "\n";
+				}
+				br.close();
+
+				JSONObject testCaseSummary = new JSONObject(fileContents);
+				// Look for failing assertion
+				Iterator it = testCaseSummary.keys();
+				JSONObject assertion = null;
+				while (it.hasNext()) {
+					assertion = testCaseSummary.getJSONObject((String) it.next());
+					if (assertion.getString("outcome").equals("false")) {
+						ArrayList<String> fnNamesAcrossFiles = new ArrayList<String>();
+						for (int j = 0; j < theSlice.size(); j++) {
+							fnNamesAcrossFiles.addAll(theSlice.get(j).getLevel2FunctionNames());
+						}
+
+						// Found a failing assertion
+						assertion.put("level2", fnNamesAcrossFiles);
+						// NOT SURE IF THE ABOVE WILL WORK (ASSIGNING Collection to key in JSONObject)
+					}
+				}
+
+				if (assertion != null) {
+					// Rewrite assertion summary since level 2 functions were added for failing assertion
+					File output = new File("domAccesses.json");
+					FileWriter fw = new FileWriter(output);
+					fw.write(testCaseSummary.toString(4));
+					fw.close();
+				}
+
 			} else {
 				System.out.println("Application not exercised enough! No slice produced.");
 			}
@@ -806,7 +845,7 @@ public class SimpleExample2 {
 			// Read assertion accesses and results from file and instantiate JSONObject
 			String s2;
 			while((s2 = br2.readLine()) != null) {
-				webAppCode += s2;
+				webAppCode += s2+"\n";
 			}
 			br2.close();
 
@@ -822,6 +861,7 @@ public class SimpleExample2 {
 			Parser rhinoParser = new Parser(compilerEnvirons, cx.getErrorReporter());
 
 			/* parse some script and save it in AST */
+			System.out.println(webAppCode);
 			AstRoot ast = rhinoParser.parse(new String(webAppCode), o.getFile(), 0);
 
 			// Init. searcher
@@ -831,7 +871,9 @@ public class SimpleExample2 {
 			// Search for enclosing function
 			ast.visit(pff);
 
-			TraceHelper.getFileLineMapping(o.getFile(), theSlice).addLevel2FunctionName(pff.getParentFunction());
+			if (TraceHelper.getFileLineMapping(o.getFile(), theSlice).getLevel2FunctionNames().indexOf(pff.getParentFunction()) == -1) {
+				TraceHelper.getFileLineMapping(o.getFile(), theSlice).addLevel2FunctionName(pff.getParentFunction());
+			}
 		} catch (IOException ioe) {
 			ioe.printStackTrace();
 		}

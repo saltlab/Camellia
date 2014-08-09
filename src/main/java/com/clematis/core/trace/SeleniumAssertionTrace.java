@@ -12,7 +12,7 @@ public class SeleniumAssertionTrace extends TraceObject/* implements EpisodeSour
 	public void setOutcome (String outcome) {
 		if (outcome.contains("true")) {
 			this.outcome = "Pass";
-		} else if(outcome.contains("fail") || outcome.contains("incomplete")) {
+		} else if(outcome.contains("false") || outcome.contains("incomplete")) {
 			this.outcome = "Fail";
 		} else {
 			this.outcome = outcome;

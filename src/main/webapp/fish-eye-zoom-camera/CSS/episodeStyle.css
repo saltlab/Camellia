@@ -29,6 +29,10 @@ td.domEvent {
   background-color: #E0FFFF;
 }
 */
+td.episode_cell_ass {
+  border: 1px solid #00CED1;
+  background-color: #E74C3C;
+}
 
 td.episode_cell_dom {
   border: 1px solid #00CED1;

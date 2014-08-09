@@ -551,7 +551,163 @@ for (var i = 0; i < number_episodes; i++) {
 for (var i = 0, n = cells.length; i < n; i++) {
     var el = cells[i];
   
-    if (el.innerHTML.contains('Assertion')) {
+    if (el.innerHTML.contains('Assertion') && el.innerHTML.contains('Pass')) {
+        continue;
+    } else if (el.innerHTML.contains('Assertion') && el.innerHTML.contains('Fail')) {
+        el.addEventListener('click', (function (i, el) {
+        return function () {
+                                      allEpisodes[i].assertionFlag = true;
+                                      allEpisodes[i].assertionOutcome = false;
+            menuAnchor4.appendChild(fullScreen);
+            if (zoomLevel1[i] == false) {
+                zoomLevel1[i] = true;
+                currentEpisode = i;
+     
+                //Get the trace for  zoom level 1.
+                var url3 = 'http://localhost:8080/rest/clematis-api/assertion/failure/Level1';
+                var trace = new Array;
+                var tempDiv = document.createElement("div");
+                var myBr = document.createElement('br');
+                var tbl = document.createElement("table");
+                var tblBody = document.createElement("tbody");
+                                      var tblBody_source = document.createElement("tbody");
+
+                var cells_source = new Array;
+                                      var rows_source = new Array;
+
+                var rows = new Array;
+                rows[0] = document.createElement("tr");
+                rows[1] = document.createElement("tr");
+                var cells = new Array;
+
+                cells[0] = document.createElement("td");
+                cells[1] = document.createElement("td");
+                cells[2] = document.createElement("td");
+                cells[3] = document.createElement("td");
+
+                cells[0].style.fontSize = "20px";
+                cells[1].style.fontSize = "15px";
+                cells[2].style.fontSize = "15px";
+                cells[3].style.fontSize = "15px";
+
+                cells[0].style.color = "black";
+                cells[1].style.color = "black";
+                cells[2].style.color = "black";
+                cells[3].style.color = "black";
+
+                cells[0].style.fontFamily = "TAHOMA";
+                cells[1].style.fontFamily = "TAHOMA";
+                cells[2].style.fontFamily = "TAHOMA";
+                cells[3].style.fontFamily = "TAHOMA";
+
+                cells[0].colSpan = 3;
+                cells[0].appendChild(document.createTextNode("Related Fn."));
+                cells[1].appendChild(document.createTextNode("lineNo"));
+                cells[2].appendChild(document.createTextNode("targetFunction"));
+                cells[3].appendChild(document.createTextNode("scopeName"));
+
+                rows[0].appendChild(cells[0]);
+                rows[1].appendChild(cells[1]);
+                rows[1].appendChild(cells[2]);
+                rows[1].appendChild(cells[3]);
+                tblBody.appendChild(rows[0]);
+                                      
+                                      rows_source[0] = document.createElement("tr");
+                                      rows_source[1] = document.createElement("tr");
+                                      rows_source[2] = document.createElement("tr");
+                                      
+                                      cells_source[0] = document.createElement("td");
+                                      cells_source[1] = document.createElement("td");
+                                      cells_source[2] = document.createElement("td");
+                                      cells_source[3] = document.createElement("td");
+                                      cells_source[4] = document.createElement("td");
+                                      
+                                      cells_source[0].style.fontSize = "20px";
+                                      cells_source[1].style.fontSize = "15px";
+                                      cells_source[2].style.fontSize = "15px";
+                                      cells_source[0].style.color = "black";
+                                      cells_source[1].style.color = "black";
+                                      cells_source[2].style.color = "black";
+                                      
+                                      cells_source[0].style.fontFamily = "TAHOMA";
+                                      cells_source[1].style.fontFamily = "TAHOMA";
+                                      cells_source[2].style.fontFamily = "TAHOMA";
+                                      
+                                      cells_source[0].colSpan = 2;
+                                      cells_source[0].appendChild(document.createTextNode("Source"));
+                                      rows_source[0].appendChild(cells_source[0]);
+
+                                      
+                                      
+                                      // DOMEvent
+                                      cells_source[1].appendChild(document.createTextNode("eventType"));
+                                      cells_source[2].appendChild(document.createTextNode("targetElement id"));
+                                      cells_source[3].appendChild(document.createTextNode("Assertion"));
+                                      cells_source[3].setAttribute('class', 'cell_source');
+                                      $(episodeContents[i]).addClass('cell_assertion_fail').removeClass('cell_to', 'cell_xhr', 'cell_dom');
+                                      
+                                      rows_source[1].appendChild(cells_source[1]);
+                                      rows_source[1].appendChild(cells_source[2]);
+                                      rows_source[2].appendChild(cells_source[3]);
+                                      
+                                      tblBody_source.appendChild(rows_source[0]);
+                                      tblBody_source.appendChild(rows_source[2]);
+                                      
+                                      $.ajax({
+                                             type: 'GET',
+                                             url: url3,
+                                             dataType: "json",
+                                             async: false,
+                                             success: function renderList4(data) {
+        
+                                             var counter = 0;
+                                             var num_rows = 1;
+                                             rows[num_rows + 2] = document.createElement("tr");
+                                             for (var h = 0; h < data.length; h++) {
+                                             if (counter == 3) {
+                                             counter = 0;
+                                             num_rows++;
+                                             rows[num_rows + 2] = document.createElement("tr");
+                                             }
+                                             counter++;
+                                             cells[h + 3] = document.createElement("td");
+                                             
+                                             // Function trace, create lifeline
+                                             if (data[h] === 'script') {
+                                                cells[h + 3].appendChild(document.createTextNode(data[h]));
+                                             } else {
+                                                cells[h + 3].appendChild(document.createTextNode(data[h]+'()'));
+                                             }
+                                             cells[h + 3].setAttribute('class', 'cell_source');
+                                             
+                                             rows[num_rows + 2].appendChild(cells[h + 3]);
+                                             tblBody.appendChild(rows[num_rows + 2]);
+                                             }
+                                             tbl.appendChild(tblBody);
+                                             tempDiv.appendChild(tbl);
+                                             }
+                                             });
+                                      cell2SZ[i].appendChild(tempDiv);
+                                      jsPlumb.detachEveryConnection();
+                                      $(divs[i]).replaceWith(episodeContents[i]);
+                                      renderListLinks(temp_data);
+            } else {
+                                      zoomLevel1[i] = false;
+                                      $(episodeContents[i]).replaceWith(divs[i]);
+                                      cell2SZ[i].removeChild(cell2SZ[i].lastChild);
+                                      var counterForLinks = 0;
+                                      for (var x = 0; x < zoomLevel1.length; x++) {
+                                      if (zoomLevel1[x] == false) {
+                                      counterForLinks++;
+                                      }
+                                      }
+                                      jsPlumb.reset();
+                                      renderListLinks(temp_data);
+                                      
+                                      }
+                                      
+        }
+        })(i, el), false);
         continue;
     }
 
@@ -783,10 +939,9 @@ for (var i = 0, n = cells.length; i < n; i++) {
                         counterForLinks++;
                     }
                 }
-                if (counterForLinks == zoomLevel1.length) {
                     jsPlumb.reset();
                     renderListLinks(temp_data);
-                }
+                
             }
         }
     })(i, el), false);
@@ -826,6 +981,14 @@ function expandCurrentEpisode(i) {
 
     //get the DOM of a speceifc episode
     tabs2.appendChild(third_column);
+    
+    window.console.log(allEpisodes[i]);
+    window.checkMe = allEpisodes[i];
+    
+    if (allEpisodes[i].assertionFlag === true && allEpisodes[i].assertionOutcome === false) {
+        window.open("http://localhost:8080/view.html");
+        return;
+    }
 
     //get the trace of a specefic episode
     var table_sequence = document.createElement('table');
