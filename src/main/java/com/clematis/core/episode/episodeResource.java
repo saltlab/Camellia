@@ -833,6 +833,9 @@ public class episodeResource {
 		if (returnMe.has("counter")) {
 			returnMe.remove("counter");
 		}
+		if (returnMe.has("child")) {
+			returnMe.remove("child");
+		}
 
 		return returnMe;
 	}

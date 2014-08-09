@@ -701,7 +701,18 @@ for (var i = 0, n = cells.length; i < n; i++) {
                                              async: false,
                                              success: function renderList4(data) {
                                              
-                                             cells_source[3].appendChild(document.createTextNode(JSON.stringify(data, null, 4)));
+                                             var args = JSON.stringify(data).split(',');
+                                             var out = document.createElement("div");
+                                             
+                                             
+                                             for (var ty = 0; ty < args.length; ty++) {
+                                                out.appendChild(document.createTextNode(args[ty]
+                                                                                        .replace('{', '')
+                                                                                        .replace('}', '')));
+                                                out.appendChild(document.createElement("br"));
+                                             }
+                                             
+                                            cells_source[3].appendChild(out);
 
                                              }
                                              });
