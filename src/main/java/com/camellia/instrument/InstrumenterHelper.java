@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeSet;
 
+import org.apache.bcel.generic.INSTANCEOF;
 import org.mozilla.javascript.Token;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.FunctionNode;
@@ -88,9 +89,15 @@ public final class InstrumenterHelper {
         Scope currentScope = node.getEnclosingScope();
         ArrayList<Scope> scopePath = new ArrayList<Scope>();
 
+        System.out.println(currentScope.toSource());
+        
         while (currentScope != null) {
-            scopePath.add(currentScope);
-            currentScope = currentScope.getEnclosingScope();
+        	// Add the scope only if it is a Function or Script type, don't want blocks (i.e. 'if' statements) for now
+            if (Token.typeToName(currentScope.getType()).equals("FUNCTION")
+            		|| Token.typeToName(currentScope.getType()).equals("SCRIPT")) {
+                scopePath.add(currentScope);
+            }
+            currentScope = currentScope.getEnclosingScope(); 
         }  
         return scopePath;
     }

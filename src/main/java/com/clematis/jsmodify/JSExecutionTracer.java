@@ -265,7 +265,7 @@ public class JSExecutionTracer {
 	@SuppressWarnings("unchecked")
 	private static String[] extraxtTraceObjects() {
 		String[] args = new String[8];
-		
+
 		try {
 			// Declarations for reading back the written assertion summary
 			String s;
@@ -414,32 +414,24 @@ public class JSExecutionTracer {
 				assertions = testCaseSummary.keys();
 				// <<  ASSERTION ITERATE  >> 
 				while (assertions.hasNext()) {
-					
+
 					assertionID = assertions.next();
 					System.out.println("=================================");
 					System.out.println("ASSERTION:  " + assertionID);
 
 
 					singleAssertionSummary = testCaseSummary.getJSONObject(assertionID);
-					
+
 					// August 8th, CHANGE
 					// Only showing mapping between failing assertions and previous events (Level 0)
 					if (singleAssertionSummary.has("outcome") &&  singleAssertionSummary.get("outcome").equals("true")) {
 						continue;
 					}
 
-					if (epNum == 8) {
-						System.out.println("interesting!");
-					}
-					
 					// FINDING RELEVANT Mutations
 					// <<  MUTATION ITERATE  >>
 					relatedMutations = getRelevantTraceInformation(singleAssertionSummary.getJSONObject("elements"), e.getDom());
-					
-					if (epNum == 8) {
-						System.out.println(relatedMutations.size());
-					}
-					
+
 					// 1. Find parent episode of all mutants in "relatedMutations"
 					// ^^ Dont need to find this? already known? see above loop
 					if (relatedMutations.size() > 0) {
@@ -549,20 +541,32 @@ public class JSExecutionTracer {
 
 											int lineType = ast.getType();
 
-
+											System.out.println("Found JS line responsible for DOM update:  ");
+											System.out.println(webAppCode);
 											SlicingCriteriaExtractor sce = new SlicingCriteriaExtractor();
 											ast.visit(sce);
 
-											Iterator<AstNode> it = sce.getDependencies().iterator();
-											AstNode next;
-											while (it.hasNext()) {
-												next = it.next();
-												System.out.println(next.toSource());
-												if (next instanceof Name) {
-													next.setLineno(lineCounter);
-													slicingCriteria.add((Name) next);
+
+
+											if (sce.getDependencies().size() > 0) {
+												// The DOM-updating JavaScript line has some RHS dependencies (variables, etc.)
+												Iterator<AstNode> it = sce.getDependencies().iterator();
+												AstNode next;
+												while (it.hasNext()) {
+													next = it.next();
+													System.out.println(next.toSource());
+													if (next instanceof Name) {
+														next.setLineno(lineCounter);
+														slicingCriteria.add((Name) next);
+													}
 												}
+											} else {
+												// The DOM-updating JavaScript line has no dependencies (e.g. Updating DOM with hard-coded String value)
+												Name next = new Name();
+												next.setLineno(lineCounter);
+												slicingCriteria.add(next);
 											}
+
 											sce.clearDependencies();
 
 											break;

@@ -60,6 +60,8 @@ public class ParentFunctionFinder  extends AstInstrumenter {
 	private Scope findParentFunction(AstNode node) {
 
 		ArrayList<Scope> chain = InstrumenterHelper.getScopeChain(node);
+		System.out.println(chain.size());
+		System.out.println(node.toSource());
 
 		return chain.get(0);
 

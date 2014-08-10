@@ -638,7 +638,7 @@ for (var i = 0, n = cells.length; i < n; i++) {
                                       cells_source[2].style.fontFamily = "TAHOMA";
                                       
                                       cells_source[0].colSpan = 2;
-                                      cells_source[0].appendChild(document.createTextNode("Source"));
+                                      cells_source[0].appendChild(document.createTextNode("DOM Dependency"));
                                       rows_source[0].appendChild(cells_source[0]);
 
                                       

@@ -831,12 +831,6 @@ public class SimpleExample2 {
 		// Add line to existing mapping
 		TraceHelper.getFileLineMapping(o.getFile(), theSlice).addLine(o.getLineNo());
 
-
-
-
-
-
-
 		try {
 			File getSliceCriteria = new File("src/main/webapp/fish-eye-zoom-camera/"+o.getFile());
 			FileReader fr2 = new FileReader(getSliceCriteria);
@@ -871,9 +865,12 @@ public class SimpleExample2 {
 			pff.setLineNumber(o.getLineNo());
 			// Search for enclosing function
 			ast.visit(pff);
+			
+		System.out.println(o.getLineNo());
 
 			if (TraceHelper.getFileLineMapping(o.getFile(), theSlice).getLevel2FunctionNames().indexOf(pff.getParentFunction()) == -1) {
 				TraceHelper.getFileLineMapping(o.getFile(), theSlice).addLevel2FunctionName(pff.getParentFunction());
+				System.out.println(pff.getParentFunction());
 			}
 		} catch (IOException ioe) {
 			ioe.printStackTrace();
