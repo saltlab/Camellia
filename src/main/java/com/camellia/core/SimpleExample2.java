@@ -379,7 +379,7 @@ public class SimpleExample2 {
 				JSONObject assertion = null;
 				while (it.hasNext()) {
 					assertion = testCaseSummary.getJSONObject((String) it.next());
-					if (assertion.getString("outcome").equals("false")) {
+					if (!assertion.getString("outcome").equals("true")) {
 						ArrayList<String> fnNamesAcrossFiles = new ArrayList<String>();
 						for (int j = 0; j < theSlice.size(); j++) {
 							fnNamesAcrossFiles.addAll(theSlice.get(j).getLevel2FunctionNames());

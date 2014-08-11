@@ -553,7 +553,7 @@ for (var i = 0, n = cells.length; i < n; i++) {
   
     if (el.innerHTML.contains('Assertion') && el.innerHTML.contains('Pass')) {
         continue;
-    } else if (el.innerHTML.contains('Assertion') && el.innerHTML.contains('Fail')) {
+    } else if (el.innerHTML.contains('Assertion')) {
         el.addEventListener('click', (function (i, el) {
         return function () {
                                       allEpisodes[i].assertionFlag = true;
@@ -612,13 +612,15 @@ for (var i = 0, n = cells.length; i < n; i++) {
 
                 rows[0].appendChild(cells[0]);
                 rows[1].appendChild(cells[1]);
-                rows[1].appendChild(cells[2]);
-                rows[1].appendChild(cells[3]);
+
                 tblBody.appendChild(rows[0]);
                                       
                                       rows_source[0] = document.createElement("tr");
                                       rows_source[1] = document.createElement("tr");
                                       rows_source[2] = document.createElement("tr");
+                                      rows_source[3] = document.createElement("tr");
+                                      rows_source[4] = document.createElement("tr");
+                                      rows_source[5] = document.createElement("tr");
                                       
                                       cells_source[0] = document.createElement("td");
                                       cells_source[1] = document.createElement("td");
@@ -627,7 +629,7 @@ for (var i = 0, n = cells.length; i < n; i++) {
                                       cells_source[4] = document.createElement("td");
                                       
                                       cells_source[0].style.fontSize = "20px";
-                                      cells_source[1].style.fontSize = "15px";
+                                      cells_source[1].style.fontSize = "20px";
                                       cells_source[2].style.fontSize = "15px";
                                       cells_source[0].style.color = "black";
                                       cells_source[1].style.color = "black";
@@ -644,17 +646,29 @@ for (var i = 0, n = cells.length; i < n; i++) {
                                       
                                       
                                       // DOMEvent
-                                      cells_source[1].appendChild(document.createTextNode("eventType"));
+                                      cells_source[1].colSpan = 2;
+                                      cells_source[1].appendChild(document.createTextNode("Failure Message"));
+                                      //rows_source[1].appendChild(cells_source[1]);
+
                                       cells_source[2].appendChild(document.createTextNode("targetElement id"));
                                       cells_source[3].setAttribute('class', 'cell_source');
+                                      cells_source[4].setAttribute('class', 'cell_source');
                                       $(episodeContents[i]).addClass('cell_assertion_fail').removeClass('cell_to', 'cell_xhr', 'cell_dom');
                                       
-                                      rows_source[1].appendChild(cells_source[1]);
-                                      rows_source[1].appendChild(cells_source[2]);
+                                      
+                                      rows_source[4].appendChild( cells_source[1]);
+                                      rows_source[5].appendChild(cells_source[4]);
+
+
+
                                       rows_source[2].appendChild(cells_source[3]);
                                       
                                       tblBody_source.appendChild(rows_source[0]);
+                                      tblBody_source.appendChild(rows_source[1]);
                                       tblBody_source.appendChild(rows_source[2]);
+                                      tblBody_source.appendChild(rows_source[3]);
+                                      tblBody_source.appendChild(rows_source[4]);
+                                      tblBody_source.appendChild(rows_source[5]);
                                       
                                       // Add assertion's related JavaScript functions to visualization
                                       $.ajax({
@@ -687,6 +701,9 @@ for (var i = 0, n = cells.length; i < n; i++) {
                                              rows[num_rows + 2].appendChild(cells[h + 3]);
                                              tblBody.appendChild(rows[num_rows + 2]);
                                              }
+                                             
+                                             
+                                             
                                              tbl.appendChild(tblBody);
                                              tempDiv.appendChild(tbl);
                                              }
@@ -701,6 +718,12 @@ for (var i = 0, n = cells.length; i < n; i++) {
                                              async: false,
                                              success: function renderList4(data) {
                                              
+                                             var message = "";
+                                             if (data.hasOwnProperty("message")) {
+                                              message = data.message;
+                                              delete data["message"];
+                                             }
+                                             
                                              var args = JSON.stringify(data).split(',');
                                              var out = document.createElement("div");
                                              
@@ -712,7 +735,9 @@ for (var i = 0, n = cells.length; i < n; i++) {
                                                 out.appendChild(document.createElement("br"));
                                              }
                                              
-                                            cells_source[3].appendChild(out);
+                                             cells_source[3].appendChild(out);
+                                             cells_source[4].appendChild(document.createTextNode(message));
+
 
                                              }
                                              });

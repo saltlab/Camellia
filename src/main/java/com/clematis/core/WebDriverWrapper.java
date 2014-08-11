@@ -229,7 +229,7 @@ public class WebDriverWrapper extends org.openqa.selenium.firefox.FirefoxDriver 
 		return super.manage();
 	}
 
-	public static void flushAccesses(boolean assertionPass, long assertionCounter, long timeStamp) {
+	public static void flushAccesses(String assertionMessage, long assertionCounter, long timeStamp) {
 		// Should be called when an assertion is executed in the Selenium test case.
 
 		JSONArray newAssertion1 = new JSONArray();
@@ -254,7 +254,7 @@ public class WebDriverWrapper extends org.openqa.selenium.firefox.FirefoxDriver 
 		directAccesses.removeAllElements();
 		foundElements.removeAllElements();
 
-		assertionOutcomes.add(assertionPass ? "true" : "false");
+		assertionOutcomes.add(assertionMessage == null ? "true" : assertionMessage);
 		assertionCounters.add(assertionCounter);
 		assertionTimeStamps.add(timeStamp);
 	}

@@ -780,7 +780,7 @@ public class episodeResource {
 				nextString = keys.next();
 				nextAssertion = testCaseSummary.getJSONObject(nextString);
 				// Found the failure
-				if (nextAssertion.has("outcome") && nextAssertion.get("outcome").equals("false")) {
+				if (nextAssertion.has("outcome") && !nextAssertion.get("outcome").equals("true")) {
 					// Should have level 2 function names added to the summary at this point
 					return nextAssertion.getJSONArray("level2");
 				}
@@ -798,18 +798,18 @@ public class episodeResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject getDependentElement() {
 		JSONObject returnMe = new JSONObject();
+		JSONObject nextAssertion = null;
 
 		try {
 			JSONObject testCaseSummary = getTestCaseSummary();
 			Iterator<String> keys = testCaseSummary.keys();
 			String nextString = "";
-			JSONObject nextAssertion;
 
 			while (keys.hasNext()) {
 				nextString = keys.next();
 				nextAssertion = testCaseSummary.getJSONObject(nextString);
 				// Found the failure
-				if (nextAssertion.has("outcome") && nextAssertion.get("outcome").equals("false")) {
+				if (nextAssertion.has("outcome") && !nextAssertion.get("outcome").equals("true")) {
 					// Latest access/element returned is the dependency
 					JSONObject elements = nextAssertion.getJSONObject("elements");
 					Iterator<String> elementIDs = elements.keys();
@@ -835,6 +835,16 @@ public class episodeResource {
 		}
 		if (returnMe.has("child")) {
 			returnMe.remove("child");
+		}
+		
+		// Append Selenium/test case failure message
+		try {
+			returnMe.put("message", nextAssertion.get("outcome"));
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NullPointerException e) {
+			e.printStackTrace();
 		}
 
 		return returnMe;

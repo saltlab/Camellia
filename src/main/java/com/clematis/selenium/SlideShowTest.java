@@ -106,10 +106,10 @@ public class SlideShowTest {
 		try {
 			org.junit.Assert.assertTrue(condition);
 		} catch (Error e) {
-			WebDriverWrapper.flushAccesses(false, assertionCutoff, timeStamp);
+			WebDriverWrapper.flushAccesses(e.toString(), assertionCutoff, timeStamp);
 			throw e;
 		}
-		WebDriverWrapper.flushAccesses(true, assertionCutoff, timeStamp);
+		WebDriverWrapper.flushAccesses(null, assertionCutoff, timeStamp);
 	}
 
 	private static void assertEquals(String s1, String s2){
@@ -126,10 +126,10 @@ public class SlideShowTest {
 		   // org.junit.Assert.assertEquals(s1, s1);
 		    org.junit.Assert.assertEquals(s1, s2);
 		} catch (Error e) {
-			WebDriverWrapper.flushAccesses(false, assertionCutoff, timeStamp);
+			WebDriverWrapper.flushAccesses(e.toString(), assertionCutoff, timeStamp);
 			throw e;
 		}
-		WebDriverWrapper.flushAccesses(true, assertionCutoff, timeStamp);
+		WebDriverWrapper.flushAccesses(null, assertionCutoff, timeStamp);
 	}
 }
 
