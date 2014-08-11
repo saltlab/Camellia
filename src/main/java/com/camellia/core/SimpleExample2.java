@@ -45,9 +45,11 @@ import com.camellia.core.trace.VariableRead;
 import com.camellia.core.trace.VariableWrite;
 import com.camellia.core.trace.VariableWriteAugmentAssign;
 import com.camellia.instrument.ProxyInstrumenter;
+import com.camellia.instrument.helpers.ControlMapper;
 import com.camellia.instrument.helpers.ParentFunctionFinder;
 import com.camellia.jsmodify.JSExecutionTracer;
 import com.camellia.jsmodify.JSModifyProxyPlugin;
+import com.camellia.units.IfStatement;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
@@ -667,6 +669,32 @@ public class SimpleExample2 {
 
 						// Add line to slice
 						highlightLine(next);
+					}
+					
+					
+					// August 10th, slice the control dependencies!!!
+					int parentIfId = ControlMapper.getIfId(next.getLineNo(), next.getFile());
+					System.out.println("line:  " + next.getLineNo() + ", file:  " + next.getFile());
+					System.out.println(next.getVariable());
+					System.out.println(next.getClass());
+					if (parentIfId != -1) {
+						IfStatement parentIf = ControlMapper.getIf(parentIfId);;
+						int ifLine = parentIf.getLine();
+						
+						// go backwards will last read for if
+						ArrayList<RWOperation> controlDeps = TraceHelper.getConditionalReads(all, next, ifLine);
+						Iterator<RWOperation> ctrlIt = controlDeps.iterator();
+						RWOperation nextCtrl = null;
+						while (ctrlIt.hasNext()) {
+							nextCtrl = ctrlIt.next();
+							
+							computeBackwardSlice(null,
+									nextCtrl,
+									nextCtrl.getVariable(),
+									all,
+									true);
+							System.out.println();
+						}
 					}
 				}
 
