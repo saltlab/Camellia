@@ -3,6 +3,8 @@ package com.camellia.instrument.helpers;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import net.sourceforge.htmlunit.corejs.javascript.Token;
+
 import org.mozilla.javascript.ast.Assignment;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.FunctionCall;
@@ -65,6 +67,7 @@ public class InfixExpressionParser {//extends AstInstrumenter {
 				break;
 			default:
 				System.out.println("[InfixExpression]: Error parsing Infix Expression. Unknown operand type. (getNames())");
+				System.out.println(Token.typeToName(operand.getType()));
 				break;
 			}
 		}

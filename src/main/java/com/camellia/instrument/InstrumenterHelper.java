@@ -9,6 +9,7 @@ import org.apache.bcel.generic.INSTANCEOF;
 import org.mozilla.javascript.Token;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.ast.IfStatement;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.Symbol;
@@ -88,8 +89,6 @@ public final class InstrumenterHelper {
     public static ArrayList<Scope> getScopeChain(AstNode node) {
         Scope currentScope = node.getEnclosingScope();
         ArrayList<Scope> scopePath = new ArrayList<Scope>();
-
-        System.out.println(currentScope.toSource());
         
         while (currentScope != null) {
         	// Add the scope only if it is a Function or Script type, don't want blocks (i.e. 'if' statements) for now
@@ -100,6 +99,25 @@ public final class InstrumenterHelper {
             currentScope = currentScope.getEnclosingScope(); 
         }  
         return scopePath;
+    }
+    
+    public static ArrayList<AstNode> getControlChain(AstNode node) {
+    	AstNode currentControl = node.getEnclosingScope();
+        ArrayList<AstNode> controlPath = new ArrayList<AstNode>();
+        
+        while (currentControl != null) {
+        	// Add the scope only if it is a Function or Script type, don't want blocks (i.e. 'if' statements) for now
+            if (!Token.typeToName(currentControl.getType()).equals("FUNCTION")
+            	&& !Token.typeToName(currentControl.getType()).equals("SCRIPT")) {
+            	
+            	if (currentControl.getParent() != null
+            			&& currentControl.getParent() instanceof IfStatement) {
+                	controlPath.add(currentControl.getParent());
+            	}
+            }
+            currentControl = currentControl.getEnclosingScope(); 
+        }  
+        return controlPath;
     }
 
     protected static String[] getArgumentsAndDeclarations(Scope scope) {

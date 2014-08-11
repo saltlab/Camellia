@@ -27,6 +27,7 @@ import com.camellia.instrument.DependencyFinder;
 import com.camellia.instrument.FunctionCallerDependencies;
 import com.camellia.instrument.FunctionDeclarationFinder;
 import com.camellia.instrument.FunctionDeclarationInstrumenter;
+import com.camellia.instrument.InstrumenterHelper;
 import com.camellia.instrument.ProxyInstrumenter2;
 import com.camellia.instrument.ReadWriteReplacer;
 import com.camellia.units.ArgumentPassedIn;
@@ -133,6 +134,8 @@ public class LocalExample {
 
         System.out.println("[LocalExample]:  " + scopename);
         System.out.println("[definingScope]:  " + definingScope);
+        System.out.println(varName);
+        System.out.println(tempLineNo);
         System.out.println(this.targetFile);
 
         if (definingScope != null) {
@@ -202,13 +205,6 @@ public class LocalExample {
             possibleNextSteps = new ArrayList<SlicingCriteria>();
 
             justFinished = new SlicingCriteria(remainingSlices.get(0).getScope(), remainingSlices.get(0).getVariable(), remainingSlices.get(0).getInter());
-
-            if (remainingSlices.get(0).getScope() == null) {
-                System.out.println(remainingSlices.size());
-                System.out.println(completedSlices.size());
-                System.out.println(remainingSlices.get(0).getVariable());
-                System.out.println(remainingSlices.get(0).getInter());
-            }
 
             // "UPWARDS"
             if (justFinished.getScope() instanceof FunctionNode 
@@ -314,6 +310,17 @@ public class LocalExample {
                     }
                 }
             }
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
 
             // Check if dependencies are new
             it = varDeps.iterator();
@@ -322,6 +329,10 @@ public class LocalExample {
                 step = it.next();
                 if (step instanceof Name) {
                     possibleNextSteps.add(new SlicingCriteria(getDefiningScope(ast, (Name) step), ((Name) step).getIdentifier(), justFinished.getInter()));
+                    
+// HERE WAS CONTROL CODE
+
+                    
                 } else if (step instanceof KeywordLiteral && step.toSource().equals("this")) {
                     possibleNextSteps.add(new SlicingCriteria(((KeywordLiteral) step).getEnclosingFunction(), "this", justFinished.getInter()));
                 } else if (step instanceof PropertyGet) {
@@ -470,13 +481,8 @@ public class LocalExample {
         df.clearDataDependencies();
         df.setScopeName(targetFile);
 
-        System.out.println(df.getTopScope().toSource());
-
         // Start the instrumentation for a single variable
         df.getTopScope().visit(df);		
-
-        System.out.println(df.getTopScope().toSource());
-
 
         // The current slice should be the first in queue, move it to completed queue
         if (remainingSlices.get(0).equals(newSlice)) {

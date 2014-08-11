@@ -15,6 +15,7 @@ import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.FunctionCall;
 import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.ast.IfStatement;
 import org.mozilla.javascript.ast.InfixExpression;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.ObjectLiteral;
@@ -27,6 +28,7 @@ import org.mozilla.javascript.ast.VariableInitializer;
 
 import bsh.This;
 
+import com.camellia.instrument.helpers.ControlMapper;
 import com.camellia.instrument.helpers.FunctionCallParser;
 import com.camellia.instrument.helpers.InfixExpressionParser;
 import com.camellia.instrument.helpers.NotParser;
@@ -374,6 +376,7 @@ public class DependencyFinder extends AstInstrumenter {
 	// TODO: mark left side with scope + variable name (right now its just scope but we are only interested in that
 	//       given variable at the most local level)
 	//ArrayList<String> myClosure = getClosure(node);
+	@SuppressWarnings("unused")
 	private void handleVariableDeclaration(VariableDeclaration node) {
 		List<VariableInitializer> vi = node.getVariables();
 		Iterator<VariableInitializer> varIt = vi.iterator();
@@ -389,7 +392,7 @@ public class DependencyFinder extends AstInstrumenter {
 			leftSide = nextInitializer.getTarget();
 			rightSide = nextInitializer.getInitializer();
 			rightSideType = rightSide.getType();
-			
+
 			if (rightSide == null) {
 				// Variable declaration without assignment e.g. "var i;"
 				continue;
@@ -399,6 +402,23 @@ public class DependencyFinder extends AstInstrumenter {
 
 
 			if (leftSide.getType() == org.mozilla.javascript.Token.NAME && ((Name) leftSide).getIdentifier().equals(variableName)) {
+				// CONTROL
+				// Making sure the current write is associated with an 'if'
+				ControlMapper.addIf(leftSide, getScopeName());
+				// If a parent 'if' was found through ControlMapper, add the conditional dependencies for instrumentation
+				int possibleParentIf = ControlMapper.getIfId(leftSide.getLineno(), getScopeName());
+				System.out.println(possibleParentIf);
+				if(possibleParentIf != -1) {
+					if (ControlMapper.getIf(possibleParentIf).getCondition() instanceof InfixExpression) {
+						// Maybe should create separate buffer for control dependencies...for now they are treated equally
+						dataDependencies.addAll(InfixExpressionParser.getOperandDependencies(
+								(InfixExpression) ControlMapper.getIf(possibleParentIf).getCondition(),
+								true));
+					} else if (ControlMapper.getIf(possibleParentIf).getCondition() instanceof Name) {
+						dataDependencies.add((Name) ControlMapper.getIf(possibleParentIf).getCondition());
+					}
+				}
+
 				if (rightSideType == org.mozilla.javascript.Token.FUNCTION) {
 					// No data dependencies added
 				} else if (rightSideType == org.mozilla.javascript.Token.CALL) {
@@ -575,11 +595,11 @@ public class DependencyFinder extends AstInstrumenter {
 
 			} else if (rightSideType == org.mozilla.javascript.Token.NOT
 					/*||*/) {
-				
-				
+
+
 				dataDependencies.addAll(NotParser.getNotDependencies((UnaryExpression) rightSide));
 
-				
+
 			} else if (rightSideType == org.mozilla.javascript.Token.GETPROP) {
 				// Need to check if there is over lap with CALL (method calls, which do they fall under)
 
