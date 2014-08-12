@@ -15,6 +15,8 @@ import com.clematis.core.configuration.ProxyConfiguration;
 import com.clematis.instrument.FunctionTrace;
 import com.clematis.jsmodify.JSExecutionTracer;
 import com.clematis.jsmodify.JSModifyProxyPlugin;
+import com.clematis.selenium.HomePageTest;
+import com.clematis.selenium.MainViewTest;
 import com.clematis.selenium.SlideShowTest;
 import com.clematis.selenium.TestSortByPopDefaults;
 
@@ -95,12 +97,22 @@ public class SimpleExample {
 			// Use WebDriver to visit specified URL
 			//		driver.get(URL);
 
-			SlideShowTest HPT = new SlideShowTest();
+			MainViewTest HPT = new MainViewTest();
+
+
+			// Aug 12
+			//SlideShowTest HPT = new SlideShowTest();
+			//			HomePageTest HPT = new HomePageTest();
+
+			
+			
+			
+			
 			//TestSortByPopDefaults HPT = new TestSortByPopDefaults();
 			try {
 				HPT.setUp(driver);
 				//HPT.testSortByPopDefaults();
-				HPT.testSlideShow();
+				HPT.testMainView();
 			} catch (NoSuchElementException e) {
 				System.out.println("Error executing test case:");
 				e.printStackTrace();

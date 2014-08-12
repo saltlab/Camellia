@@ -120,9 +120,7 @@ for (var i = 0; i < number_episodes; i++) {
                 $(divs_map[i]).addClass('box');
             } else if (data.id === 7) {
 			    // Assertion
-			    episodes[i]=document.createTextNode("Assertion #"+data.assertionID+"\n"+data.outcome); 
-			    window.console.log(i);
-		 	    window.console.log(data.outcome);
+			    episodes[i]=document.createTextNode("Assertion #"+data.assertionID+"\n"+(data.outcome == 'Pass'?'Pass':"Fail"));
 			    if (data.outcome == 'Pass') {
 				    // Pass is gray color
 				    $(divs[i]).addClass('cell_assertion_pass');

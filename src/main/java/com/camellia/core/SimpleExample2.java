@@ -58,6 +58,7 @@ import com.google.common.collect.TreeMultimap;
 
 import com.clematis.core.WebDriverWrapper;
 import com.clematis.core.trace.FunctionCall;
+import com.clematis.selenium.MainViewTest_forSlicer;
 import com.clematis.selenium.SlideShowTest_forSlicer;
 import com.crawljax.util.Helper;
 
@@ -231,9 +232,9 @@ public class SimpleExample2 {
 			// Use WebDriver to visit specified URL
 			/* Auguest 8th, commented out
             driver.get(URL); */
-			SlideShowTest_forSlicer engine = new SlideShowTest_forSlicer();
+			MainViewTest_forSlicer engine = new MainViewTest_forSlicer();
 			engine.setUp(driver);
-			engine.testSlideShow();
+			engine.testMainView();
 			engine.tearDown();
 
 			while (!sessionOver) {
