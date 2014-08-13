@@ -140,12 +140,13 @@ public class ReturnStatementInstrumenter extends AstInstrumenter {
 		ArrayList<String> wrapperArgs = new ArrayList<String>();
 		
 		if (!node.getEnclosingFunction().equals(getParentFunction())
-				|| node.getReturnValue().toSource().indexOf(READFUNCRET) != -1) {
+				|| (node.getReturnValue() != null
+						&& node.getReturnValue().toSource().indexOf(READFUNCRET) != -1)) {
 			return;
 		}
 		//functionName, returnValue, fileName, lineNo,
         wrapperArgs.add(getParentFunction().getName());
-        wrapperArgs.add(node.getReturnValue().toSource());
+        wrapperArgs.add((node.getReturnValue() == null? "null" :node.getReturnValue().toSource()));
         wrapperArgs.add("\""+getScopeName()+"\"");			
         wrapperArgs.add(node.getLineno()+"");			
 		

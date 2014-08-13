@@ -70,8 +70,7 @@ public class MainViewTest_forSlicer {
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
-		Thread.sleep(1400);
-
+		Thread.sleep(3000);
 	}
 
 	@After

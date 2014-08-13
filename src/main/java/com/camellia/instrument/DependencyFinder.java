@@ -411,6 +411,9 @@ public class DependencyFinder extends AstInstrumenter {
 				if(possibleParentIf != -1) {
 					if (ControlMapper.getIf(possibleParentIf).getCondition() instanceof InfixExpression) {
 						// Maybe should create separate buffer for control dependencies...for now they are treated equally
+						System.out.println(InfixExpressionParser.getOperandDependencies(
+								(InfixExpression) ControlMapper.getIf(possibleParentIf).getCondition(),
+								true).size());
 						dataDependencies.addAll(InfixExpressionParser.getOperandDependencies(
 								(InfixExpression) ControlMapper.getIf(possibleParentIf).getCondition(),
 								true));
@@ -493,7 +496,14 @@ public class DependencyFinder extends AstInstrumenter {
 		String[] dotSplit;
 
 		AstNode nextArg;
-
+		
+		// If base class instance is of interest, add arguements
+		if (node.getTarget().getType() == org.mozilla.javascript.Token.GETPROP 
+				&& ((PropertyGet) node.getTarget()).getTarget().getType() == org.mozilla.javascript.Token.NAME
+				&& ((Name) ((PropertyGet) node.getTarget()).getTarget()).getIdentifier().equals(this.variableName)) {
+			// Class method, add class instance as dependency
+			dataDependencies.addAll(FunctionCallParser.getArgumentDependencies(node));
+		}
 		FunctionArgumentPair fap = new FunctionArgumentPair(node.getTarget().toSource());
 
 

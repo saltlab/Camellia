@@ -80,7 +80,11 @@ public class EpisodeGraph {
 				currentEpisode.getTrace().addToTrace(currentEpisode.getSource());
 			}
 
+			boolean asynchRelations = false;
 			for (TraceObject to : currentEpisode.getTrace().getTrace()) {
+				if (!asynchRelations) {
+					break;
+				}
 				// Iterate through each TraceObject in the Episode
 				if (to.getClass().toString().contains("TimeoutCallback")
 						|| to.getClass().toString().contains("XMLHttpRequestResponse")) {

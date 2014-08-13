@@ -477,6 +477,9 @@ public class LocalExample {
 
         // Set up parameters for instrumentation once scope if known
         df.setVariableName(target.getVariable());
+        if (targetFile == null) {
+        	System.out.println("Null scope");
+        }
         df.setTopScope(target.getScope());			
         df.clearDataDependencies();
         df.setScopeName(targetFile);

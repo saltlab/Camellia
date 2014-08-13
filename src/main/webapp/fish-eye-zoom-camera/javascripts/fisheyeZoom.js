@@ -719,6 +719,7 @@ for (var i = 0, n = cells.length; i < n; i++) {
                                              var message = "";
                                              if (data.hasOwnProperty("message")) {
                                               message = data.message;
+                                             window.console.log(message);
                                               delete data["message"];
                                              }
                                              

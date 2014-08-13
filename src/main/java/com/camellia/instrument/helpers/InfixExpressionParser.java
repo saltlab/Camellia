@@ -43,6 +43,7 @@ public class InfixExpressionParser {//extends AstInstrumenter {
 
 		while (it.hasNext()) {
 			operand = it.next();
+			System.out.println(Token.typeToName(operand.getType()));
 			switch (operand.getType()) {
 			case org.mozilla.javascript.Token.ADD:  
 				// Call recursively (e.g. var a = b + c + d)
@@ -61,10 +62,24 @@ public class InfixExpressionParser {//extends AstInstrumenter {
 			case org.mozilla.javascript.Token.GETPROP:  
 				d.addAll(PropertyGetParser.getPropertyDependencies((PropertyGet) operand));
 				break;
+
+			case org.mozilla.javascript.Token.CALL:
+				// Add the arguments as dependencies
+				d.addAll(FunctionCallParser.getArgumentDependencies((FunctionCall) operand));
+				
+				// Add the base object as dependency
+				FunctionCall operandAsFunctionCall = (FunctionCall) operand;
+				if (operandAsFunctionCall.getTarget().getType() == org.mozilla.javascript.Token.GETPROP) {
+					// Class method, add class instance as dependency
+					d.addAll(PropertyGetParser.getPropertyDependencies((PropertyGet) operandAsFunctionCall.getTarget()));
+				}
+				
+				break;
 			case org.mozilla.javascript.Token.NUMBER:  
 			case org.mozilla.javascript.Token.STRING:  
 				System.out.println("[InfixExpression]: Don't care infix (String or Number)");
 				break;
+				
 			default:
 				System.out.println("[InfixExpression]: Error parsing Infix Expression. Unknown operand type. (getNames())");
 				System.out.println(Token.typeToName(operand.getType()));

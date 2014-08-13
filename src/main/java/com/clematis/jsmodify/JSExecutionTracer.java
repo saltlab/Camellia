@@ -275,6 +275,7 @@ public class JSExecutionTracer {
 			Iterator<String> assertions;
 			String assertionID;
 			JSONObject singleAssertionSummary;
+			JSONObject lastFailingAssertion;
 			Vector<TraceObject> relatedMutations;
 			// For removing webdriver events
 			Iterator<TraceObject> domEventIterator;
@@ -408,7 +409,9 @@ public class JSExecutionTracer {
 				episodeDomAccesses = e.getDomAccesses();
 				episodeTrace = e.getTrace().getTrace();
 				int closestCounterEnter = -1;
+				long closestTimeEnter = -1;
 				int closestCounterCall = -1;
+				long closestTimeCall = -1;
 
 				// Iterate through all assertions from selenium test case/suite run
 				assertions = testCaseSummary.keys();
@@ -427,6 +430,7 @@ public class JSExecutionTracer {
 					if (singleAssertionSummary.has("outcome") &&  singleAssertionSummary.get("outcome").equals("true")) {
 						continue;
 					}
+					lastFailingAssertion = singleAssertionSummary;
 
 					// FINDING RELEVANT Mutations
 					// <<  MUTATION ITERATE  >>
@@ -456,14 +460,20 @@ public class JSExecutionTracer {
 							// << DOM ELEMEN ACCESS ITERATE >>
 							for (int tt = 0; tt < episodeDomAccesses.size(); tt++) {
 
+								if (episodeDomAccesses.get(tt).getCounter() > singleAccess.getInt("counter")) {
+									continue;
 
+								}
 
 								if (compareHTMLElements(singleAccess, new JSONObject(((DOMElementAccess) episodeDomAccesses.get(tt)).getElement()))) {
 									// link matches to closest Function enters
 
 									// Reset variables when looking for closest 'call' and 'enter'
 									closestCounterEnter = -1;
+									closestTimeEnter = -1;
+
 									closestCounterCall = -1;
+									closestTimeCall = -1;
 
 
 									// closest ENTER and CALL to JS access
@@ -472,25 +482,27 @@ public class JSExecutionTracer {
 												//&& episodeTrace.get(f).getCounter() - episodeDomAccesses.get(tt).getCounter() < closestCounter
 												&& episodeTrace.get(f) instanceof FunctionEnter) {
 											closestCounterEnter = episodeTrace.get(f).getCounter();
+											closestTimeEnter = episodeTrace.get(f).getTimeStamp();
 										} else if (episodeDomAccesses.get(tt).getCounter() > episodeTrace.get(f).getCounter()
 												//&& episodeTrace.get(f).getCounter() - episodeDomAccesses.get(tt).getCounter() < closestCounter
 												&& episodeTrace.get(f) instanceof FunctionCall
 												&& episodeDomAccesses.get(tt).getCounter() - 1 == episodeTrace.get(f).getCounter()) {
 											closestCounterCall = episodeTrace.get(f).getCounter();
-
+											closestTimeCall = episodeTrace.get(f).getTimeStamp();
 										}
 									}
 
 
 									for (int f = 0; f < episodeTrace.size(); f++) {
-										if (episodeTrace.get(f).getCounter() == closestCounterEnter) {
+										if (episodeTrace.get(f).getCounter() == closestCounterEnter && episodeTrace.get(f).getTimeStamp() == closestTimeEnter) {
+											System.out.println(closestCounterEnter);
 											((FunctionEnter) episodeTrace.get(f)).addAssertion(Integer.parseInt(assertionID));
 											break;
 										}
 									}
 
 									for (int ff = 0; ff < episodeTrace.size(); ff++) {
-										if (episodeTrace.get(ff).getCounter() == closestCounterCall) {
+										if (episodeTrace.get(ff).getCounter() == closestCounterCall && closestTimeCall == episodeTrace.get(ff).getTimeStamp()) {
 											System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 											System.out.println("Slicing Criteria: ");
 											System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~");
@@ -627,6 +639,7 @@ public class JSExecutionTracer {
 			System.out.println("-----------------------------------");
 			Iterator<Name> finalIt = slicingCriteria.iterator();
 			Name nameNext = null;
+			Name namePrev = null;
 
 			while (finalIt.hasNext()) {
 				nameNext = finalIt.next();

@@ -674,6 +674,10 @@ public class SimpleExample2 {
 					
 					
 					// August 10th, slice the control dependencies!!!
+					if (next.getFile() == null) {
+						System.out.println("[SimpleExample2 678]: null file!");
+						System.out.println(next.getOrder());
+					}
 					int parentIfId = ControlMapper.getIfId(next.getLineNo(), next.getFile());
 					System.out.println("line:  " + next.getLineNo() + ", file:  " + next.getFile());
 					System.out.println(next.getVariable());

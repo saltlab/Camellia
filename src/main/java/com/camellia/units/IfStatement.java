@@ -56,6 +56,8 @@ public class IfStatement {
 
 	public boolean contains(int line, String file) {
 		// Only those lines in the same JavaScript file can be a child
+		System.out.println("If statement file: " + this.file);
+		System.out.println("Child line file: " + file);
 		if (file.equals(this.file)) {
 			Iterator<Integer> it = childlines.iterator();
 			int nextChild = -1;

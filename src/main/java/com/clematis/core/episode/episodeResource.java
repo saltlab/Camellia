@@ -520,38 +520,42 @@ public class episodeResource {
 		initialize();
 		List<causalLinks> causalLinkss = new ArrayList<causalLinks>();
 
+		boolean disableCausalLinks = true;
+
 		for (int i = 0; i < episodeMap.size(); i++) {
 			String strI = "" + i;
-			getTimeoutSet(strI);
-			// if episode contains a timeout, find the corresponding callback
-			if (getTimeoutSet(strI).size() > 0) {
-				for (int x = 0; x < getTimeoutSet(strI).size(); x++) {
-					for (int z = 0; z < episodeMap.size(); z++) {
-						String strZ = "" + z;
-						if (getTimeoutCallback(strZ).size() > 0)
-						{
-							for (int zz = 0; zz < getTimeoutCallback(strZ).size(); zz++) {
-								if (getTimeoutSet(strI).get(x).getId() == getTimeoutCallback(strZ)
-										.get(zz).getId()) {
-									causalLinkss.add(new causalLinks(i, z));
+
+			if (!disableCausalLinks) {
+				// if episode contains a timeout, find the corresponding callback
+				if (getTimeoutSet(strI).size() > 0) {
+					for (int x = 0; x < getTimeoutSet(strI).size(); x++) {
+						for (int z = 0; z < episodeMap.size(); z++) {
+							String strZ = "" + z;
+							if (getTimeoutCallback(strZ).size() > 0)
+							{
+								for (int zz = 0; zz < getTimeoutCallback(strZ).size(); zz++) {
+									if (getTimeoutSet(strI).get(x).getId() == getTimeoutCallback(strZ)
+											.get(zz).getId()) {
+										causalLinkss.add(new causalLinks(i, z));
+									}
 								}
 							}
 						}
 					}
 				}
-			}
 
-			if (getXMLHttpRequestOpen(strI).size() > 0) {
-				for (int x = 0; x < getXMLHttpRequestOpen(strI).size(); x++) {
-					for (int z = 0; z < episodeMap.size(); z++) {
-						String strZ = "" + z;
-						if (getXMLHttpRequestResponse(strZ).size() > 0)
-						{
-							for (int zz = 0; zz < getXMLHttpRequestResponse(strZ).size(); zz++) {
-								if (getXMLHttpRequestOpen(strI).get(x).getId() == getXMLHttpRequestResponse(
-										strZ)
-										.get(zz).getId()) {
-									causalLinkss.add(new causalLinks(i, z));
+				if (getXMLHttpRequestOpen(strI).size() > 0) {
+					for (int x = 0; x < getXMLHttpRequestOpen(strI).size(); x++) {
+						for (int z = 0; z < episodeMap.size(); z++) {
+							String strZ = "" + z;
+							if (getXMLHttpRequestResponse(strZ).size() > 0)
+							{
+								for (int zz = 0; zz < getXMLHttpRequestResponse(strZ).size(); zz++) {
+									if (getXMLHttpRequestOpen(strI).get(x).getId() == getXMLHttpRequestResponse(
+											strZ)
+											.get(zz).getId()) {
+										causalLinkss.add(new causalLinks(i, z));
+									}
 								}
 							}
 						}
@@ -824,6 +828,8 @@ public class episodeResource {
 						}
 					}
 
+					// Only dealing with one failing assertion, break after it is found
+					break;
 				}
 			}
 		} catch (JSONException e) {
@@ -836,7 +842,7 @@ public class episodeResource {
 		if (returnMe.has("child")) {
 			returnMe.remove("child");
 		}
-		
+
 		// Append Selenium/test case failure message
 		try {
 			returnMe.put("message", nextAssertion.get("outcome"));
