@@ -182,11 +182,24 @@ public class FunctionDeclarationInstrumenter extends AstInstrumenter {
         wrapperArgs.add("\""+this.getScopeName()+"\"");		
 		node.getBody().addChildToFront(parse(generateWrapper(ARGWRITE, wrapperArgs), node.getLineno()));
 		
+		// Don't need to add return tracking for each argument, if the bottom of the function was already 
+		// instrumented...don't do it again!
 		ArrayList<String> wrapperArgs2 = new ArrayList<String>();
 		wrapperArgs2.add(name);
 		wrapperArgs2.add("undefined");
 		wrapperArgs2.add("\""+getScopeName()+"\"");			
-		wrapperArgs2.add(node.getLineno()+"");			
+		wrapperArgs2.add(node.getLineno()+"");
+		
+		AstNode lastChild = (AstNode) node.getBody().getLastChild();
+		System.out.println(lastChild.toSource());
+		System.out.println(lastChild.getClass());
+		
+		if (lastChild instanceof AstRoot
+				&& lastChild.toSource().indexOf(READFUNCRET) == 0) {
+			System.out.println("Bottom already instrumented!");
+			return;
+		}
+		
 		node.getBody().addChildToBack(parse(generateWrapper(READFUNCRET, wrapperArgs2), node.getLineno()));		
 		
 		System.out.println(node.toSource());

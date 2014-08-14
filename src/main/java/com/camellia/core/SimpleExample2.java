@@ -312,7 +312,7 @@ public class SimpleExample2 {
 					if (nextOp.getLineNo() == next.getLineNo() && nextOp.getVariable().equals(next.getVariable()) && (nextOp instanceof VariableRead || nextOp instanceof PropertyRead)) {
 						// Relevant [READ] found! --> nextOp
 
-						computeBackwardSlice(null, nextOp, nextOp.getVariable(), all, true);
+						computeBackwardSlice(null, nextOp, nextOp.getVariable(), all, true, ((VariableRead) nextOp).getDefiningFunction());
 
 
 
@@ -457,7 +457,7 @@ public class SimpleExample2 {
 	}
 
 
-	private void computeBackwardSlice(RWOperation top, RWOperation bottom, String name, ArrayList<RWOperation> all, boolean contained) {
+	private void computeBackwardSlice(RWOperation top, RWOperation bottom, String name, ArrayList<RWOperation> all, boolean contained, String definingFunction) {
 		int i = (top == null ? 0 : all.indexOf(top));
 		RWOperation next = null;
 		RWOperation nestedTop, nestedBottom;
@@ -469,96 +469,109 @@ public class SimpleExample2 {
 		System.out.println("Bottom: " + bottom.getOrder());
 		System.out.println("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-");
 
-		for (int j = all.indexOf(bottom) - 1; j >= i; j--) {
+		for (int j = all.indexOf(bottom); j >= i; j--) {
 			next = all.get(j);
 			System.out.println(next.getOrder());
 			System.out.println(next.getClass());
 
+
+
+
 			/** 1 (ONE): Cut out function calls **/
 			if (next instanceof ReturnStatementValue) {
-				String alias = null;
-				nestedTop = TraceHelper.getBeginningOfFunction((ReturnStatementValue) next, all);
-				nestedBottom = next;
-
-				// Skip the nested call when backwards slicing, it is taken care of in the above recursive call
-				// j = index of ArgumentRead
-				j = all.indexOf(nestedTop) + 1;
-
-				// Check if the variable of interest is passed into a function by reference (could be altered there)
-				for (int p = j; p >= i; p--) {
-					// Possible for multiple references to variable passed in as separate arguments (but why?)
-					if (all.get(p) instanceof ArgumentRead
-							&& ((ArgumentRead) all.get(p)).getVariable().indexOf(name) == 0
-							&& TraceHelper.isComplex(((ArgumentRead) all.get(p)).getValue())) {
-
-						System.out.println(((ArgumentRead) all.get(p)).getFunctionName());
-						System.out.println(name);
-						System.out.println(all.get(p).getLineNo());
-
-						// Get the local name in the called function (argument name)
-						for (int q = j; q <= all.indexOf(nestedBottom); q++) {
-							if (all.get(q) instanceof ArgumentWrite
-									&& ((ArgumentWrite) all.get(q)).getFunctionName().equals(((ArgumentRead) all.get(p)).getFunctionName())
-									&& ((ArgumentWrite) all.get(q)).getArgumentNumber() == ((ArgumentRead) all.get(p)).getArgumentNumber()) {
-								alias = ((ArgumentWrite) all.get(q)).getVariable();
 
 
-								System.out.println("Function name: " + ((ArgumentWrite) all.get(q)).getFunctionName());
+				if (definingFunction.equals("global")) {
+					// Keep looking for writes to this global variable (regardless of from which function)
+					continue;
+				} else if (!definingFunction.equals("global") && TraceHelper.isReadAsynchronous(j, definingFunction, all)) {
 
-								System.out.println("READ ARG:");
-								System.out.println(all.get(p).getVariable());
-								System.out.println(all.get(p).getOrder());
+				} else {
 
-								System.out.println("WRITE ARG:");
-								System.out.println(all.get(q).getVariable());
-								System.out.println(all.get(q).getOrder());
+					String alias = null;
+					nestedTop = TraceHelper.getBeginningOfFunction((ReturnStatementValue) next, all);
+					nestedBottom = next;
 
-								//TODO: implement 'computeForwardSlice'
-								// Compute forward slice of reference/argument
-								computeForwardSlice(all.get(q), nestedBottom, alias, all);
+					// Skip the nested call when backwards slicing, it is taken care of in the above recursive call
+					// j = index of ArgumentRead
+					j = all.indexOf(nestedTop) + 1;
 
-								if (all.get(q).getChildren().size() > 0) {
-									// If the function call does change the object via reference, highlight the origin of the call:
-									highlightLine(all.get(p));
+					// Check if the variable of interest is passed into a function by reference (could be altered there)
+					for (int p = j; p >= i; p--) {
+						// Possible for multiple references to variable passed in as separate arguments (but why?)
+						if (all.get(p) instanceof ArgumentRead
+								&& ((ArgumentRead) all.get(p)).getVariable().indexOf(name) == 0
+								&& TraceHelper.isComplex(((ArgumentRead) all.get(p)).getValue())) {
 
-									for (int o = q; o <= all.indexOf(nestedBottom); o++) {
-										if (all.get(o).getSliceStatus() == true) {
+							System.out.println(((ArgumentRead) all.get(p)).getFunctionName());
+							System.out.println(name);
+							System.out.println(all.get(p).getLineNo());
 
-											all.get(o).omitFromSlice();
-											all.get(o).clearChildren();
-											all.get(o).setParent(null);
+							// Get the local name in the called function (argument name)
+							for (int q = j; q <= all.indexOf(nestedBottom); q++) {
+								if (all.get(q) instanceof ArgumentWrite
+										&& ((ArgumentWrite) all.get(q)).getFunctionName().equals(((ArgumentRead) all.get(p)).getFunctionName())
+										&& ((ArgumentWrite) all.get(q)).getArgumentNumber() == ((ArgumentRead) all.get(p)).getArgumentNumber()) {
+									alias = ((ArgumentWrite) all.get(q)).getVariable();
 
-											// Add line to slice
-											highlightLine(all.get(o));
+
+									System.out.println("Function name: " + ((ArgumentWrite) all.get(q)).getFunctionName());
+
+									System.out.println("READ ARG:");
+									System.out.println(all.get(p).getVariable());
+									System.out.println(all.get(p).getOrder());
+
+									System.out.println("WRITE ARG:");
+									System.out.println(all.get(q).getVariable());
+									System.out.println(all.get(q).getOrder());
+
+									//TODO: implement 'computeForwardSlice'
+									// Compute forward slice of reference/argument
+									computeForwardSlice(all.get(q), nestedBottom, alias, all);
+
+									if (all.get(q).getChildren().size() > 0) {
+										// If the function call does change the object via reference, highlight the origin of the call:
+										highlightLine(all.get(p));
+
+										for (int o = q; o <= all.indexOf(nestedBottom); o++) {
+											if (all.get(o).getSliceStatus() == true) {
+
+												all.get(o).omitFromSlice();
+												all.get(o).clearChildren();
+												all.get(o).setParent(null);
+
+												// Add line to slice
+												highlightLine(all.get(o));
 
 
-											if (all.get(o) instanceof VariableWrite) {
-												// NEW, TEST THIS
-												// Need to slice all the dependencies for this write (this update through alias)
-												ArrayList<RWOperation> deps = null;
-												try {
-													deps = TraceHelper.getDataDependencies(all, (VariableWrite) all.get(o));
-												} catch (Exception e) {
-													e.printStackTrace();
-												}
-												for (int r = 0; r < deps.size(); r++) {
-													computeBackwardSlice(null, deps.get(r), deps.get(r).getVariable(), all, true);
+												if (all.get(o) instanceof VariableWrite) {
+													// NEW, TEST THIS
+													// Need to slice all the dependencies for this write (this update through alias)
+													ArrayList<RWOperation> deps = null;
+													try {
+														deps = TraceHelper.getDataDependencies(all, (VariableWrite) all.get(o));
+													} catch (Exception e) {
+														e.printStackTrace();
+													}
+													for (int r = 0; r < deps.size(); r++) {
+														computeBackwardSlice(null, deps.get(r), deps.get(r).getVariable(), all, true, ((VariableRead) deps.get(r)).getDefiningFunction());
+													}
 												}
 											}
 										}
 									}
+
+
+
+
+									break;
+
 								}
 
-
-
-
-								break;
-
 							}
+							if (alias != null) break; 
 
 						}
-						if (alias != null) break; 
-
 					}
 				}
 				/** 2 (TWO): Return value from function is used in write-of-interest **/
@@ -580,7 +593,7 @@ public class SimpleExample2 {
 					e.printStackTrace();
 				}
 				for (int z = 0; z < deps.size(); z++) {
-					computeBackwardSlice(null, all.get(all.indexOf(deps.get(z))-1), deps.get(z).getVariable(), all, true);
+					computeBackwardSlice(null, all.get(all.indexOf(deps.get(z))-1), deps.get(z).getVariable(), all, true, ((VariableRead) deps.get(z)).getDefiningFunction());
 				}
 
 
@@ -597,7 +610,7 @@ public class SimpleExample2 {
 						for (int w = 0; w < rsDependencies.size(); w++) {
 							// TODO: What if an argument influenced the return value? --> do we need to allow slicing to exit the function?
 							// NOT being run yet
-							computeBackwardSlice(nestedTop, all.get(r), rsDependencies.get(w), all, true /* or false ????*/);
+							computeBackwardSlice(nestedTop, all.get(r), rsDependencies.get(w), all, true, "global");
 						}
 					}
 				}
@@ -624,7 +637,11 @@ public class SimpleExample2 {
 
 								// Allowed to look through the parent/calling function for argument slice
 								// GOOD TO GO
-								computeBackwardSlice(null, all.get(q-1), all.get(q).getVariable(), all, true);
+								System.out.println(all.get(q-1).getLineNo());
+								System.out.println(all.get(q).getVariable());
+								System.out.println(all.get(q).getOrder());
+								System.out.println(all.get(q-1).getClass().toString());
+								computeBackwardSlice(null, all.get(q-1), all.get(q).getVariable(), all, true, ((VariableRead) all.get(q)).getDefiningFunction());
 
 
 								// Break from looking from Argument read
@@ -650,13 +667,15 @@ public class SimpleExample2 {
 									all.get(all.indexOf(deps.get(z))-1),
 									deps.get(z).getVariable().split("\\.")[0],
 									all,
-									true);
+									true,
+									((VariableRead) deps.get(z)).getDefiningFunction());
 						} else {
 							computeBackwardSlice(null,
 									all.get(all.indexOf(deps.get(z))-1),
 									deps.get(z).getVariable(),
 									all,
-									true);
+									true,
+									((VariableRead) deps.get(z)).getDefiningFunction());
 						}
 					}
 
@@ -671,8 +690,8 @@ public class SimpleExample2 {
 						// Add line to slice
 						highlightLine(next);
 					}
-					
-					
+
+
 					// August 10th, slice the control dependencies!!!
 					if (next.getFile() == null) {
 						System.out.println("[SimpleExample2 678]: null file!");
@@ -685,19 +704,21 @@ public class SimpleExample2 {
 					if (parentIfId != -1) {
 						IfStatement parentIf = ControlMapper.getIf(parentIfId);;
 						int ifLine = parentIf.getLine();
-						
+
 						// go backwards will last read for if
 						ArrayList<RWOperation> controlDeps = TraceHelper.getConditionalReads(all, next, ifLine);
 						Iterator<RWOperation> ctrlIt = controlDeps.iterator();
 						RWOperation nextCtrl = null;
 						while (ctrlIt.hasNext()) {
 							nextCtrl = ctrlIt.next();
-							
+
 							computeBackwardSlice(null,
 									nextCtrl,
 									nextCtrl.getVariable(),
 									all,
-									true);
+									true,
+									((VariableRead) nextCtrl).getDefiningFunction());
+
 							System.out.println();
 						}
 					}
@@ -723,7 +744,7 @@ public class SimpleExample2 {
 					e.printStackTrace();
 				}
 				for (int z = 0; z < deps.size(); z++) {
-					computeBackwardSlice(null, all.get(all.indexOf(deps.get(z))-1), deps.get(z).getVariable(), all, true);
+					computeBackwardSlice(null, all.get(all.indexOf(deps.get(z))-1), deps.get(z).getVariable(), all, true, ((VariableRead) deps.get(z)).getDefiningFunction());
 				}
 
 
@@ -808,7 +829,7 @@ public class SimpleExample2 {
 
 
 											// CANT be computing slice from bottom
-											computeBackwardSlice(null, all.get(all.indexOf(deps.get(r))-1), deps.get(r).getVariable(), all, true);
+											computeBackwardSlice(null, all.get(all.indexOf(deps.get(r))-1), deps.get(r).getVariable(), all, true, ((VariableRead) deps.get(r)).getDefiningFunction());
 										}
 									}
 								}
@@ -898,8 +919,8 @@ public class SimpleExample2 {
 			pff.setLineNumber(o.getLineNo());
 			// Search for enclosing function
 			ast.visit(pff);
-			
-		System.out.println(o.getLineNo());
+
+			System.out.println(o.getLineNo());
 
 			if (TraceHelper.getFileLineMapping(o.getFile(), theSlice).getLevel2FunctionNames().indexOf(pff.getParentFunction()) == -1) {
 				TraceHelper.getFileLineMapping(o.getFile(), theSlice).addLevel2FunctionName(pff.getParentFunction());

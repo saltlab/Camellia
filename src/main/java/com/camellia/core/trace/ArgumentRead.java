@@ -19,4 +19,5 @@ public class ArgumentRead extends VariableRead {
     public void setFunctionName(String s) {
     	calledFunction = s;
     }
+
 }

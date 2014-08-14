@@ -102,11 +102,11 @@ public class TraceHelper {
 			if (current instanceof VariableRead && current.getLineNo() == vw.getLineNo()) {
 				deps.add(current);
 				jumpAllowed = false;
-			} else if (current instanceof PropertyRead && current.getLineNo() == vw.getLineNo()) {
+			} /*else if (current instanceof PropertyRead && current.getLineNo() == vw.getLineNo()) {
 				j = getAtomicIndex(trace, (PropertyRead) current);
 				deps.add(current);
 				jumpAllowed = false;
-			} else if (current instanceof ReturnStatementValue) {
+			} */else if (current instanceof ReturnStatementValue) {
 				// Line number is allow to change (!= vw.getLineNo())
 
 
@@ -236,6 +236,25 @@ public class TraceHelper {
 		return null;
 	}
 
+	public static boolean isReadAsynchronous (int currentPosition, String definingFn, ArrayList<RWOperation> trace) {
+		RWOperation next;
+
+		for (int i = currentPosition; i >= 0; i--) {
+			next = trace.get(i);
+
+			if (next instanceof ArgumentWrite && ((ArgumentWrite) next).getFunctionName().equals(definingFn)) {
+				// Entrance to defining function has been hit
+				return false;
+			} else if (next instanceof ReturnStatementValue && ((ReturnStatementValue) next).getFunctionName().equals(definingFn)) {
+				// An exit from the defining variable has been hit
+				return true;
+			}
+		}
+
+		// The function was not encountered, assume asynchronous
+		return true;		
+	}
+
 	public static RWOperation getBeginningOfFunction(ReturnStatementValue exit, ArrayList<RWOperation> trace) {
 		RWOperation next;
 		int depth = -1;
@@ -260,7 +279,7 @@ public class TraceHelper {
 				}
 				// Continue search for entrance to function
 				depth--;
-						i = j + 1;
+				i = j + 1;
 			}
 		}
 		return null;

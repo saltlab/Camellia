@@ -57,6 +57,8 @@ public class MainViewTest_forSlicer {
 		    	break;
 		    }
 		}
+		Thread.sleep(700);
+
 		try {
 			assertEquals("Your rating saved!", driver.findElement(By.cssSelector("span#rateStatus")).getText());
 		} catch (Error e) {

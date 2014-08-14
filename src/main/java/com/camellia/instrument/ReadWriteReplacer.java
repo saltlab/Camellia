@@ -42,7 +42,6 @@ public class ReadWriteReplacer extends AstInstrumenter {
 	private static final String VARWRITEAUG = "_dynoWriteAug";
 	private static final String VARWRITEPROP = "_dynoWriteProp";
 	private static final String VARWRITEFUNCRET = "_dynoWriteReturnValue";
-	private static final String READFUNCRET = "_dynoReturnValue";
 	private static final String PROPREAD = "_dynoReadProp";
 	private static final String FUNCCALL = "_dynoFunc";
 
@@ -180,7 +179,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
 
 		if (tt == org.mozilla.javascript.Token.GETPROP) {
 			// TODO:
-				handleProperty((PropertyGet) node);
+			handleProperty((PropertyGet) node);
 		} else if (tt == org.mozilla.javascript.Token.VAR && node instanceof VariableDeclaration
 				// Weird glitch/bug in Mozilla Rhino (variable declarations appear twice when crawling AST)
 				&& node.getParent().getType() != org.mozilla.javascript.Token.VAR ) {
@@ -201,7 +200,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
 			// TODO:
 
 
-				handleFunctionCall((FunctionCall) node);
+			handleFunctionCall((FunctionCall) node);
 		} else if (tt == org.mozilla.javascript.Token.CALL) {
 
 			System.out.println(((FunctionCall) node).getTarget().toSource());
@@ -549,6 +548,8 @@ public class ReadWriteReplacer extends AstInstrumenter {
 		AstNode newTarget;
 		AstNode parent = node.getParent();
 
+		String parentFnName = getParentFunctionName(node.getIdentifier(), node.getLineno());
+
 		if (node.getParent() != null) {
 			if (isLeftOfAssignment(node) && node.getParent() instanceof InfixExpression) {
 				if (((InfixExpression) node.getParent()).getLeft().equals(node)) {
@@ -565,7 +566,11 @@ public class ReadWriteReplacer extends AstInstrumenter {
 				System.out.println(Token.typeToName(node.getParent().getType()));
 
 				//_dynoWrite('ss_cur', 0, '', 3, '/phorm.js');
-				newBody = VARWRITE+"(\'"+node.getIdentifier()+"\',"+ node.toSource()+", " +node.getLineno()+", \"" +this.getScopeName()+"\")";
+				newBody = VARWRITE+"(\'"+node.getIdentifier()+"\',"
+						+ node.toSource()+", " 
+						+node.getLineno()+", \"" 
+						+this.getScopeName()+"\" , "
+						+"\"" + parentFnName + "\")";
 
 				return;
 			}
@@ -577,13 +582,20 @@ public class ReadWriteReplacer extends AstInstrumenter {
 
 			// If leading name/label e.g. 'document' in 'document.getElement()'
 			if (parent.toSource().split("\\.")[0].equals(node.getIdentifier())) {
-				newBody = VARREAD+"(\'"+node.getIdentifier()+"\',"+ node.getIdentifier() +", "+node.getLineno()+", \"" +this.getScopeName()+"\")";
+				newBody = VARREAD+"(\'"+node.getIdentifier()+"\',"
+						+ node.getIdentifier() +", "
+						+node.getLineno()+", \"" 
+						+this.getScopeName()+"\", "
+						+"\"" + parentFnName + "\")";
 			} else {
 				newBody = parent.toSource().replaceFirst("."+node.getIdentifier(), "["+PROPREAD+"(\""+node.getIdentifier()+"\", "+node.getLineno()+", \"" +this.getScopeName()+"\")]");
 			}
 		} else if (node.getParent().getType() != org.mozilla.javascript.Token.VAR && !isLeftOfAssignment(node)
 				&& node.getParent().getType() != org.mozilla.javascript.Token.CATCH) {
-			newBody = VARREAD+"(\'"+node.getIdentifier()+"\',"+ node.getIdentifier()+", " +node.getLineno()+", \"" +this.getScopeName()+"\")";
+			newBody = VARREAD+"(\'"+node.getIdentifier()+"\',"
+					+ node.getIdentifier()+", " +node.getLineno()+", \""
+					+this.getScopeName()+"\", "
+					+"\"" + parentFnName + "\")";
 		} else {
 			return;
 		}
@@ -598,16 +610,18 @@ public class ReadWriteReplacer extends AstInstrumenter {
 		AstNode newTarget;
 		AstNode parent = node.getParent();
 
+		String parentFnName = getParentFunctionName(node.getIdentifier(), node.getLineno());
+
 		if (node.getParent().getType() == org.mozilla.javascript.Token.GETPROP) {
 			// If leading name/label e.g. 'document' in 'document.getElement()'
 			if (parent.toSource().split("\\.")[0].equals(node.getIdentifier())) {
 
-				newBody = ARGREAD+"(\'"+node.getIdentifier()+"\',"+ node.getIdentifier() +",\""+functionName+ "\"," +index+", "+node.getLineno()+", \""+this.getScopeName()+"\")";
+				newBody = ARGREAD+"(\'"+node.getIdentifier()+"\',"+ node.getIdentifier() +",\""+functionName+ "\"," +index+", "+node.getLineno()+", \""+this.getScopeName()+"\", \""+parentFnName+"\")";
 			} /*else {
 				newBody = parent.toSource().replaceFirst("."+node.getIdentifier(), "["+ARGREAD+"(\""+node.getIdentifier()+"\", "+index+ ", "+node.getLineno()+")]");
 			}*/
 		} else if (node.getParent().getType() != org.mozilla.javascript.Token.VAR) {
-			newBody = ARGREAD+"(\'"+node.getIdentifier()+"\',"+ node.getIdentifier()+",\""+functionName+ "\","+index+", " +node.getLineno()+", \""+this.getScopeName()+"\")";
+			newBody = ARGREAD+"(\'"+node.getIdentifier()+"\',"+ node.getIdentifier()+",\""+functionName+ "\","+index+", " +node.getLineno()+", \""+this.getScopeName()+"\", \"" + parentFnName + "\")";
 		} else {
 			return;
 		}
@@ -650,9 +664,9 @@ public class ReadWriteReplacer extends AstInstrumenter {
 			// August 12, this is where 'open' and 'send' are instrumented
 			newBody = "["+FUNCCALL+"(\""
 					+node.getTarget().toSource()+"\", \""
-							+node.getProperty().toSource()+"\", "
-							+node.getLineno()
-							+", \"" +this.getScopeName()+"\")]";
+					+node.getProperty().toSource()+"\", "
+					+node.getLineno()
+					+", \"" +this.getScopeName()+"\")]";
 		} else if (!isLeftOfAssignment(node)) {
 			newBody = "["+PROPREAD+"(\""
 					+node.getTarget().toSource()+"\", \""
@@ -772,10 +786,6 @@ public class ReadWriteReplacer extends AstInstrumenter {
 			//		varBeingWritten.equals(variableName)
 			//		|| varBeingRead.equals(variableName)) {
 
-			System.out.println(node.toSource());
-			System.out.println(Token.typeToName(rightRightSideType));
-			System.out.println(rightSide.getClass());
-
 
 			// Variable of interest is being written to
 			if (rightRightSideType == org.mozilla.javascript.Token.FUNCTION) {
@@ -839,14 +849,15 @@ public class ReadWriteReplacer extends AstInstrumenter {
 					handleProperty((PropertyGet) rightSide);
 				} else if (rightRightSideType == org.mozilla.javascript.Token.THIS)  {
 
+					String parentFnName = getParentFunctionName(varBeingWritten, node.getLineno());
 
-
-					node.setRight(parse(VARREAD+"(\'this\', this, "+node.getLineno()+")", node.getLineno()));
+					node.setRight(parse(VARREAD+"(\'this\', this, "+node.getLineno()+", \""+getScopeName()+"\", \""+parentFnName+"\")", node.getLineno()));
 
 
 				} else if (rightRightSideType == org.mozilla.javascript.Token.NAME) {
 					handleName((Name) rightSide);
 				}
+
 
 				//newBody = rightSide.toSource().replaceFirst(rightSide.toSource(), generateWrapper(VARWRITE, wrapperArgs));
 				if (node.getType() == org.mozilla.javascript.Token.ASSIGN) {
@@ -1036,7 +1047,9 @@ public class ReadWriteReplacer extends AstInstrumenter {
 				// adding support for this
 
 
-				newBody = ARGREAD+"(\'this\', this,\""+targetMethod+ "\"," +i+", "+node.getLineno()+", \""+this.getScopeName()+"\")";
+				String parentFnName = getParentFunctionName("this", node.getLineno());
+
+				newBody = ARGREAD+"(\'this\', this,\""+targetMethod+ "\"," +i+", "+node.getLineno()+", \""+this.getScopeName()+"\", \""+parentFnName+"\")";
 
 				nextArg = parse(newBody, node.getLineno());
 				System.out.println("NEXTARG: " + nextArg.toSource());
@@ -1058,8 +1071,9 @@ public class ReadWriteReplacer extends AstInstrumenter {
 				//	newBody = nextArg.toSource() + ")";
 
 				//	newBody = "("+VARWRITEFUNCRET+"('"+((FunctionCall) nextArg).getTarget().toSource()+"')," + newBody;
+				String parentFnName = getParentFunctionName(dotSplit[0], node.getLineno());
 
-				newBody = ARGREAD+"(\'"+untouchedID.replace("\'", "\"")+"\',"+ nextArg.toSource() +",\""+targetMethod+ "\"," +i+", "+node.getLineno()+", \""+this.getScopeName()+"\")";
+				newBody = ARGREAD+"(\'"+untouchedID.replace("\'", "\"")+"\',"+ nextArg.toSource() +",\""+targetMethod+ "\"," +i+", "+node.getLineno()+", \""+this.getScopeName()+"\", \""+parentFnName+"\")";
 
 
 				nextArg = parse(newBody, node.getLineno());
@@ -1283,10 +1297,12 @@ public class ReadWriteReplacer extends AstInstrumenter {
 			case org.mozilla.javascript.Token.THIS:  
 				d.add(operand);
 
+				String parentFnName = getParentFunctionName("this", node.getLineno());
+
 				if (node.getRight().equals(operand)) {
-					node.setRight(parse(VARREAD+"(\'this\', this, "+node.getLineno()+")", node.getLineno()));
+					node.setRight(parse(VARREAD+"(\'this\', this, "+node.getLineno()+", \""+getScopeName()+"\", \""+parentFnName+"\")", node.getLineno()));
 				} else if (node.getRight().equals(operand)) {
-					node.setLeft(parse(VARREAD+"(\'this\', this, "+node.getLineno()+")", node.getLineno()));
+					node.setRight(parse(VARREAD+"(\'this\', this, "+node.getLineno()+", \""+getScopeName()+"\", \""+parentFnName+"\")", node.getLineno()));
 				}
 				break;
 			case org.mozilla.javascript.Token.GETPROP:  
@@ -1385,5 +1401,36 @@ public class ReadWriteReplacer extends AstInstrumenter {
 			parent = parent.getParent();
 		}   
 		return false;
+	}
+
+	public String getParentFunctionName (String varName, int lineNo) {
+		String returnMe = "global";
+
+		Scope startScope = TraceHelper.getDefiningScope(astCrawled, varName, lineNo);
+
+		if (startScope instanceof FunctionNode) {
+			FunctionNode node = (FunctionNode) startScope;
+
+			String name = node.getName();
+
+			AstNode parent = node.getParent();
+
+			if (node.getFunctionType() == FunctionNode.FUNCTION_EXPRESSION) {
+				// Complicated Case
+				if (node.getName() == "" && parent.getType() == org.mozilla.javascript.Token.COLON) {
+					// Assignment Expression                    
+					name = node.getParent().toSource().substring(0,node.getParent().toSource().indexOf(node.toSource()));
+					name = name.substring(0,name.indexOf(":"));
+				} else if (node.getName() == "" && parent.getType() == org.mozilla.javascript.Token.ASSIGN) {
+					name = node.getParent().toSource().substring(0,node.getParent().toSource().indexOf(node.toSource()));
+					name = name.substring(name.lastIndexOf(".")+1,name.indexOf("="));
+				}
+				name = name.trim();
+			}
+
+			returnMe = name;
+		}
+
+		return returnMe;
 	}
 }

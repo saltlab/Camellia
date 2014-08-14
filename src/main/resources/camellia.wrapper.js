@@ -9,7 +9,7 @@ function _dynoRead(varName, value, lineNo, fileName, id) {
              variable: varName,
              order: counter++,
              file: fileName,
-             globalID: id
+             definingFunction: id
     }));
     
     return value;
@@ -24,6 +24,7 @@ function _dynoReadAsArg(varName, value, functionName, argNumber, lineNo, fileNam
              argumentNumber: argNumber,
              functionName: functionName,
              file: fileName,
+             definingFunction: id,
              order: counter++,
     }));
     return value;
