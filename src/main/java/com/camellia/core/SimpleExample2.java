@@ -485,7 +485,10 @@ public class SimpleExample2 {
 					// Keep looking for writes to this global variable (regardless of from which function)
 					continue;
 				} else if (!definingFunction.equals("global") && TraceHelper.isReadAsynchronous(j, definingFunction, all)) {
-
+					// Jump to last instance of defining function and look for writes there.
+					int bottomOfLastFn = TraceHelper.getEndOfLastFnInstance(j, definingFunction, all);
+					computeBackwardSlice(null, all.get(bottomOfLastFn-1), name, all, true, definingFunction);
+					return;
 				} else {
 
 					String alias = null;
@@ -732,7 +735,7 @@ public class SimpleExample2 {
 					break;
 				}
 				/** 3.2 (OLD): Basic slicing **/
-			} else if (next instanceof VariableWrite && ((VariableWrite) next).getVariable().indexOf(next.getVariable()) == 0
+			} else if (next instanceof VariableWrite && ((VariableWrite) next).getVariable().indexOf(name) == 0
 					&& ((VariableWrite) next).getVariable().indexOf(".") != -1) {
 
 				// Backwards slice the right side! (Apr. 23)
@@ -850,6 +853,27 @@ public class SimpleExample2 {
 						System.out.println("PropertyRead");
 
 					}
+				}
+			} else if (next instanceof PropertyRead && next.getVariable().equals(name)) {
+				int propIndex = -1;
+				try {
+					propIndex = TraceHelper.getAtomicIndex(all, (PropertyRead) next);
+					VariableRead baseRead = (VariableRead) all.get(propIndex);
+
+					if (baseRead.getValue().equals("[object XMLHttpRequest]") && (((PropertyRead) next).getProperty().equals("open")  ||   ((PropertyRead) next).getProperty().equals("send"))) {
+						highlightLine(next);
+						ArrayList<RWOperation> deps = TraceHelper.getDataDependenciesLoose(all, next);
+						
+						
+						
+						for (int r = 0; r < deps.size(); r++) {
+							System.out.println(deps.get(r).getVariable() + " , " + deps.get(r).getLineNo());
+							computeBackwardSlice(null, deps.get(r), deps.get(r).getVariable(), all, true, ((VariableRead) deps.get(r)).getDefiningFunction());
+						}
+					}
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 			}
 		}

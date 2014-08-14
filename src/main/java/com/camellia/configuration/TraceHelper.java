@@ -122,6 +122,23 @@ public class TraceHelper {
 		}
 		return deps;
 	}
+	
+	public static ArrayList<RWOperation> getDataDependenciesLoose(ArrayList<RWOperation> trace, RWOperation vw) throws Exception {
+		int i = trace.indexOf(vw);
+		ArrayList<RWOperation> deps = new ArrayList<RWOperation>();
+		RWOperation current;
+
+		for (int j = i; j < trace.size(); j++) {
+			current = trace.get(j);
+
+			if (current instanceof VariableRead && current.getLineNo() == vw.getLineNo()) {
+				deps.add(current);
+			} else if (current.getLineNo() != vw.getLineNo()) {
+				break;
+			}
+		}
+		return deps;
+	}
 
 	public static Scope getDefiningScope(AstRoot ast, String name, int lineNo) {
 		ProxyInstrumenter2 sc = new ProxyInstrumenter2();
@@ -141,7 +158,7 @@ public class TraceHelper {
 		return sc.getLastScopeVisited();
 	}
 
-	private static int getAtomicIndex (ArrayList<RWOperation> trace, PropertyRead pr) throws Exception {
+	public static int getAtomicIndex (ArrayList<RWOperation> trace, PropertyRead pr) throws Exception {
 		int i = trace.indexOf(pr);
 		String base;
 		String base2;
@@ -253,6 +270,22 @@ public class TraceHelper {
 
 		// The function was not encountered, assume asynchronous
 		return true;		
+	}
+	
+	public static int getEndOfLastFnInstance (int currentPosition, String definingFn, ArrayList<RWOperation> trace) {
+		RWOperation next;
+
+		for (int i = currentPosition; i >= 0; i--) {
+			next = trace.get(i);
+
+			if (next instanceof ReturnStatementValue && ((ReturnStatementValue) next).getFunctionName().equals(definingFn)) {
+				// An exit from the defining variable has been hit
+				return i;
+			}
+		}
+
+		// The function was not encountered, assume asynchronous
+		return -1;		
 	}
 
 	public static RWOperation getBeginningOfFunction(ReturnStatementValue exit, ArrayList<RWOperation> trace) {
