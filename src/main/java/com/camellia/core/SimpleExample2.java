@@ -226,13 +226,13 @@ public class SimpleExample2 {
 			// Use WebDriver to visit specified URL
 			/* Auguest 8th, commented out
             driver.get(URL); */
-			MainViewTest_forSlicer engine = new MainViewTest_forSlicer();
-			//SlideShowTest_forSlicer engine = new SlideShowTest_forSlicer();
+			//MainViewTest_forSlicer engine = new MainViewTest_forSlicer();
+			SlideShowTest_forSlicer engine = new SlideShowTest_forSlicer();
 
 			engine.setUp(driver);
 			
-			engine.testMainView();
-			//engine.testSlideShow();
+			//engine.testMainView();
+			engine.testSlideShow();
 			
 			
 			engine.tearDown();
@@ -406,7 +406,7 @@ public class SimpleExample2 {
 			} else {
 				System.out.println("Application not exercised enough! No slice produced.");
 			}
-
+			System.out.println(WebDriverWrapper.getCutCounter());
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -853,6 +853,10 @@ public class SimpleExample2 {
 
 
 	private void highlightLine(RWOperation o) {
+		if (o.getOrder() >= WebDriverWrapper.getCutCounter()) {
+			return;
+		}
+		
 		// Add new file -> line number mapping if not already present
 		if (TraceHelper.getFileLineMapping(o.getFile(), theSlice) == null) {
 			theSlice.add(new FileLineNumber(o.getFile()));

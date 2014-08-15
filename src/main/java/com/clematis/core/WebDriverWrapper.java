@@ -28,7 +28,18 @@ public class WebDriverWrapper extends org.openqa.selenium.firefox.FirefoxDriver 
 	public static Vector<String> assertionOutcomes = new Vector<String>();
 	public static Vector<Long> assertionCounters = new Vector<Long>();
 	public static Vector<Long> assertionTimeStamps = new Vector<Long>();
+	
+	private static long assertionCutTime = -1;
+	private static long assertionCutCounter = -1;
 
+	public static long getCutTime () {
+		return assertionCutTime;
+	}
+	
+	public static long getCutCounter () {
+		return assertionCutCounter;
+	}
+	
 	public WebDriverWrapper(FirefoxProfile fp) {
 		super(fp);
 	}
@@ -257,6 +268,9 @@ public class WebDriverWrapper extends org.openqa.selenium.firefox.FirefoxDriver 
 		assertionOutcomes.add(assertionMessage == null ? "true" : assertionMessage);
 		assertionCounters.add(assertionCounter);
 		assertionTimeStamps.add(timeStamp);
+		
+		assertionCutTime = timeStamp;
+		assertionCutCounter = assertionCounter;
 	}
 
 	public static void addDOMAccess (String type, String value, boolean found) {

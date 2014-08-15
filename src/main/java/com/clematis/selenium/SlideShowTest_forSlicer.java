@@ -8,8 +8,11 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import com.clematis.core.WebDriverWrapper;
+import com.clematis.jsmodify.JSExecutionTracer;
+
 public class SlideShowTest_forSlicer {
-	private WebDriver driver;
+	private static WebDriver driver;
 	//private String baseUrl;
 	private StringBuffer verificationErrors = new StringBuffer();
 	@Before
@@ -64,6 +67,17 @@ public class SlideShowTest_forSlicer {
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
+		
+		Thread.sleep(1200);
+		driver.findElement(Byy.linkText("Previous")).click();
+		Thread.sleep(1200);
+
+		try {
+			assertEquals("3", driver.findElement(Byy.cssSelector("span#ss_n")).getText());
+		} catch (Error e) {
+			verificationErrors.append(e.toString());
+		}
+		
 		Thread.sleep(3000);
 
 	}
@@ -85,5 +99,39 @@ public class SlideShowTest_forSlicer {
 		} catch (NoSuchElementException e) {
 			return false;
 		}
+	}
+	
+	private static void assertTrue(Boolean condition){
+		try {
+			org.junit.Assert.assertTrue(condition);
+		} catch (Error e) {
+			long assertionCutoff = (Long) (((JavascriptExecutor) driver).executeScript(
+					"return counter;"/**/));
+			//assertionCutoff += JSExecutionTracer.getPageLoadBuffer();
+			long timeStamp = (Long) (((JavascriptExecutor) driver).executeScript(
+					"return Date.now();"/**/));
+			WebDriverWrapper.flushAccesses(e.toString(), assertionCutoff, timeStamp);
+			throw e;
+		}
+	}
+
+	private static void assertEquals(String s1, String s2){
+		//TODO: changed counter for allowing assertions to be shown
+
+
+		try {
+		   // org.junit.Assert.assertEquals(s1, s1);
+		    org.junit.Assert.assertEquals(s1, s2);
+		} catch (Error e) {
+			long assertionCutoff = (Long) (((JavascriptExecutor) driver).executeScript(
+					"return counter;"/**/));
+			//assertionCutoff += JSExecutionTracer.getPageLoadBuffer();
+
+			long timeStamp = (Long) (((JavascriptExecutor) driver).executeScript(
+					"return Date.now();"/**/));
+			WebDriverWrapper.flushAccesses(e.toString(), assertionCutoff, timeStamp);
+			throw e;
+		}
+		//WebDriverWrapper.flushAccesses(null, assertionCutoff, timeStamp);
 	}
 }
