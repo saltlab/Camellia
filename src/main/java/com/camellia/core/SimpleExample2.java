@@ -226,13 +226,13 @@ public class SimpleExample2 {
 			// Use WebDriver to visit specified URL
 			/* Auguest 8th, commented out
             driver.get(URL); */
-			//MainViewTest_forSlicer engine = new MainViewTest_forSlicer();
-			SlideShowTest_forSlicer engine = new SlideShowTest_forSlicer();
+			MainViewTest_forSlicer engine = new MainViewTest_forSlicer();
+			//SlideShowTest_forSlicer engine = new SlideShowTest_forSlicer();
 
 			engine.setUp(driver);
 			
-			//engine.testMainView();
-			engine.testSlideShow();
+			engine.testMainView();
+			//engine.testSlideShow();
 			
 			
 			engine.tearDown();
@@ -853,7 +853,8 @@ public class SimpleExample2 {
 
 
 	private void highlightLine(RWOperation o) {
-		if (o.getOrder() >= WebDriverWrapper.getCutCounter()) {
+		if (o.getOrder() >= WebDriverWrapper.getCutCounter()
+				&& WebDriverWrapper.getCutCounter() > 0) {
 			return;
 		}
 		

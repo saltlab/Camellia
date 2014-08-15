@@ -65,7 +65,7 @@ public class MainViewTest {
 		}
 		try {
 			System.out.println(driver.findElement(Byy.cssSelector("span#rateStatus")).getText());
-			assertEquals("Your ratsing saved!", driver.findElement(Byy.cssSelector("span#rateStatus")).getText());
+			assertEquals("Your rating saved!", driver.findElement(Byy.cssSelector("span#rateStatus")).getText());
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
