@@ -276,8 +276,6 @@ logger.logDOMEvent = function(type, targetEl, callback) {
 //	else console.log("logDOMEvent");
 
 	var jml;
-	console.log("------------------------------------");
-	console.log("DOM EVENT HANDLED");
 
 	//if (!recordStarted || arguments[0].toString().indexOf("webdriver-evaluate") >= 0)
 	if (!recordStarted)
@@ -297,9 +295,6 @@ logger.logDOMEvent = function(type, targetEl, callback) {
 	console.log("DOM EVENT HANDLED");
 */	var date = Date.now();
 
-	console.log(" + Event type: ", arguments[0]);
-	console.log(" + Target DOM element: ", arguments[1]);
-	console.log(" + Handler function: ", arguments[2]);
 
     jml = JsonML.fromHTML(arguments[1]);
 	//if (jml && recordingInProgress == true) {
@@ -307,10 +302,6 @@ logger.logDOMEvent = function(type, targetEl, callback) {
 		jml = JSON.stringify(jml);
 	    //alert("dom event");
     	send(JSON.stringify({messageType: "DOM_EVENT", timeStamp: date, eventType: arguments[0], eventHandler: callback.name, targetElement: jml,counter: traceCounter++}));
-    	console.log("-----------------------------------");
-    	console.log("YYYYGGGGGOOOOO");
-    	console.log(JSON.stringify({messageType: "DOM_EVENT", timeStamp: date, eventType: arguments[0], eventHandler: callback.name, targetElement: jml,counter: traceCounter++}));
-    	console.log("-----------------------------------");
       
 	}
 	checkValues();
@@ -431,7 +422,7 @@ logger.logDOMMutation = function() {
 window.oldSetTimeout = window.setTimeout;
 
 // Redefine setTimeout
-window.setTimeout_fake = function(func, delay, params) {
+window.setTimeout = function(func, delay, params) {
 	// Increase the number of active timeouts
 	timeoutCounter++;
 	totalNumOfTimeouts++;
@@ -444,15 +435,11 @@ window.setTimeout_fake = function(func, delay, params) {
 
 	// Call the original timeout after logging
 	window.oldSetTimeout(function(/* params */) {
-		try {
 			logger.logTimeoutCallback(func);
 
 			func.apply(null);
 			timeoutCounter--;
 
-		} catch (exception) {
-//			alert("Timeout exception");
-		}
 	}, delay);
 };
 
@@ -528,7 +515,6 @@ Document.prototype.getElementById= function(id) {
 	var date = Date.now();
     var r = geet.call(this,id);
 
-    console.log("id: "+id +" and r is: "+r);
     send(JSON.stringify({
         messageType: "DOM_ACCESS",
         timeStamp: date,

@@ -103,12 +103,6 @@ public class SimpleExample2 {
 		try {
 			int argType = -1;
 
-			System.out.println("args!");
-			System.out.println(args.length);
-			for (int ll = 0; ll < args.length; ll++) {
-				System.out.println(args[ll]);
-			}
-
 			// Iterate through arguments
 			for (String arg : args) {
 
@@ -233,8 +227,14 @@ public class SimpleExample2 {
 			/* Auguest 8th, commented out
             driver.get(URL); */
 			MainViewTest_forSlicer engine = new MainViewTest_forSlicer();
+			//SlideShowTest_forSlicer engine = new SlideShowTest_forSlicer();
+
 			engine.setUp(driver);
+			
 			engine.testMainView();
+			//engine.testSlideShow();
+			
+			
 			engine.tearDown();
 
 			while (!sessionOver) {
@@ -385,6 +385,9 @@ public class SimpleExample2 {
 						for (int j = 0; j < theSlice.size(); j++) {
 							fnNamesAcrossFiles.addAll(theSlice.get(j).getLevel2FunctionNames());
 						}
+						
+						// Order of relevant functions backwards because of backwards slicing
+						Collections.reverse(fnNamesAcrossFiles);
 
 						// Found a failing assertion
 						assertion.put("level2", fnNamesAcrossFiles);
@@ -464,23 +467,9 @@ public class SimpleExample2 {
 		boolean found = false;
 
 
-		if (name.equals("requestUrl")) {
-			System.out.println(bottom.getOrder());
-			System.out.println(bottom.getClass());
-		}
-		
-		System.out.println(name);
-		System.out.println("Top: " + i);
-		System.out.println("Bottom: " + bottom.getOrder());
-		System.out.println("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-");
 
 		for (int j = all.indexOf(bottom); j >= i; j--) {
 			next = all.get(j);
-			System.out.println(next.getOrder());
-			System.out.println(next.getClass());
-
-
-
 
 			/** 1 (ONE): Cut out function calls **/
 			if (next instanceof ReturnStatementValue) {
@@ -511,9 +500,6 @@ public class SimpleExample2 {
 								&& ((ArgumentRead) all.get(p)).getVariable().indexOf(name) == 0
 								&& TraceHelper.isComplex(((ArgumentRead) all.get(p)).getValue())) {
 
-							System.out.println(((ArgumentRead) all.get(p)).getFunctionName());
-							System.out.println(name);
-							System.out.println(all.get(p).getLineNo());
 
 							// Get the local name in the called function (argument name)
 							for (int q = j; q <= all.indexOf(nestedBottom); q++) {
@@ -521,17 +507,6 @@ public class SimpleExample2 {
 										&& ((ArgumentWrite) all.get(q)).getFunctionName().equals(((ArgumentRead) all.get(p)).getFunctionName())
 										&& ((ArgumentWrite) all.get(q)).getArgumentNumber() == ((ArgumentRead) all.get(p)).getArgumentNumber()) {
 									alias = ((ArgumentWrite) all.get(q)).getVariable();
-
-
-									System.out.println("Function name: " + ((ArgumentWrite) all.get(q)).getFunctionName());
-
-									System.out.println("READ ARG:");
-									System.out.println(all.get(p).getVariable());
-									System.out.println(all.get(p).getOrder());
-
-									System.out.println("WRITE ARG:");
-									System.out.println(all.get(q).getVariable());
-									System.out.println(all.get(q).getOrder());
 
 									//TODO: implement 'computeForwardSlice'
 									// Compute forward slice of reference/argument
@@ -624,11 +599,6 @@ public class SimpleExample2 {
 				}
 				/** 3 (OLD): Basic slicing **/
 			} else if (next instanceof VariableWrite && ((VariableWrite) next).getVariable().equals(name)) {
-
-				if (name.equals("requestUrl")) {
-					System.out.println(bottom.getOrder());
-					System.out.println(bottom.getClass());
-				}
 				
 				// UPWARDS
 				if (next instanceof ArgumentWrite) {
@@ -650,10 +620,7 @@ public class SimpleExample2 {
 
 								// Allowed to look through the parent/calling function for argument slice
 								// GOOD TO GO
-								System.out.println(all.get(q-1).getLineNo());
-								System.out.println(all.get(q).getVariable());
-								System.out.println(all.get(q).getOrder());
-								System.out.println(all.get(q-1).getClass().toString());
+
 								computeBackwardSlice(null, all.get(q-1), all.get(q).getVariable(), all, true, ((VariableRead) all.get(q)).getDefiningFunction());
 
 
@@ -674,7 +641,6 @@ public class SimpleExample2 {
 				} else {
 					// Regular hard write (not argument write)
 					ArrayList<RWOperation> deps = null;
-					System.out.println(name);
 					try {
 						deps = TraceHelper.getDataDependencies(all, (VariableWrite) next);
 					} catch (Exception e) {
@@ -682,13 +648,7 @@ public class SimpleExample2 {
 						e.printStackTrace();
 					}
 					
-					if (name.equals("requestUrl")) {
-						System.out.println(bottom.getOrder());
-						System.out.println(bottom.getClass());
-					}
-					
 					for (int z = 0; z < deps.size(); z++) {
-						System.out.println(deps.get(z).getVariable());
 						if (deps.get(z).getVariable().split("\\.").length > 1) {
 							computeBackwardSlice(null,
 									all.get(all.indexOf(deps.get(z))-1),
@@ -706,11 +666,6 @@ public class SimpleExample2 {
 						}
 					}
 					
-					if (name.equals("requestUrl")) {
-						System.out.println(bottom.getOrder());
-						System.out.println(bottom.getClass());
-					}
-
 					if (!(next instanceof VariableWriteAugmentAssign)) {
 						// Previous writes are IRRELEVANT if it was NOT an augmented assignment i.e. -=, +=
 						found = true;
@@ -730,9 +685,7 @@ public class SimpleExample2 {
 						System.out.println(next.getOrder());
 					}
 					int parentIfId = ControlMapper.getIfId(next.getLineNo(), next.getFile());
-					System.out.println("line:  " + next.getLineNo() + ", file:  " + next.getFile());
-					System.out.println(next.getVariable());
-					System.out.println(next.getClass());
+
 					if (parentIfId != -1) {
 						IfStatement parentIf = ControlMapper.getIf(parentIfId);;
 						int ifLine = parentIf.getLine();
@@ -751,7 +704,6 @@ public class SimpleExample2 {
 									true,
 									((VariableRead) nextCtrl).getDefiningFunction());
 
-							System.out.println();
 						}
 					}
 				}
@@ -801,17 +753,6 @@ public class SimpleExample2 {
 
 				// RHS Reading
 				for (int b = 0; b < dependencies.size(); b++) {
-					if (dependencies.get(b) instanceof VariableRead && top == null) {
-						System.out.println(dependencies.get(b).getOrder());
-						System.out.println(dependencies.get(b).getLineNo());
-						System.out.println(dependencies.get(b).getClass());
-						System.out.println(dependencies.get(b).getVariable());
-						System.out.println("=-=-=-=-=-=-=-=-=-");
-						System.out.println(next.getOrder());
-						System.out.println(next.getLineNo());
-						System.out.println(next.getClass());
-						System.out.println(next.getVariable());
-					}
 
 					// If the variable read on the right side is the variable being CURRENTLY sliced, and its value is
 					// non-primitive...possible new alias created (by reference) check for updates via this alias...
@@ -854,12 +795,6 @@ public class SimpleExample2 {
 											e.printStackTrace();
 										}
 										for (int r = 0; r < deps.size(); r++) {
-
-											System.out.println(deps.get(r).getOrder());
-											System.out.println(deps.get(r).getClass());
-											System.out.println(deps.get(r).getVariable());
-
-
 											// CANT be computing slice from bottom
 											computeBackwardSlice(null, all.get(all.indexOf(deps.get(r))-1), deps.get(r).getVariable(), all, true, ((VariableRead) deps.get(r)).getDefiningFunction());
 										}
@@ -878,9 +813,6 @@ public class SimpleExample2 {
 						break;
 					} else if (dependencies.get(b) instanceof PropertyRead
 							&& dependencies.get(b).getVariable().indexOf(bottom.getVariable()) == 0) {
-
-						System.out.println("PropertyRead");
-
 					}
 				}
 			} else if (next instanceof PropertyRead && next.getVariable().equals(name)) {
@@ -896,7 +828,6 @@ public class SimpleExample2 {
 						
 						
 						for (int r = 0; r < deps.size(); r++) {
-							System.out.println(deps.get(r).getVariable() + " , " + deps.get(r).getLineNo());
 							computeBackwardSlice(null, deps.get(r), deps.get(r).getVariable(), all, true, ((VariableRead) deps.get(r)).getDefiningFunction());
 						}
 					}
@@ -916,15 +847,6 @@ public class SimpleExample2 {
 
 		AliasAnalyzer.getNextWrite(top, bottom, all);
 
-		if (top.getSliceStatus() == true) {
-			System.out.println(top.getClass());
-			System.out.println(top.getOrder());
-			System.out.println(top.getVariable());       
-		} else {
-			System.out.println(top.getClass());
-			System.out.println(top.getOrder());
-			System.out.println(top.getVariable());
-		}
 
 
 	}
@@ -963,7 +885,6 @@ public class SimpleExample2 {
 			Parser rhinoParser = new Parser(compilerEnvirons, cx.getErrorReporter());
 
 			/* parse some script and save it in AST */
-			System.out.println(webAppCode);
 			AstRoot ast = rhinoParser.parse(new String(webAppCode), o.getFile(), 0);
 
 			// Init. searcher
@@ -973,11 +894,9 @@ public class SimpleExample2 {
 			// Search for enclosing function
 			ast.visit(pff);
 
-			System.out.println(o.getLineNo());
 
 			if (TraceHelper.getFileLineMapping(o.getFile(), theSlice).getLevel2FunctionNames().indexOf(pff.getParentFunction()) == -1) {
 				TraceHelper.getFileLineMapping(o.getFile(), theSlice).addLevel2FunctionName(pff.getParentFunction());
-				System.out.println(pff.getParentFunction());
 			}
 		} catch (IOException ioe) {
 			ioe.printStackTrace();

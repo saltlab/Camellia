@@ -182,7 +182,6 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 			Helper.directoryCheck(getOutputFolder());
 			setFileName(scopename);
 			PrintStream output = new PrintStream(getOutputFolder() + getFilename());
-			System.out.println("MOEEEEE" + getOutputFolder() + getFilename());
 			PrintStream oldOut = System.out;
 			System.setOut(output);
 			System.out.println(input);
@@ -190,8 +189,7 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 
 			PrintStream output_visual =
 					new PrintStream("src/main/webapp/fish-eye-zoom-camera/" + getFilename());
-			System.out.println("MOEEEEE" +
-					"src/main/webapp/fish-eye-zoom/" + getFilename());
+
 			PrintStream oldOut2_visual = System.out;
 			System.setOut(output_visual);
 			System.out.println(input);
@@ -220,7 +218,6 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 
 			/****************************/
 			// todo todo todo do not instrument again if visited before
-			System.out.println("--------------------------------");
 			StringTokenizer tokenizer = new StringTokenizer(scopename, "?");
 			String newBaseUrl = "";
 			if (tokenizer.hasMoreTokens()) {
@@ -253,13 +250,11 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 				e.printStackTrace();
 			}
 
-			System.out.println("--------------------------------");
 			/***************************/
 
 			/* clean up */
 			Context.exit();
 
-			System.out.println(">>>>");
 
 			return ast.toSource();
 		} catch (RhinoException re) {
@@ -316,7 +311,6 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 	 * @return The modified response.
 	 */
 	private Response createResponse(Response response, Request request) {
-		System.out.println("[createResponse]");
 		Element newNodeToAdd;
 		ArrayList<String> scriptNodesToCreate;
 
@@ -406,9 +400,7 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 					entireDOMAsJSON.put(0, loadEvent);
 					JSExecutionTracer.addPoint(entireDOMAsJSON);
 
-				} else {
-					System.out.println("Something Wong! Size should be 1");
-				}
+				} 
 			} catch (JSONException e) { 
 				e.printStackTrace();
 			} catch (SAXException e) {
@@ -477,9 +469,7 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 
 						if (content.length() > 0) {
 							String js = modifyJS(content, request.getURL() + "script" + i);
-							System.out.println(js);
 							nodes.item(i).setTextContent(js);
-							System.out.println(nodes.item(i).getTextContent());
 							continue;
 						}
 					}
@@ -509,15 +499,11 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 							&& dom.getElementsByTagName("meta").item(0).getParentNode() == dom.getElementsByTagName("head").item(0)) {
 						dom.getElementsByTagName("head").item(0).insertBefore(newNodeToAdd, dom.getElementsByTagName("meta").item(dom.getElementsByTagName("meta").getLength()-1));
 					} else if (dom.getElementsByTagName("script").getLength() > 0) {
-						System.out.println("there are other script");
 						dom.getElementsByTagName("script").item(0).getParentNode().insertBefore(newNodeToAdd, dom.getElementsByTagName("script").item(0));
 					} else {
 						if (dom.getElementsByTagName("HEAD").getLength() > 0) {
 							NodeList nl = dom.getElementsByTagName("HEAD").item(0).getChildNodes();
-							for (int t = 0; t < nl.getLength(); t++) {
-								System.out.println("child of the head:");
-								System.out.println(nl.item(t).getTextContent());
-							}
+
 						}
 
 					}
@@ -538,7 +524,6 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 				}
 
 
-				System.out.println(Helper.getDocumentToString(dom));
 
 
 
@@ -620,7 +605,6 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 					try {
 						returnMe.put(children.getJSONObject(j));
 					} catch (JSONException e) {
-						System.out.println("[crawlAndConvert]: Error adding children as mutations");
 						e.printStackTrace();
 					}
 				}

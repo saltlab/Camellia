@@ -216,8 +216,6 @@ public class DependencyFinder extends AstInstrumenter {
 				//	.replaceAll("(\\n)", "\n\n")  // <-- just for spacing, might not be needed
 				.replaceAll("\\.\\[", "[");
 
-		System.out.println(isc);
-
 		AstRoot iscNode = rhinoCreateNode(isc);
 
 
@@ -407,13 +405,9 @@ public class DependencyFinder extends AstInstrumenter {
 				ControlMapper.addIf(leftSide, getScopeName());
 				// If a parent 'if' was found through ControlMapper, add the conditional dependencies for instrumentation
 				int possibleParentIf = ControlMapper.getIfId(leftSide.getLineno(), getScopeName());
-				System.out.println(possibleParentIf);
 				if(possibleParentIf != -1) {
 					if (ControlMapper.getIf(possibleParentIf).getCondition() instanceof InfixExpression) {
 						// Maybe should create separate buffer for control dependencies...for now they are treated equally
-						System.out.println(InfixExpressionParser.getOperandDependencies(
-								(InfixExpression) ControlMapper.getIf(possibleParentIf).getCondition(),
-								true).size());
 						dataDependencies.addAll(InfixExpressionParser.getOperandDependencies(
 								(InfixExpression) ControlMapper.getIf(possibleParentIf).getCondition(),
 								true));
@@ -516,8 +510,6 @@ public class DependencyFinder extends AstInstrumenter {
 			//nextArg = argsIt.next();
 			dotSplit = nextArg.toSource().split("\\.");
 
-			System.out.println(Token.typeToName(nextArg.getType()));
-
 			// Argument is variable of interest
 			if (nextArg.getType() == org.mozilla.javascript.Token.NAME && ((Name) nextArg).getIdentifier().equals(this.variableName)) {
 
@@ -542,8 +534,6 @@ public class DependencyFinder extends AstInstrumenter {
 
 
 	private void handleAssignmentOperator(InfixExpression node) {
-		System.out.println("[handleAssignmentOperator]: " + node.toSource());
-
 		// Left & Right side
 		AstNode leftSide = node.getLeft();
 		AstNode rightSide = node.getRight();
@@ -559,9 +549,7 @@ public class DependencyFinder extends AstInstrumenter {
 			varBeingWritten = leftSide.toSource().split("\\.")[0];
 		} else if (leftSide.getType() == org.mozilla.javascript.Token.NAME) {
 			varBeingWritten = ((Name) leftSide).getIdentifier();
-		} else {
-			System.out.println("[handleAssignmentOperator]: Left hand side of assignment is not NAME or GETPROP, illegal?");
-		}
+		} 
 
 		// Get the name of the object being read from
 		if (rightSide.getType() == org.mozilla.javascript.Token.GETPROP) {
@@ -576,7 +564,6 @@ public class DependencyFinder extends AstInstrumenter {
 			// No dependency
 		} else {
 			System.out.println("[handleAssignmentOperator]: Right hand side of assignment is not NAME or GETPROP, function?");
-			System.out.println(rightSide.toSource());
 		}
 
 		if (node.getLineno() == 581)  {
@@ -624,11 +611,6 @@ public class DependencyFinder extends AstInstrumenter {
 
 				// Investigate how to get all variables in the add/concatination
 				InfixExpression addOperation = ((InfixExpression) rightSide);
-
-				System.out.println("Class: " + rightSide.getClass().toString());
-				System.out.println("Operation: " + Token.typeToName(addOperation.getOperator()));
-				System.out.println("Right: " + Token.typeToName(addOperation.getRight().getType()));
-				System.out.println("Left: " + Token.typeToName(addOperation.getLeft().getType()));
 
 				dataDependencies.addAll(InfixExpressionParser.getOperandDependencies((InfixExpression) rightSide, true));
 

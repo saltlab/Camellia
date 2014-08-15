@@ -5,6 +5,8 @@ import org.junit.*;
 import static org.junit.Assert.*;
 import org.openqa.selenium.*;
 import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class SlideShowTest_forSlicer {
 	private WebDriver driver;
@@ -24,42 +26,45 @@ public class SlideShowTest_forSlicer {
 		assertTrue(driver.getTitle().matches("^SlideShow[\\s\\S]*$"));
 		Thread.sleep(700);
 
-		
-		Thread.sleep(700);
-		driver.findElement(Byy.id("ss_playpause_link")).click();
-		Thread.sleep(700);
-
 		try {
-			assertTrue(isElementPresent(Byy.cssSelector("img#ss_photo")));
+			assertTrue(isElementPresent(By.cssSelector("img#ss_photo")));
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
 		Thread.sleep(700);
 
 		try {
-			assertEquals("1", driver.findElement(Byy.cssSelector("span#ss_n")).getText());
+			assertEquals("1", driver.findElement(By.cssSelector("span#ss_n")).getText());
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
 		
 		Thread.sleep(700);
-		driver.findElement(Byy.linkText("Next")).click();
+		driver.findElement(By.linkText("Next")).click();
 		Thread.sleep(700);
 
 		try {
-			assertEquals("2", driver.findElement(Byy.cssSelector("span#ss_n")).getText());
+			assertEquals("2", driver.findElement(By.cssSelector("span#ss_n")).getText());
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
-		Thread.sleep(1200);
-		driver.findElement(Byy.linkText("Previous")).click();
+		
+		Thread.sleep(700);
+		driver.findElement(By.linkText("Next")).click();
+		Thread.sleep(700);
+		try {
+			assertEquals("3", driver.findElement(By.cssSelector("span#ss_n")).getText());
+		} catch (Error e) {
+			verificationErrors.append(e.toString());
+		}
+		
+		(new WebDriverWait(driver, 10)).until(ExpectedConditions.invisibilityOfElementWithText(By.cssSelector("span#ss_n"), "3"));
+		try {
+			assertEquals("4", driver.findElement(By.cssSelector("span#ss_n")).getText());
+		} catch (Error e) {
+			verificationErrors.append(e.toString());
+		}
 		Thread.sleep(3000);
-
-		try {
-			assertEquals("2", driver.findElement(Byy.cssSelector("span#ss_n")).getText());
-		} catch (Error e) {
-			verificationErrors.append(e.toString());
-		}
 
 	}
 

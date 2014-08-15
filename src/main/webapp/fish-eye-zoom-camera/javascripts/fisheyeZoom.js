@@ -131,7 +131,7 @@ for (var i = 0; i < number_episodes; i++) {
 			    $(divs_map[i]).addClass('box');
               
 
-            } else if (data.timeoutId !== undefined && data.callbackFunction.length > 0) {
+            } else if (data.timeoutId !== undefined && data.callbackFunction && data.callbackFunction.length > 0) {
                 episodes[i] = document.createTextNode("Episode #" + i + "\n" + "Timeout");
                 $(divs[i]).addClass('cell_to');
                 $(divs_map[i]).addClass('box');
@@ -690,7 +690,10 @@ for (var i = 0, n = cells.length; i < n; i++) {
                                              
                                              // Function trace, create lifeline
                                              if (data[h] === 'script') {
-                                                cells[h + 3].appendChild(document.createTextNode(data[h]));
+                                                //cells[h + 3].appendChild(document.createTextNode(data[h]));
+                                                continue;
+                                             } else if (data[h].length === 0) {
+                                                cells[h + 3].appendChild(document.createTextNode('anonymous'+'()'));
                                              } else {
                                                 cells[h + 3].appendChild(document.createTextNode(data[h]+'()'));
                                              }

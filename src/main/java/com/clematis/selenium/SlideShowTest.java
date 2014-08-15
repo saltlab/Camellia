@@ -6,7 +6,10 @@ import java.util.concurrent.TimeUnit;
 import org.json.JSONObject;
 import org.junit.*;
 import static org.junit.Assert.*;
+
 import org.openqa.selenium.*;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import com.clematis.core.WebDriverWrapper;
 import com.clematis.jsmodify.JSExecutionTracer;
@@ -33,11 +36,6 @@ public class SlideShowTest {
 		assertTrue(driver.getTitle().matches("^SlideShow[\\s\\S]*$"));
 		Thread.sleep(700);
 
-		
-		Thread.sleep(700);
-		driver.findElement(Byy.id("ss_playpause_link")).click();
-		Thread.sleep(700);
-
 		try {
 			assertTrue(isElementPresent(Byy.cssSelector("img#ss_photo")));
 		} catch (Error e) {
@@ -60,20 +58,33 @@ public class SlideShowTest {
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
+		
+		Thread.sleep(700);
+		driver.findElement(Byy.linkText("Next")).click();
+		Thread.sleep(700);
+		try {
+			assertEquals("3", driver.findElement(Byy.cssSelector("span#ss_n")).getText());
+		} catch (Error e) {
+			verificationErrors.append(e.toString());
+		}
+		
+		(new WebDriverWait(driver, 10)).until(ExpectedConditions.invisibilityOfElementWithText(By.cssSelector("span#ss_n"), "3"));
+		try {
+			assertEquals("4", driver.findElement(By.cssSelector("span#ss_n")).getText());
+		} catch (Error e) {
+			verificationErrors.append(e.toString());
+		}
+		
 		Thread.sleep(1200);
 		driver.findElement(Byy.linkText("Previous")).click();
 		Thread.sleep(3000);
 
 		try {
-			assertEquals("1", driver.findElement(Byy.cssSelector("span#ss_n")).getText());
+			assertEquals("3", driver.findElement(Byy.cssSelector("span#ss_n")).getText());
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
 
-
-		//Thread.sleep(30000);
-		//driver.findElement(By.linkText("Back")).click();
-		//assertEquals("TestGallery1", driver.getTitle());
 	}
 
 	@After

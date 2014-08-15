@@ -114,7 +114,7 @@ function send(value) {
     	return; 
     }
 	window.buffer.push(value);
-    if (window.buffer.length > 300) {
+    if (window.buffer.length > 600) {
         sendReally();
     }
 }

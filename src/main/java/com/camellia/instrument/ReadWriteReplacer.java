@@ -104,8 +104,6 @@ public class ReadWriteReplacer extends AstInstrumenter {
 				.replaceAll("\\.\\[", "[")
 				.replaceAll("\\;\\\n\\)", ")");
 
-		System.out.println(code);
-
 		AstRoot returnMe = null;
 		try {
 			returnMe = p.parse(code, null, lineNo);
@@ -170,12 +168,6 @@ public class ReadWriteReplacer extends AstInstrumenter {
 	@Override
 	public  boolean visit(AstNode node){
 		int tt = node.getType();
-
-		if (tt == org.mozilla.javascript.Token.CALL && node.getLineno() > 38) {
-			System.out.println(node.toSource());
-			System.out.println(node.getLineno());
-		}
-
 
 		if (tt == org.mozilla.javascript.Token.GETPROP) {
 			// TODO:
@@ -457,7 +449,6 @@ public class ReadWriteReplacer extends AstInstrumenter {
 		String newBody;
 
 		System.out.println("[handleVariableDeclaration]: begin");
-		System.out.println(node.toSource());
 
 		while (varIt.hasNext()) {
 			nextInitializer = varIt.next();
@@ -472,9 +463,6 @@ public class ReadWriteReplacer extends AstInstrumenter {
 			// Just in case
 			newBody = rightSide.toSource();
 
-
-			System.out.println(Token.typeToName(rightSide.getType()));
-			System.out.println(rightSide.toSource());
 			//System.out.println(Token.typeToName(rightSide.getType()));
 
 
@@ -499,9 +487,6 @@ public class ReadWriteReplacer extends AstInstrumenter {
 					&& isItInteresting(((Name) rightSide).getIdentifier(), rightSide.getLineno())) {
 				//	&& ((Name) rightSide).getIdentifier().equals(variableName)) {
 
-
-				System.out.println("Right side of declarations is variable of interest");
-
 				newBody = (VARWRITE+"(\""+leftSide.toSource()+"\", "+rightSide.toSource()+", \"" +rightSide.toSource().replaceAll("\\\"", "'")+ "\" ,"+node.getLineno()+", \""+this.getScopeName()+"\")");
 
 				// TODO: Add left side to interesting variables
@@ -512,8 +497,6 @@ public class ReadWriteReplacer extends AstInstrumenter {
 			} else if (rightSide.getType() == org.mozilla.javascript.Token.GETPROP 
 					//&& ((PropertyGet) rightSide).getTarget().toSource().equals(variableName)) {
 					&& isItInteresting(((PropertyGet) rightSide).getTarget().toSource().split("\\.")[0], rightSide.getLineno())) {   
-
-				System.out.println("Right side of declarations is variable of interest (PROP)");
 
 				newBody = (VARWRITE+"(\""+leftSide.toSource()+"\", " +rightSide.toSource()+ ", \"" +rightSide.toSource().replaceAll("\\\"", "'")+ "\" ,"+node.getLineno()+", \""+this.getScopeName()+"\")");
 
@@ -532,14 +515,12 @@ public class ReadWriteReplacer extends AstInstrumenter {
 
 			System.out.println("Element found in here? " + found);*/
 
-			System.out.println(newBody);
 
 			newRightSide = parse(newBody, node.getLineno());
 			if (newRightSide != null) {
 				nextInitializer.setInitializer(newRightSide);
 			}
 			System.out.println("[handleVariableDeclaration]: end");
-			System.out.println(node.toSource());
 		}
 	}
 
@@ -561,9 +542,6 @@ public class ReadWriteReplacer extends AstInstrumenter {
 				// Don't want to instrument arguments in a function declaration
 				return;
 			} else if (parent.getType() == org.mozilla.javascript.Token.INC || parent.getType() == org.mozilla.javascript.Token.DEC) {
-				System.out.println(node.toSource());
-				System.out.println(node.getParent().toSource());
-				System.out.println(Token.typeToName(node.getParent().getType()));
 
 				//_dynoWrite('ss_cur', 0, '', 3, '/phorm.js');
 				newBody = VARWRITE+"(\'"+node.getIdentifier()+"\',"
@@ -626,8 +604,6 @@ public class ReadWriteReplacer extends AstInstrumenter {
 			return;
 		}
 		newTarget = parse(newBody, node.getLineno());
-		System.out.println(">>>>>>>>>>>>> handleArgumentName");
-		System.out.println(newTarget.toSource());
 		if (newTarget != null) {
 			node.setIdentifier(newBody);
 		}
@@ -638,10 +614,6 @@ public class ReadWriteReplacer extends AstInstrumenter {
 			System.out.println("First character is square bracket!");
 			return;
 		}
-
-		System.out.println("[handleProperty] : begin");
-		System.out.println(node.toSource());
-		System.out.println(node.getProperty().toSource());
 
 		String varBeingWritten = node.getLeft().toSource().split("\\.")[0];
 
@@ -681,7 +653,6 @@ public class ReadWriteReplacer extends AstInstrumenter {
 		newTarget = parse(newBody, node.getLineno());
 
 		System.out.println("[handleProperty] : end");
-		System.out.println(newBody);
 
 
 		Name tt = new Name();
@@ -698,8 +669,6 @@ public class ReadWriteReplacer extends AstInstrumenter {
 		}
 
 		System.out.println("[handleProperty] : begin");
-		System.out.println(node.toSource());
-		System.out.println(node.getProperty().toSource());
 
 		String varBeingWritten = node.getLeft().toSource().split("\\.")[0];
 
@@ -778,7 +747,6 @@ public class ReadWriteReplacer extends AstInstrumenter {
 		}
 
 		System.out.println("last thing:" + Token.typeToName(node.getOperator()));
-		System.out.println("[handleAssignmentOperator//handleAssignmentOperator]:" + node.toSource());
 
 		// newBody = (VARWRITE+"(\""+leftSide.toSource()+"\", \""+rightSide.toSource()+"\", " +rightSide.toSource()+ " ,"+node.getLineno()+")");
 
@@ -983,23 +951,9 @@ public class ReadWriteReplacer extends AstInstrumenter {
 
 	private void handleFunctionCall(FunctionCall node) {
 
-		if (fromHere) {
-			System.out.println(node.toSource());
-		}
-
 		if (node.getTarget().toSource().indexOf(TOOLNAME) != -1) {
 			// We don't want to instrument out code (dirty way)
 			return;
-		}
-		System.out.println("========================");
-		System.out.println("[handleFunctionCall]: begin");
-		System.out.println(node.getTarget().toSource());
-		System.out.println(node.toSource());
-		System.out.println(node.getLineno());
-		System.out.println("========================");
-
-		if (node.getTarget().toSource().equals("renderAssetsScroll") /*&& node.getLineno() == 71*/) {
-			System.out.println("stop here");
 		}
 
 		boolean isTargetInArgument = false;
@@ -1033,10 +987,8 @@ public class ReadWriteReplacer extends AstInstrumenter {
 			//nextArg = argsIt.next();
 			dotSplit = nextArg.toSource().split("\\.");
 
-			System.out.println(Token.typeToName(nextArg.getType()));
 
 			// Argument is variable of interest
-			System.out.println( nextArg.getLineno());
 			if (nextArg.getType() == org.mozilla.javascript.Token.NAME && isItInteresting(((Name) nextArg).getIdentifier(), nextArg.getLineno())) {
 				handleArgumentName((Name) nextArg, targetMethod, i);
 
@@ -1081,9 +1033,6 @@ public class ReadWriteReplacer extends AstInstrumenter {
 				args.remove(i);
 				args.add(i, nextArg);
 				nextArg.setParent(node);
-
-				System.out.println(nextArg.toSource());
-
 
 				isTargetInArgument = true;
 
@@ -1135,9 +1084,6 @@ public class ReadWriteReplacer extends AstInstrumenter {
 			String[] methods = targetMethod.split("\\.");
 			targetObject = methods[0];
 			targetMethod = methods[methods.length-1];
-
-			System.out.println(targetObject);
-			System.out.println(targetMethod);
 
 			if (isItInteresting(targetObject, target.getLineno())) {
 
@@ -1203,7 +1149,6 @@ public class ReadWriteReplacer extends AstInstrumenter {
 
 			/*parent.set
 		node.setIdentifier(newBody);*/
-			System.out.println(newBody);
 
 			//System.out.println(parent.getClass());
 			node.setOperand(parse(newBody, node.getLineno()));
@@ -1259,10 +1204,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
 
 	private void handleGetElem(ElementGet node) {
 		System.out.println("handleGetElem:");
-		System.out.println(node.toSource());
-		System.out.println(node.getElement().toSource());
-		System.out.println(node.getTarget().toSource());
-		System.out.println(Token.typeToName(node.getTarget().getType()));
+
 		fromHere = true;
 	}
 
@@ -1337,12 +1279,6 @@ public class ReadWriteReplacer extends AstInstrumenter {
 
 		Iterator<SlicingCriteria> it = vars.iterator();
 
-		while (it.hasNext()) {
-			System.out.println(it.next().getVariable());
-		}
-		System.out.println("-=-===-=-=-=-=-");
-
-
 		this.astCrawled = asd;
 	}
 
@@ -1357,10 +1293,7 @@ public class ReadWriteReplacer extends AstInstrumenter {
 		}
 
 		Scope scope = TraceHelper.getDefiningScope(astCrawled, varName, lineNo);
-		if (scope != null) {
-			System.out.println(scope.toSource());
 
-		}
 		SlicingCriteria checkMe = new SlicingCriteria(scope, varName, true);
 
 		Iterator<SlicingCriteria> it = this.variablesOfInterest.iterator();
@@ -1368,13 +1301,6 @@ public class ReadWriteReplacer extends AstInstrumenter {
 
 		while (it.hasNext()) {
 			next = it.next();
-			System.out.println(next.getVariable());
-			System.out.println(checkMe.getVariable());
-			System.out.println("----------");
-			System.out.println(next.getScope().getLineno());
-			if (scope != null) {
-				System.out.println(scope.getLineno());
-			}
 
 			if (checkMe.equals(next)) {
 				System.out.println("[isItIteresting]: Returning true");

@@ -121,8 +121,6 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 	}
 
 	private boolean shouldModify(String name) {
-		System.out.println(name);
-		System.out.println(targetFile);
 		
 		/* try all patterns and if 1 matches, return false */
 		for (String pattern : excludeFilenamePatterns) {
@@ -134,9 +132,7 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 			firstTime = false;
 			return true;
 		} else if (name.indexOf(targetFile) != -1 && firstTime == true) {
-			System.out.println(name.length());
-			System.out.println(targetFile.length());
-			System.out.println(name.indexOf(targetFile));
+
 		} else if (firstTime == false) {
 			return true;
 		}
@@ -160,30 +156,15 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 	 * @return The modified JavaScript
 	 */
 	private synchronized String modifyJS(String input, String scopename) {
-
-		System.out.println("<<<<");
-		System.out.println("Scope: " + scopename);
 		
-		if (scopename.contains("preload")) {
-			System.out.println(scopename);
-			System.out.println(targetFile);
-		}
 
 		scopeNameForExternalUse = scopename;
 
 		if (!shouldModify(scopename)) {
-			System.out.println("^^ should not modify");
-			System.out.println(">>>>");
 			return input;
-		} else {
-			
-			System.out.println("OKAY for instrumentation:");
-			System.out.println(scopename);
-		}
+		} 
+		
 		try {
-			System.out.println(targetFile);
-			System.out.println(targetLine);
-			System.out.println(targetVariable);
 
 			le.setTargetFile(targetFile);
 			le.setLineNo(targetLine);
@@ -207,11 +188,7 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 			System.setOut(oldOut);
 
 			String ast = le.instrument(input, "/"+getFilename());
-
-			System.out.println(ast);
-
 			/* clean up */
-
 			return ast;//.toSource();
 		} catch (RhinoException re) {
 			System.err.println(re.getMessage()
@@ -273,23 +250,18 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 		Element newNodeToAdd;
 
 		if (request == null) {
-			System.err.println("JSModifyProxyPlugin::createResponse: request is null");
+			//System.err.println("JSModifyProxyPlugin::createResponse: request is null");
 			return response;
-		}
-
-		if (request != null && request.getURL() != null) {
-			System.out.println("Request URL:");
-			System.out.println(request.getURL().toString());
 		}
 
 		if (request.getURL() == null) {
-			System.err.println("JSModifyProxyPlugin::createResponse: request url is null");
+			//System.err.println("JSModifyProxyPlugin::createResponse: request url is null");
 			return response;
 		} else if (request.getURL().toString().isEmpty()) {
-			System.err.println("JSModifyProxyPlugin::createResponse: request url is empty");
+			//System.err.println("JSModifyProxyPlugin::createResponse: request url is empty");
 			return response;
 		} else if (response == null) {
-			System.err.println("JSModifyProxyPlugin::createResponse: response is null");
+			//System.err.println("JSModifyProxyPlugin::createResponse: response is null");
 			return response;
 			// Proxy can provide Clematis files to prepend to application (specified in SimpleExample.java)
 		} else if (!request.getURL().toString().contains("-clematis")
@@ -414,10 +386,10 @@ public class JSModifyProxyPlugin extends ProxyPlugin {
 			intrResponse.setContent(Resources.toByteArray(AstInstrumenter.class.getResource(file)));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			System.out.println(file);
+			//System.out.println(file);
 			e.printStackTrace();
 		} catch (NullPointerException npe) {
-			System.out.println(file);
+			//System.out.println(file);
 			npe.printStackTrace();
 		}
 		return intrResponse;

@@ -92,34 +92,20 @@ public class SimpleExample {
 
 			driver = new WebDriverWrapper(profile);
 			WebDriverWait wait = new WebDriverWait(driver, 10);
-			boolean sessionOver = false;
-
-			// Use WebDriver to visit specified URL
-			//		driver.get(URL);
 
 			MainViewTest HPT = new MainViewTest();
-
-
-			// Aug 12
-			//SlideShowTest HPT = new SlideShowTest();
-			//			HomePageTest HPT = new HomePageTest();
-
+			//SlideShowTest HPT = new SlideShowTest();	
 			
-			
-			
-			
-			//TestSortByPopDefaults HPT = new TestSortByPopDefaults();
 			try {
 				HPT.setUp(driver);
-				//HPT.testSortByPopDefaults();
 				HPT.testMainView();
+				//HPT.testSlideShow();
 			} catch (NoSuchElementException e) {
 				System.out.println("Error executing test case:");
 				e.printStackTrace();
 			}
 
 			if (driver instanceof JavascriptExecutor) {
-				System.out.println("doing sendRecordStop");
 				((JavascriptExecutor) driver).executeScript("sendRecordStop();");
 			}
 

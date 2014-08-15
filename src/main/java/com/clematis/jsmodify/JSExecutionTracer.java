@@ -642,7 +642,11 @@ public class JSExecutionTracer {
 			Name namePrev = null;
 
 			while (finalIt.hasNext()) {
-				nameNext = finalIt.next();
+				namePrev = finalIt.next();
+				if (namePrev.toSource().contains("null")) {
+					continue;
+				}
+				nameNext = namePrev;
 				System.out.println(nameNext.toSource() + ", line @:  " + nameNext.getLineno());
 			}
 			System.out.println(".....................................");
