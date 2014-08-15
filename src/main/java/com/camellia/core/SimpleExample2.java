@@ -464,6 +464,11 @@ public class SimpleExample2 {
 		boolean found = false;
 
 
+		if (name.equals("requestUrl")) {
+			System.out.println(bottom.getOrder());
+			System.out.println(bottom.getClass());
+		}
+		
 		System.out.println(name);
 		System.out.println("Top: " + i);
 		System.out.println("Bottom: " + bottom.getOrder());
@@ -620,6 +625,11 @@ public class SimpleExample2 {
 				/** 3 (OLD): Basic slicing **/
 			} else if (next instanceof VariableWrite && ((VariableWrite) next).getVariable().equals(name)) {
 
+				if (name.equals("requestUrl")) {
+					System.out.println(bottom.getOrder());
+					System.out.println(bottom.getClass());
+				}
+				
 				// UPWARDS
 				if (next instanceof ArgumentWrite) {
 					if (all.indexOf(next) == 0) {
@@ -652,6 +662,14 @@ public class SimpleExample2 {
 								break;
 							}
 						}
+						if (!found) {
+							// The argument write was found (assignment of the variable as an arugment)...
+							// But the passing of the value into the function was not found in trace...
+							// Most probably the call was not instrumented (not found). Best effort, give up
+							highlightLine(next);
+
+							return;
+						}
 					}
 				} else {
 					// Regular hard write (not argument write)
@@ -663,6 +681,12 @@ public class SimpleExample2 {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
+					
+					if (name.equals("requestUrl")) {
+						System.out.println(bottom.getOrder());
+						System.out.println(bottom.getClass());
+					}
+					
 					for (int z = 0; z < deps.size(); z++) {
 						System.out.println(deps.get(z).getVariable());
 						if (deps.get(z).getVariable().split("\\.").length > 1) {
@@ -680,6 +704,11 @@ public class SimpleExample2 {
 									true,
 									((VariableRead) deps.get(z)).getDefiningFunction());
 						}
+					}
+					
+					if (name.equals("requestUrl")) {
+						System.out.println(bottom.getOrder());
+						System.out.println(bottom.getClass());
 					}
 
 					if (!(next instanceof VariableWriteAugmentAssign)) {
