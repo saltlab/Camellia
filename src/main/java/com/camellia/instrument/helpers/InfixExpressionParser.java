@@ -53,6 +53,10 @@ public class InfixExpressionParser {//extends AstInstrumenter {
 				d.addAll(getOperandDependencies((InfixExpression) operand, true));
 
 				break;
+			case org.mozilla.javascript.Token.EQ:
+				d.addAll(getOperandDependencies((InfixExpression) operand, true));
+
+				break;
 			case org.mozilla.javascript.Token.NAME:  
 				d.add((Name) operand);
 				break;
@@ -83,6 +87,7 @@ public class InfixExpressionParser {//extends AstInstrumenter {
 			default:
 				System.out.println("[InfixExpression]: Error parsing Infix Expression. Unknown operand type. (getNames())");
 				System.out.println(Token.typeToName(operand.getType()));
+				System.out.println(operand.getClass());
 				break;
 			}
 		}
