@@ -652,7 +652,15 @@ public class JSExecutionTracer {
 			System.out.println(".....................................");
 			System.out.println("-----------------------------------");
 
+			// Make sure other browser session is killed here, will make new one to run test case for slicing portion
 
+			JSepisodes.close();
+
+			// Create graph containing all episodes with embedded sequence diagrams
+			EpisodeGraph eg = new EpisodeGraph(getOutputFolder(), story.getEpisodes());
+			eg.createGraph();
+			writeStoryToDisk();
+			
 			if (nameNext != null) {
 				args[0] = "--server";
 				args[1] = "N/A";
@@ -662,23 +670,9 @@ public class JSExecutionTracer {
 				args[5] = (nameNext.getLineno()-1) + "";
 				args[6] = "--variable";
 				args[7] = nameNext.getIdentifier();
-
-				System.out.println("Arguments to camellia");
-				for (int i = 0; i < 8; i++) {
-					System.out.print(args[i] + " ");
-				}
-				System.out.println("......");
-
+			} else {
+				args = null;
 			}
-
-			// Make sure other browser session is killed here, will make new one to run test case for slicing portion
-
-			JSepisodes.close();
-
-			// Create graph containing all episodes with embedded sequence diagrams
-			EpisodeGraph eg = new EpisodeGraph(getOutputFolder(), story.getEpisodes());
-			eg.createGraph();
-			writeStoryToDisk();
 		} catch (Exception e) {
 			e.printStackTrace();
 			return args;

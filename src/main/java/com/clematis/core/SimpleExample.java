@@ -114,11 +114,16 @@ public class SimpleExample {
 			//saveDirectAccessesToFile(driver.assertionToAccess, driver.assertionToElements, driver.assertionOutcomes, driver.directAccesses);
 
 			HPT.tearDown();
-
-			// Part 2 - slicing with test case
-			SimpleExample2 camellia = new SimpleExample2();
-			camellia.main(p.getArgs());
-
+			
+			if (p.getArgs() == null) {
+				System.out.println("[Camellia]: Test Case Pass, no failing assertions!");
+			} else {
+				System.out.println("[Camellia]: Computing slices for failing assertions.");
+				// Part 2 - slicing with test case
+				SimpleExample2 camellia = new SimpleExample2();
+				camellia.main(p.getArgs());
+			}
+			System.err.println("[Camellia]: Complete!");
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(1);
