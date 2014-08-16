@@ -29,6 +29,8 @@ public class WebDriverWrapper extends org.openqa.selenium.firefox.FirefoxDriver 
 	public static Vector<Long> assertionCounters = new Vector<Long>();
 	public static Vector<Long> assertionTimeStamps = new Vector<Long>();
 	
+	public static Vector<Integer> assertionLineNumber = new Vector<Integer>();
+	
 	private static long assertionCutTime = -1;
 	private static long assertionCutCounter = -1;
 
@@ -240,7 +242,7 @@ public class WebDriverWrapper extends org.openqa.selenium.firefox.FirefoxDriver 
 		return super.manage();
 	}
 
-	public static void flushAccesses(String assertionMessage, long assertionCounter, long timeStamp) {
+	public static void flushAccesses(String assertionMessage, long assertionCounter, long timeStamp, int lineNumber) {
 		// Should be called when an assertion is executed in the Selenium test case.
 
 		JSONArray newAssertion1 = new JSONArray();
@@ -271,6 +273,7 @@ public class WebDriverWrapper extends org.openqa.selenium.firefox.FirefoxDriver 
 		
 		assertionCutTime = timeStamp;
 		assertionCutCounter = assertionCounter;
+		assertionLineNumber.add(lineNumber);
 	}
 
 	public static void addDOMAccess (String type, String value, boolean found) {

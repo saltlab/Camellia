@@ -1,6 +1,5 @@
 package com.clematis.selenium;
 
-//import java.util.regex.Pattern;
 import java.util.concurrent.TimeUnit;
 
 import org.json.JSONObject;
@@ -19,56 +18,51 @@ public class SlideShowTest {
 	//private String baseUrl;
 	private static StringBuffer verificationErrors = new StringBuffer();
 
-
-
 	@Before
 	public void setUp(WebDriver parentDriver) throws Exception {
-		//driver = new FirefoxDriver();
 		driver = parentDriver;
-		//baseUrl = "http://localhost/";
 		driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
 	}
 
 	@Test
 	public static void testSlideShow() throws Exception {
 		driver.get("http://localhost:8888/?feat=slideshow");
-
-		assertTrue(driver.getTitle().matches("^SlideShow[\\s\\S]*$"));
+		assertTrue(driver.getTitle().matches("^SlideShow[\\s\\S]*$"), 30);
 		try {
-			assertTrue(isElementPresent(Byy.cssSelector("img#ss_photo")));
+			assertTrue(isElementPresent(Byy.cssSelector("img#ss_photo")), 32);
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
 		try {
-			assertEquals("1", driver.findElement(Byy.cssSelector("span#ss_n")).getText());
+			assertEquals("1", driver.findElement(Byy.cssSelector("span#ss_n")).getText(), 37);
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
 		
 		driver.findElement(Byy.linkText("Next")).click();
 		try {
-			assertEquals("2", driver.findElement(Byy.cssSelector("span#ss_n")).getText());
+			assertEquals("2", driver.findElement(Byy.cssSelector("span#ss_n")).getText(), 44);
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
 		driver.findElement(Byy.linkText("Next")).click();
 		
 		try {
-			assertEquals("3", driver.findElement(Byy.cssSelector("span#ss_n")).getText());
+			assertEquals("3", driver.findElement(Byy.cssSelector("span#ss_n")).getText(), 51);
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
 		
 		(new WebDriverWait(driver, 10)).until(ExpectedConditions.invisibilityOfElementWithText(By.cssSelector("span#ss_n"), "3"));
 		try {
-			assertEquals("4", driver.findElement(By.cssSelector("span#ss_n")).getText());
+			assertEquals("4", driver.findElement(By.cssSelector("span#ss_n")).getText(), 58);
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
 		
 		driver.findElement(Byy.linkText("Previous")).click();
 		try {
-			assertEquals("3", driver.findElement(Byy.cssSelector("span#ss_n")).getText());
+			assertEquals("3", driver.findElement(Byy.cssSelector("span#ss_n")).getText(), 65);
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
@@ -95,7 +89,7 @@ public class SlideShowTest {
 	}
 
 	/** Clematest jUnit wrappers **/
-	private static void assertTrue(Boolean condition){
+	private static void assertTrue(Boolean condition, int lineNumber){
 		System.out.println("[assertTrue]: ");
 		long assertionCutoff = (Long) (((JavascriptExecutor) driver).executeScript(
 				"return traceCounter++;"/**/));
@@ -105,13 +99,13 @@ public class SlideShowTest {
 		try {
 			org.junit.Assert.assertTrue(condition);
 		} catch (Error e) {
-			WebDriverWrapper.flushAccesses(e.toString(), assertionCutoff, timeStamp);
+			WebDriverWrapper.flushAccesses(e.toString(), assertionCutoff, timeStamp, lineNumber);
 			throw e;
 		}
-		WebDriverWrapper.flushAccesses(null, assertionCutoff, timeStamp);
+		WebDriverWrapper.flushAccesses(null, assertionCutoff, timeStamp, lineNumber);
 	}
 
-	private static void assertEquals(String s1, String s2){
+	private static void assertEquals(String s1, String s2, int lineNumber){
 		//TODO: changed counter for allowing assertions to be shown
 		long assertionCutoff = (Long) (((JavascriptExecutor) driver).executeScript(
 				"return traceCounter++;"/**/));
@@ -125,10 +119,10 @@ public class SlideShowTest {
 		   // org.junit.Assert.assertEquals(s1, s1);
 		    org.junit.Assert.assertEquals(s1, s2);
 		} catch (Error e) {
-			WebDriverWrapper.flushAccesses(e.toString(), assertionCutoff, timeStamp);
+			WebDriverWrapper.flushAccesses(e.toString(), assertionCutoff, timeStamp, lineNumber);
 			throw e;
 		}
-		WebDriverWrapper.flushAccesses(null, assertionCutoff, timeStamp);
+		WebDriverWrapper.flushAccesses(null, assertionCutoff, timeStamp, lineNumber);
 	}
 }
 

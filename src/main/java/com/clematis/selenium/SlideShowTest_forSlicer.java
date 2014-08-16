@@ -100,7 +100,7 @@ public class SlideShowTest_forSlicer {
 			//assertionCutoff += JSExecutionTracer.getPageLoadBuffer();
 			long timeStamp = (Long) (((JavascriptExecutor) driver).executeScript(
 					"return Date.now();"/**/));
-			WebDriverWrapper.flushAccesses(e.toString(), assertionCutoff, timeStamp);
+			WebDriverWrapper.flushAccesses(e.toString(), assertionCutoff, timeStamp, 0);
 			throw e;
 		}
 	}
@@ -119,7 +119,7 @@ public class SlideShowTest_forSlicer {
 
 			long timeStamp = (Long) (((JavascriptExecutor) driver).executeScript(
 					"return Date.now();"/**/));
-			WebDriverWrapper.flushAccesses(e.toString(), assertionCutoff, timeStamp);
+			WebDriverWrapper.flushAccesses(e.toString(), assertionCutoff, timeStamp, 0);
 			throw e;
 		}
 		//WebDriverWrapper.flushAccesses(null, assertionCutoff, timeStamp);

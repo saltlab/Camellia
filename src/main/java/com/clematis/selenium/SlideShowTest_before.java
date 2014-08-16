@@ -1,4 +1,4 @@
-		package com.clematis.selenium;
+package com.clematis.selenium;
 
 import java.util.concurrent.TimeUnit;
 import org.junit.*;
@@ -21,7 +21,6 @@ public class SlideShowTest_before {
 	@Before
 	public void setUp() throws Exception {
 		driver = new FirefoxDriver();
-		//baseUrl = "http://localhost/";
 		driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
 	}
 

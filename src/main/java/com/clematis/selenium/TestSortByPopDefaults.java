@@ -98,9 +98,9 @@ public class TestSortByPopDefaults {
 		try {
 			org.junit.Assert.assertEquals(s1, s2);
 		} catch (Error e) {
-			WebDriverWrapper.flushAccesses(e.toString(), assertionCutoff, timeStamp);
+			WebDriverWrapper.flushAccesses(e.toString(), assertionCutoff, timeStamp, 0);
 			throw e;
 		}
-		WebDriverWrapper.flushAccesses(null, assertionCutoff, timeStamp);
+		WebDriverWrapper.flushAccesses(null, assertionCutoff, timeStamp, 0);
 	}
 }

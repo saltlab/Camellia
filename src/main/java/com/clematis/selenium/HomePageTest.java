@@ -5,17 +5,13 @@ import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.*;
 
 import com.clematis.core.WebDriverWrapper;
 import com.clematis.jsmodify.JSExecutionTracer;
 
 public class HomePageTest {
 	private static WebDriver driver;
-	//private String baseUrl;
 	private StringBuffer verificationErrors = new StringBuffer();
 	@Before
 	public void setUp(WebDriver parentDriver) throws Exception {
@@ -26,53 +22,45 @@ public class HomePageTest {
 	@Test
 	public void testHomePage() throws Exception {
 		driver.get("http://localhost:8888/");
-		assertTrue(isElementPresent(Byy.cssSelector("div#Granny")));
+		assertTrue(isElementPresent(Byy.cssSelector("div#Granny")), 21);
 		Thread.sleep(700);
 
 		driver.findElement(Byy.linkText("Stories")).click();
 		try {
-			assertTrue(driver.getCurrentUrl().matches("^http://localhost:8888/[\\s\\S]mode=stories$"));
+			assertTrue(driver.getCurrentUrl().matches("^http://localhost:8888/[\\s\\S]mode=stories$"), 24);
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
-		Thread.sleep(700);
 
 		driver.findElement(Byy.partialLinkText("Default Category")).click();
 		try {
-			assertTrue(driver.findElement(Byy.cssSelector("div.midInfo")).getText().matches("^[\\s\\S]*category[\\s\\S]*$"));
+			assertTrue(driver.findElement(Byy.cssSelector("div.midInfo")).getText().matches("^[\\s\\S]*category[\\s\\S]*$"), 30);
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
-		Thread.sleep(700);
 
 		driver.findElement(Byy.partialLinkText("Default Story")).click();
 		try {
-			assertTrue(driver.findElement(Byy.cssSelector("div.midInfo")).getText().matches("^[\\s\\S]*story[\\s\\S]*$"));
+			assertTrue(driver.findElement(Byy.cssSelector("div.midInfo")).getText().matches("^[\\s\\S]*story[\\s\\S]*$"), 36);
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
-		Thread.sleep(700);
 
 		driver.findElement(Byy.linkText("SlideShow")).click();
 		try {
-			assertTrue(driver.getTitle().matches("^SlideShow[\\s\\S]*$"));
+			assertTrue(driver.getTitle().matches("^SlideShow[\\s\\S]*$"), 42);
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
 		
-		Thread.sleep(700);
 		driver.findElement(Byy.linkText("Next")).click();
-		Thread.sleep(700);
 
 		try {
-			assertEquals("1", driver.findElement(Byy.cssSelector("span#ss_n")).getText());
+			assertEquals("1", driver.findElement(Byy.cssSelector("span#ss_n")).getText(), 48);
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
-		
 		Thread.sleep(3000);
-
-
 	}
 
 	@After
@@ -95,7 +83,7 @@ public class HomePageTest {
 	}
 	
 	/** Clematest jUnit wrappers **/
-	private static void assertTrue(Boolean condition){
+	private static void assertTrue(Boolean condition, int lineNumber){
 		System.out.println("[assertTrue]: ");
 		long assertionCutoff = (Long) (((JavascriptExecutor) driver).executeScript(
 				"return traceCounter++;"/**/));
@@ -105,13 +93,13 @@ public class HomePageTest {
 		try {
 			org.junit.Assert.assertTrue(condition);
 		} catch (Error e) {
-			WebDriverWrapper.flushAccesses(e.toString(), assertionCutoff, timeStamp);
+			WebDriverWrapper.flushAccesses(e.toString(), assertionCutoff, timeStamp, lineNumber);
 			throw e;
 		}
-		WebDriverWrapper.flushAccesses(null, assertionCutoff, timeStamp);
+		WebDriverWrapper.flushAccesses(null, assertionCutoff, timeStamp, lineNumber);
 	}
 
-	private static void assertEquals(String s1, String s2){
+	private static void assertEquals(String s1, String s2, int lineNumber){
 		//TODO: changed counter for allowing assertions to be shown
 		long assertionCutoff = (Long) (((JavascriptExecutor) driver).executeScript(
 				"return traceCounter++;"/**/));
@@ -125,10 +113,10 @@ public class HomePageTest {
 		   // org.junit.Assert.assertEquals(s1, s1);
 		    org.junit.Assert.assertEquals(s1, s2);
 		} catch (Error e) {
-			WebDriverWrapper.flushAccesses(e.toString(), assertionCutoff, timeStamp);
+			WebDriverWrapper.flushAccesses(e.toString(), assertionCutoff, timeStamp, lineNumber);
 			throw e;
 		}
-		WebDriverWrapper.flushAccesses(null, assertionCutoff, timeStamp);
+		WebDriverWrapper.flushAccesses(null, assertionCutoff, timeStamp, lineNumber);
 	}
 
 }
