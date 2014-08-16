@@ -58,6 +58,7 @@ import com.google.common.collect.TreeMultimap;
 
 import com.clematis.core.WebDriverWrapper;
 import com.clematis.core.trace.FunctionCall;
+import com.clematis.selenium.HomePageTest_forSlicer;
 import com.clematis.selenium.MainViewTest_forSlicer;
 import com.clematis.selenium.SlideShowTest_forSlicer;
 import com.crawljax.util.Helper;
@@ -226,13 +227,15 @@ public class SimpleExample2 {
 			// Use WebDriver to visit specified URL
 			/* Auguest 8th, commented out
             driver.get(URL); */
-			MainViewTest_forSlicer engine = new MainViewTest_forSlicer();
-			//SlideShowTest_forSlicer engine = new SlideShowTest_forSlicer();
+			//HomePageTest_forSlicer engine = new HomePageTest_forSlicer();
+			//MainViewTest_forSlicer engine = new MainViewTest_forSlicer();
+			SlideShowTest_forSlicer engine = new SlideShowTest_forSlicer();
 
 			engine.setUp(driver);
 			
-			engine.testMainView();
-			//engine.testSlideShow();
+			//engine.testHomePage();
+			//engine.testMainView();
+			engine.testSlideShow();
 			
 			
 			engine.tearDown();
@@ -466,6 +469,11 @@ public class SimpleExample2 {
 		RWOperation nestedTop, nestedBottom;
 		boolean found = false;
 
+		
+		if (name.equals("ss_cur")) {
+			System.out.println(bottom.getOrder());
+			System.out.println(bottom.getClass());
+		}
 
 
 		for (int j = all.indexOf(bottom); j >= i; j--) {
@@ -676,6 +684,31 @@ public class SimpleExample2 {
 
 						// Add line to slice
 						highlightLine(next);
+						
+						int parentIfId = ControlMapper.getIfId(next.getLineNo(), next.getFile());
+						if (parentIfId != -1) {
+							IfStatement parentIf = ControlMapper.getIf(parentIfId);;
+							int ifLine = parentIf.getLine();
+
+							// go backwards will last read for if
+							ArrayList<RWOperation> controlDeps = TraceHelper.getConditionalReads(all, next, ifLine);
+							Iterator<RWOperation> ctrlIt = controlDeps.iterator();
+							RWOperation nextCtrl = null;
+							while (ctrlIt.hasNext()) {
+								nextCtrl = ctrlIt.next();
+
+								// Add control/branches to slice
+								highlightLine(nextCtrl);
+								
+								computeBackwardSlice(null,
+										nextCtrl,
+										nextCtrl.getVariable(),
+										all,
+										true,
+										((VariableRead) nextCtrl).getDefiningFunction());
+
+							}
+						}
 					}
 
 
@@ -697,6 +730,9 @@ public class SimpleExample2 {
 						while (ctrlIt.hasNext()) {
 							nextCtrl = ctrlIt.next();
 
+							// Add control/branches to slice
+							highlightLine(nextCtrl);
+							
 							computeBackwardSlice(null,
 									nextCtrl,
 									nextCtrl.getVariable(),

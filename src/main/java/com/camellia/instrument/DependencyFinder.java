@@ -167,9 +167,48 @@ public class DependencyFinder extends AstInstrumenter {
 
 			// TODO: If the name we are interested is is an argument in the declaration, skip the node and children
 			//       since the name will refer to a different object within this function (declaration)
+		} else if (tt == org.mozilla.javascript.Token.INC
+				|| tt == org.mozilla.javascript.Token.DEC) {
+			handleUnaryExpression((UnaryExpression) node);
 		}
 
 		return true;  // process kids
+	}
+
+	private void handleUnaryExpression(UnaryExpression node) {
+		AstNode operand = node.getOperand();
+
+		if (operand.toSource().equals(variableName)) {
+			// CONTROL
+			// Making sure the current write is associated with an 'if'
+			ControlMapper.addIf(operand, getScopeName());
+			System.out.println(node.toSource());
+			// If a parent 'if' was found through ControlMapper, add the conditional dependencies for instrumentation
+			int possibleParentIf = ControlMapper.getIfId(operand.getLineno(), getScopeName());
+			if(possibleParentIf != -1) {
+				if (ControlMapper.getIf(possibleParentIf).getCondition() instanceof InfixExpression) {
+					// Maybe should create separate buffer for control dependencies...for now they are treated equally
+					ArrayList<AstNode> infixDeps = InfixExpressionParser.getOperandDependencies(
+							(InfixExpression) ControlMapper.getIf(possibleParentIf).getCondition(),
+							true);
+					System.out.println(infixDeps.size());
+					
+					for (int i = 0; i < infixDeps.size(); i++) {
+						System.out.println(infixDeps.get(i).toSource());
+					}
+					
+					dataDependencies.addAll(InfixExpressionParser.getOperandDependencies(
+							(InfixExpression) ControlMapper.getIf(possibleParentIf).getCondition(),
+							true));
+				} else if (ControlMapper.getIf(possibleParentIf).getCondition() instanceof Name) {
+					dataDependencies.add((Name) ControlMapper.getIf(possibleParentIf).getCondition());
+				} else {
+					System.out.println(ControlMapper.getIf(possibleParentIf).getCondition().getClass());
+					System.out.println(Token.typeToName(ControlMapper.getIf(possibleParentIf).getCondition().getType()));
+				}
+			}
+		}
+
 	}
 
 	@Override
@@ -490,7 +529,7 @@ public class DependencyFinder extends AstInstrumenter {
 		String[] dotSplit;
 
 		AstNode nextArg;
-		
+
 		// If base class instance is of interest, add arguements
 		if (node.getTarget().getType() == org.mozilla.javascript.Token.GETPROP 
 				&& ((PropertyGet) node.getTarget()).getTarget().getType() == org.mozilla.javascript.Token.NAME

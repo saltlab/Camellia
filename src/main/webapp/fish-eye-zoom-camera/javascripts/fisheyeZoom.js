@@ -1239,6 +1239,11 @@ function renderListLinks(data) {
         var howMuchCurve;
         var arrowLocation;
         for (var i = 0; i < data.length; i++) {
+			// Only want most recent episode to assertion edge
+			if (i !== data.length -1) {
+				continue;
+			}
+
             howMuchCurve = 30;
             arrowLocation = .955;
             var color_link = get_random_color();

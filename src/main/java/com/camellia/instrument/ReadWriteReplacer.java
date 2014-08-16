@@ -1139,12 +1139,14 @@ public class ReadWriteReplacer extends AstInstrumenter {
 	private void handleUnaryExpression(UnaryExpression node) {
 		AstNode operand = node.getOperand();
 		String newBody;
+		
+		System.out.println(Token.typeToName(node.getType()));
 
 		if (isItInteresting(node.getOperand().toSource(), node.getLineno())) {
 			if (node.toSource().indexOf("++") == 0 || node.toSource().indexOf("--") == 0) {
-				newBody = operand.toSource()+", "+VARWRITE+"(\'"+operand.toSource()+"\',"+ operand.toSource()+", \'\'," +node.getLineno()+", \"" +this.getScopeName()+"\")";
+				newBody = operand.toSource()+", "+VARWRITEAUG+"(\'"+operand.toSource()+"\',"+ operand.toSource()+", \'\'," +node.getLineno()+", \"" +this.getScopeName()+"\")";
 			} else {
-				newBody = VARWRITE+"(\'"+operand.toSource()+"\',"+ operand.toSource()+", \'\'," +node.getLineno()+", \"" +this.getScopeName()+"\"), "+operand.toSource();
+				newBody = VARWRITEAUG+"(\'"+operand.toSource()+"\',"+ operand.toSource()+", \'\'," +node.getLineno()+", \"" +this.getScopeName()+"\"), "+operand.toSource();
 			}
 
 			/*parent.set

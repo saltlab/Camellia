@@ -1,5 +1,6 @@
 package com.clematis.selenium;
 
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -58,7 +59,18 @@ public class HomePageTest_forSlicer {
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
+		
 		Thread.sleep(700);
+		driver.findElement(Byy.linkText("Next")).click();
+		Thread.sleep(700);
+		try {
+			assertEquals("1", driver.findElement(By.cssSelector("span#ss_n")).getText());
+		} catch (Error e) {
+			verificationErrors.append(e.toString());
+		}
+		
+		Thread.sleep(3000);
+
 
 	}
 
@@ -68,7 +80,7 @@ public class HomePageTest_forSlicer {
 		String verificationErrorString = verificationErrors.toString();
 		if (!"".equals(verificationErrorString)) {
 			System.out.println(verificationErrorString);
-			fail(verificationErrorString);
+			//fail(verificationErrorString);
 		}
 	}
 

@@ -27,14 +27,11 @@ public class SlideShowTest_forSlicer {
 		driver.get("http://localhost:8888/?feat=slideshow");
 
 		assertTrue(driver.getTitle().matches("^SlideShow[\\s\\S]*$"));
-		Thread.sleep(700);
-
 		try {
 			assertTrue(isElementPresent(By.cssSelector("img#ss_photo")));
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
-		Thread.sleep(700);
 
 		try {
 			assertEquals("1", driver.findElement(By.cssSelector("span#ss_n")).getText());
@@ -42,9 +39,7 @@ public class SlideShowTest_forSlicer {
 			verificationErrors.append(e.toString());
 		}
 		
-		Thread.sleep(700);
 		driver.findElement(By.linkText("Next")).click();
-		Thread.sleep(700);
 
 		try {
 			assertEquals("2", driver.findElement(By.cssSelector("span#ss_n")).getText());
@@ -52,9 +47,7 @@ public class SlideShowTest_forSlicer {
 			verificationErrors.append(e.toString());
 		}
 		
-		Thread.sleep(700);
 		driver.findElement(By.linkText("Next")).click();
-		Thread.sleep(700);
 		try {
 			assertEquals("3", driver.findElement(By.cssSelector("span#ss_n")).getText());
 		} catch (Error e) {
@@ -68,10 +61,7 @@ public class SlideShowTest_forSlicer {
 			verificationErrors.append(e.toString());
 		}
 		
-		Thread.sleep(1200);
 		driver.findElement(Byy.linkText("Previous")).click();
-		Thread.sleep(1200);
-
 		try {
 			assertEquals("3", driver.findElement(Byy.cssSelector("span#ss_n")).getText());
 		} catch (Error e) {

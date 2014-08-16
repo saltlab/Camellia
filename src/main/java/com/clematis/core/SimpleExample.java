@@ -93,13 +93,15 @@ public class SimpleExample {
 			driver = new WebDriverWrapper(profile);
 			WebDriverWait wait = new WebDriverWait(driver, 10);
 
-			MainViewTest HPT = new MainViewTest();
-			//SlideShowTest HPT = new SlideShowTest();	
+			//HomePageTest HPT = new HomePageTest();	
+			//MainViewTest HPT = new MainViewTest();
+			SlideShowTest HPT = new SlideShowTest();	
 			
 			try {
 				HPT.setUp(driver);
-				HPT.testMainView();
-				//HPT.testSlideShow();
+				//HPT.testHomePage();
+				//HPT.testMainView();
+				HPT.testSlideShow();
 			} catch (NoSuchElementException e) {
 				System.out.println("Error executing test case:");
 				e.printStackTrace();
