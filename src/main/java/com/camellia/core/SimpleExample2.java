@@ -13,6 +13,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
+import org.codehaus.jettison.json.JSONArray;
 import org.json.JSONObject;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
@@ -50,8 +51,14 @@ import com.camellia.instrument.helpers.ParentFunctionFinder;
 import com.camellia.jsmodify.JSExecutionTracer;
 import com.camellia.jsmodify.JSModifyProxyPlugin;
 import com.camellia.units.IfStatement;
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.introspect.VisibilityChecker;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
@@ -85,6 +92,8 @@ public class SimpleExample2 {
 
 	public static final String VAR_PREFIX2 = "--v";
 	public static final String VAR_PREFIX1 = "--variable";
+	
+	private static ObjectMapper mapper2 = new ObjectMapper();
 
 	private static boolean urlProvided = false;
 	private static boolean varProvided = false;
@@ -99,6 +108,7 @@ public class SimpleExample2 {
 	private static WebDriver driver;
 
 	private ArrayList<FileLineNumber> theSlice = new ArrayList<FileLineNumber>();
+	private ArrayList<RWOperation> expandedSlice = new ArrayList<RWOperation>();
 
 	public void main(String[] args) {
 		try {
@@ -232,12 +242,12 @@ public class SimpleExample2 {
 			SlideShowTest_forSlicer engine = new SlideShowTest_forSlicer();
 
 			engine.setUp(driver);
-			
+
 			//engine.testHomePage();
 			//engine.testMainView();
 			engine.testSlideShow();
-			
-			
+
+
 			engine.tearDown();
 
 			while (!sessionOver) {
@@ -388,7 +398,7 @@ public class SimpleExample2 {
 						for (int j = 0; j < theSlice.size(); j++) {
 							fnNamesAcrossFiles.addAll(theSlice.get(j).getLevel2FunctionNames());
 						}
-						
+
 						// Order of relevant functions backwards because of backwards slicing
 						Collections.reverse(fnNamesAcrossFiles);
 
@@ -409,7 +419,17 @@ public class SimpleExample2 {
 			} else {
 				System.out.println("Application not exercised enough! No slice produced.");
 			}
-			System.out.println(WebDriverWrapper.getCutCounter());
+
+			mapper2.setVisibilityChecker(VisibilityChecker.Std.defaultInstance().withFieldVisibility(
+					Visibility.ANY));
+			mapper2.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
+			mapper2.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+			// to allow coercion of JSON empty String ("") to null Object value:
+			mapper2.enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT);
+			mapper2.enable(SerializationFeature.INDENT_OUTPUT);
+
+			mapper2.writeValue(new File("src/main/webapp/lines/slicetrace.json"),
+					expandedSlice);
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -469,7 +489,7 @@ public class SimpleExample2 {
 		RWOperation nestedTop, nestedBottom;
 		boolean found = false;
 
-		
+
 		if (name.equals("ss_cur")) {
 			System.out.println(bottom.getOrder());
 			System.out.println(bottom.getClass());
@@ -607,7 +627,7 @@ public class SimpleExample2 {
 				}
 				/** 3 (OLD): Basic slicing **/
 			} else if (next instanceof VariableWrite && ((VariableWrite) next).getVariable().equals(name)) {
-				
+
 				// UPWARDS
 				if (next instanceof ArgumentWrite) {
 					if (all.indexOf(next) == 0) {
@@ -655,7 +675,7 @@ public class SimpleExample2 {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-					
+
 					for (int z = 0; z < deps.size(); z++) {
 						if (deps.get(z).getVariable().split("\\.").length > 1) {
 							computeBackwardSlice(null,
@@ -673,7 +693,7 @@ public class SimpleExample2 {
 									((VariableRead) deps.get(z)).getDefiningFunction());
 						}
 					}
-					
+
 					if (!(next instanceof VariableWriteAugmentAssign)) {
 						// Previous writes are IRRELEVANT if it was NOT an augmented assignment i.e. -=, +=
 						found = true;
@@ -684,7 +704,7 @@ public class SimpleExample2 {
 
 						// Add line to slice
 						highlightLine(next);
-						
+
 						int parentIfId = ControlMapper.getIfId(next.getLineNo(), next.getFile());
 						if (parentIfId != -1) {
 							IfStatement parentIf = ControlMapper.getIf(parentIfId);;
@@ -699,7 +719,7 @@ public class SimpleExample2 {
 
 								// Add control/branches to slice
 								highlightLine(nextCtrl);
-								
+
 								computeBackwardSlice(null,
 										nextCtrl,
 										nextCtrl.getVariable(),
@@ -732,7 +752,7 @@ public class SimpleExample2 {
 
 							// Add control/branches to slice
 							highlightLine(nextCtrl);
-							
+
 							computeBackwardSlice(null,
 									nextCtrl,
 									nextCtrl.getVariable(),
@@ -860,9 +880,9 @@ public class SimpleExample2 {
 					if (baseRead.getValue().equals("[object XMLHttpRequest]") && (((PropertyRead) next).getProperty().equals("open")  ||   ((PropertyRead) next).getProperty().equals("send"))) {
 						highlightLine(next);
 						ArrayList<RWOperation> deps = TraceHelper.getDataDependenciesLoose(all, next);
-						
-						
-						
+
+
+
 						for (int r = 0; r < deps.size(); r++) {
 							computeBackwardSlice(null, deps.get(r), deps.get(r).getVariable(), all, true, ((VariableRead) deps.get(r)).getDefiningFunction());
 						}
@@ -893,13 +913,26 @@ public class SimpleExample2 {
 				&& WebDriverWrapper.getCutCounter() > 0) {
 			return;
 		}
-		
+
 		// Add new file -> line number mapping if not already present
 		if (TraceHelper.getFileLineMapping(o.getFile(), theSlice) == null) {
 			theSlice.add(new FileLineNumber(o.getFile()));
 		} 
 		// Add line to existing mapping
 		TraceHelper.getFileLineMapping(o.getFile(), theSlice).addLine(o.getLineNo());
+		
+		// Don't wan't duplicate operations in slice
+		Iterator<RWOperation> opIt = expandedSlice.iterator();
+		boolean found = false;
+		while (opIt.hasNext()) {
+			if (opIt.next().getOrder() == o.getOrder()) {
+				found = true;
+				break;
+			}
+		}
+		if (!found) {
+			expandedSlice.add(o);
+		}
 
 		try {
 			File getSliceCriteria = new File("src/main/webapp/fish-eye-zoom-camera/"+o.getFile());

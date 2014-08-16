@@ -145,10 +145,8 @@ public class SimpleExample {
 						fileContents += ss + "\n";
 					}
 					br.close();
-
-					System.out.println(fileContents);
 					
-					File output = new File("src/main/webapp/testcases/1.java");
+					File output = new File("src/main/webapp/testcase/1.java");
 					FileWriter fw = new FileWriter(output);
 					fw.write(fileContents);
 					fw.close();

@@ -3,6 +3,7 @@
 
 <title>View Computed Slice</title>
     <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+    <script type="text/javascript" src="javascript/jquery.scrollTo.min.js"></script>
     <link type="text/css" rel="stylesheet" href="style/prism.css">
     <script src="javascript/prism.js"></script>
 </head>
@@ -10,6 +11,8 @@
 <h1 id="fileNameGoesHere"></h1>
 <button id='prevFile'> Previous </button>
 <button id='nextFile'> Next </button>
+<button id='switch'> Swtich Mode </button>
+<button id='step'> Step </button>
 <pre id="code_pre" class="line-numbers  language-javascript" data-line="">
 <code id="code_code" class="  language-javascript">
 </code>
@@ -17,6 +20,12 @@
 <script type="text/javascript"> 
     var files = new Array();
     var fileIndex = -1;
+    
+    $( '#code_pre' ).height( 800 ).css({
+                               overflow: "auto",
+                               });
+    //$('#code_pre')._scrollable();
+
 
     // Get list of all relevant JavaScript files in slice, display first file/slice piece
     var getWhichFile = new XMLHttpRequest();
@@ -36,9 +45,9 @@
     getWhichFile.send();
 
     function changeFile(event, next) {
-        if (next == true) {
+        if (next === 1) {
             fileIndex++;
-        } else {
+        } else if (next === 2) {
             fileIndex--;
         }
 
@@ -73,10 +82,69 @@
         client.send();
     }
     $('#prevFile').click(function (e) {
-        changeFile(e, false);
+        changeFile(e, 1);
     });
     $('#nextFile').click(function (e) {
-        changeFile(e, true);
+        changeFile(e, 2);
     });
+    
+    var allSteps = [];
+    var stepIndex = 0;
+    function getStepThroughTrace(event) {
+        var slice = new XMLHttpRequest();
+        slice.open('GET', 'lines/slicetrace.json');
+
+        slice.onreadystatechange = function() {
+            if (this.readyState == 4) {
+                var rawSlice = slice.responseText;
+            
+                var trace = JSON.parse(rawSlice);
+            
+                trace.sort(function(a,b) { return parseInt(a.order) - parseInt(b.order) } );
+                
+                allSteps = [];
+                for(var op in trace) {
+                    allSteps.push(trace[op].lineNo + 1);
+                }
+                for(var aa in allSteps) {
+                    window.console.log(allSteps[aa]);
+                }
+                
+                // Un-highlight
+                $('#code_pre').attr("data-line", '0');
+                Prism.highlightElement($('#code_code')[0]);
+            }
+
+        }
+        slice.send();
+    }
+    
+    function stepThrough(e) {
+        stepIndex = 0;
+        getStepThroughTrace(e);
+        $('#switch').unbind("click" );
+        
+        $('#switch').click(function (e) {
+            changeFile(e, -1);
+            $('#switch').unbind("click" );
+            $('#switch').click(stepThrough);
+        });
+    }
+    $('#switch').click(stepThrough);
+
+    $('#step').click(function (e) {
+                     if (stepIndex < allSteps.length) {
+                        var currentLine = allSteps[stepIndex++];
+                        $('#code_pre').scrollTo((currentLine/38) * 725);
+                        currentLine = currentLine + ', ';
+                        $('#code_pre').attr("data-line", currentLine+currentLine+currentLine);
+                        Prism.highlightElement($('#code_code')[0]);
+                     } else {
+                     stepIndex = 0;
+                     changeFile();
+                     }
+
+    });
+    
 </script> 
 </body></html>
