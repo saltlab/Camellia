@@ -43,6 +43,7 @@ public class MainViewTest_before {
 		    	break;
 		    }
 		}
+		Thread.sleep(900);
 		try {
 			assertEquals("Your rating saved!", driver.findElement(By.cssSelector("span#rateStatus")).getText());
 		} catch (Error e) {

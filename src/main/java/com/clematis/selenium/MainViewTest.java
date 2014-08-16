@@ -46,9 +46,10 @@ public class MainViewTest {
 		    	break;
 		    }
 		}
+		Thread.sleep(900);
 		try {
 			System.out.println(driver.findElement(Byy.cssSelector("span#rateStatus")).getText());
-			assertEquals("Your rating saved!", driver.findElement(Byy.cssSelector("span#rateStatus")).getText(), 47);
+			assertEquals("Your rating saved!", driver.findElement(Byy.cssSelector("span#rateStatus")).getText(), 48);
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
