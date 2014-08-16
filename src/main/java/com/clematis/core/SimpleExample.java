@@ -1,6 +1,14 @@
 package com.clematis.core;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintStream;
+
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.NoAlertPresentException;
 import org.openqa.selenium.NoSuchElementException;
@@ -93,10 +101,12 @@ public class SimpleExample {
 			driver = new WebDriverWrapper(profile);
 			WebDriverWait wait = new WebDriverWait(driver, 10);
 
+			String testCaseName = "SlideShowTest";
+
 			//HomePageTest HPT = new HomePageTest();	
 			//MainViewTest HPT = new MainViewTest();
 			SlideShowTest HPT = new SlideShowTest();	
-			
+
 			try {
 				HPT.setUp(driver);
 				//HPT.testHomePage();
@@ -114,7 +124,7 @@ public class SimpleExample {
 			//saveDirectAccessesToFile(driver.assertionToAccess, driver.assertionToElements, driver.assertionOutcomes, driver.directAccesses);
 
 			HPT.tearDown();
-			
+
 			if (p.getArgs() == null) {
 				System.out.println("[Camellia]: Test Case Pass, no failing assertions!");
 			} else {
@@ -122,6 +132,30 @@ public class SimpleExample {
 				// Part 2 - slicing with test case
 				SimpleExample2 camellia = new SimpleExample2();
 				camellia.main(p.getArgs());
+				
+				try {
+					File file = new File("src/main/java/com/clematis/selenium/"+testCaseName+"_before.java");
+					FileReader fr = new FileReader(file);
+					BufferedReader br = new BufferedReader(fr); 
+					String ss = "";
+					String fileContents = "";
+
+					// Read assertion accesses and results from file and instantiate JSONObject
+					while((ss = br.readLine()) != null) {
+						fileContents += ss + "\n";
+					}
+					br.close();
+
+					System.out.println(fileContents);
+					
+					File output = new File("src/main/webapp/testcases/1.java");
+					FileWriter fw = new FileWriter(output);
+					fw.write(fileContents);
+					fw.close();
+
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 			System.err.println("[Camellia]: Complete!");
 		} catch (Exception e) {

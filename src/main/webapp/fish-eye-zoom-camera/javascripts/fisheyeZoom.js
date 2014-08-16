@@ -1062,6 +1062,7 @@ function expandCurrentEpisode(i) {
     
     if (allEpisodes[i].assertionFlag === true && allEpisodes[i].assertionOutcome === false) {
         window.open("http://localhost:8080/view.html");
+        window.open("http://localhost:8080/testcase.html");
         return;
     }
 

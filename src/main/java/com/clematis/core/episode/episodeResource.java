@@ -880,5 +880,32 @@ public class episodeResource {
 		}
 		return new JSONObject();
 	}
+	
+	@GET
+	@Path("/assertion/failure/linenumber")
+	@Produces(MediaType.APPLICATION_JSON)
+	public int getLineNumber() {
+		try {
+			JSONObject testCaseSummary = getTestCaseSummary();
+			Iterator<String> keys = testCaseSummary.keys();
+			String nextString = "";
+			JSONObject nextAssertion;
+
+			while (keys.hasNext()) {
+				nextString = keys.next();
+				nextAssertion = testCaseSummary.getJSONObject(nextString);
+				// Found the failure
+				if (nextAssertion.has("outcome") && !nextAssertion.get("outcome").equals("true")) {
+					// Should have level 2 function names added to the summary at this point
+					return nextAssertion.getInt("lineNumber");
+				}
+			}
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return -1;
+	}
 
 }

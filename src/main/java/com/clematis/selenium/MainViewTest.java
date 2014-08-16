@@ -1,32 +1,21 @@
 package com.clematis.selenium;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
+import static org.junit.Assert.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-
+import org.openqa.selenium.*;
 import com.clematis.core.WebDriverWrapper;
 import com.clematis.jsmodify.JSExecutionTracer;
 
 public class MainViewTest {
 	private static WebDriver driver;
-	//private String baseUrl;
 	private StringBuffer verificationErrors = new StringBuffer();
 	@Before
 	public void setUp(WebDriver parentDriver) throws Exception {
 		driver = parentDriver;
-		//baseUrl = "http://localhost/";
 		driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
 	}
 
@@ -34,22 +23,16 @@ public class MainViewTest {
 	public void testMainView() throws Exception {
 		driver.get("http://localhost:8888/?p=1");
 		try {
-			assertTrue(isElementPresent(Byy.cssSelector("div#theImage")));
+			assertTrue(isElementPresent(Byy.cssSelector("div#theImage")), 23);
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
-		}
-		Thread.sleep(700);
-
+		}Thread.sleep(700);
 		driver.findElement(Byy.linkText("Hide  info")).click();
 		// ERROR: Caught exception [ERROR: Unsupported command [getEval | window.document.getElementById("photoBoxes").style.display == "none" | ]]
-		assertTrue(driver.findElement(Byy.id("photoBoxes")).isDisplayed() == false);
-		Thread.sleep(700);
-
+		assertTrue(driver.findElement(Byy.id("photoBoxes")).isDisplayed() == false, 29);
 		driver.findElement(Byy.linkText("Show info")).click();
 		// ERROR: Caught exception [ERROR: Unsupported command [getEval | window.document.getElementById("photoBoxes").style.display == "none" | ]]
-		assertTrue(driver.findElement(Byy.id("photoBoxes")).isDisplayed());
-		Thread.sleep(700);
-
+		assertTrue(driver.findElement(Byy.id("photoBoxes")).isDisplayed(), 32);
 		// ERROR: Caught exception [ERROR: Unsupported command [getEval | (window.document.getElementById("rateSelect").value % 5) + 1 | ]]
 		WebElement select = driver.findElement(Byy.id("rateSelect"));
 		int rating = Integer.parseInt(select.getAttribute("value"));
@@ -65,7 +48,7 @@ public class MainViewTest {
 		}
 		try {
 			System.out.println(driver.findElement(Byy.cssSelector("span#rateStatus")).getText());
-			assertEquals("Your rating saved!", driver.findElement(Byy.cssSelector("span#rateStatus")).getText());
+			assertEquals("Your rating saved!", driver.findElement(Byy.cssSelector("span#rateStatus")).getText(), 47);
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
@@ -73,7 +56,7 @@ public class MainViewTest {
 
 		driver.findElement(Byy.xpath("//div[@id='Granny']/div[5]/div[2]/center/a/img")).click();
 		try {
-			assertTrue(driver.getCurrentUrl().matches("^http://localhost:8888/[\\s\\S]p=2$"));
+			assertTrue(driver.getCurrentUrl().matches("^http://localhost:8888/[\\s\\S]p=2$"), 53);
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
@@ -101,7 +84,7 @@ public class MainViewTest {
 	}
 	
 	/** Clematest jUnit wrappers **/
-	private static void assertTrue(Boolean condition){
+	private static void assertTrue(Boolean condition, int lineNumber){
 		System.out.println("[assertTrue]: ");
 		long assertionCutoff = (Long) (((JavascriptExecutor) driver).executeScript(
 				"return traceCounter++;"/**/));
@@ -111,13 +94,13 @@ public class MainViewTest {
 		try {
 			org.junit.Assert.assertTrue(condition);
 		} catch (Error e) {
-			WebDriverWrapper.flushAccesses(e.toString(), assertionCutoff, timeStamp);
+			WebDriverWrapper.flushAccesses(e.toString(), assertionCutoff, timeStamp, lineNumber);
 			throw e;
 		}
-		WebDriverWrapper.flushAccesses(null, assertionCutoff, timeStamp);
+		WebDriverWrapper.flushAccesses(null, assertionCutoff, timeStamp, lineNumber);
 	}
 
-	private static void assertEquals(String s1, String s2){
+	private static void assertEquals(String s1, String s2, int lineNumber){
 		//TODO: changed counter for allowing assertions to be shown
 		long assertionCutoff = (Long) (((JavascriptExecutor) driver).executeScript(
 				"return traceCounter++;"/**/));
@@ -131,9 +114,9 @@ public class MainViewTest {
 		   // org.junit.Assert.assertEquals(s1, s1);
 		    org.junit.Assert.assertEquals(s1, s2);
 		} catch (Error e) {
-			WebDriverWrapper.flushAccesses(e.toString(), assertionCutoff, timeStamp);
+			WebDriverWrapper.flushAccesses(e.toString(), assertionCutoff, timeStamp, lineNumber);
 			throw e;
 		}
-		WebDriverWrapper.flushAccesses(null, assertionCutoff, timeStamp);
+		WebDriverWrapper.flushAccesses(null, assertionCutoff, timeStamp, lineNumber);
 	}
 }

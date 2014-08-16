@@ -305,7 +305,8 @@ public class JSExecutionTracer {
 					WebDriverWrapper.assertionOutcomes,
 					WebDriverWrapper.assertionCounters,
 					WebDriverWrapper.assertionTimeStamps,
-					WebDriverWrapper.directAccesses);
+					WebDriverWrapper.directAccesses,
+					WebDriverWrapper.assertionLineNumber);
 			File file = new File("domAccesses.json");
 			FileReader fr = new FileReader(file);
 			BufferedReader br = new BufferedReader(fr); 
@@ -1093,7 +1094,8 @@ public class JSExecutionTracer {
 			Vector<String> assertionOutcomes,
 			Vector<Long> assertionCounters,
 			Vector<Long> assertionTimestamps,
-			Vector<org.json.JSONObject> directAccesses) {
+			Vector<org.json.JSONObject> directAccesses,
+			Vector<Integer> assertionLineNumbers) {
 
 		// Accesses via By for the assertion
 		Iterator<org.codehaus.jettison.json.JSONArray> eachAssertion = saveMe.iterator();
@@ -1137,6 +1139,7 @@ public class JSExecutionTracer {
 				assertionObject.put("timeStamp", assertionTimestamps.get(assertionNumber));
 				assertionObject.put("accesses", accessObject);
 				assertionObject.put("elements", elementObject);
+				assertionObject.put("lineNumber", assertionLineNumbers.get(assertionNumber));
 
 				objectToPrint.put(assertionNumber+"", assertionObject);
 				assertionNumber++;
