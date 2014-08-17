@@ -592,12 +592,12 @@ public class SimpleExample_Tester {
 						nestedTop = TraceHelper.getBeginningOfFunction((ReturnStatementValue) all.get(r), all);
 
 						// TODO: implement TraceHelper.getReturnDependencies
-						ArrayList<String> rsDependencies = TraceHelper.getReturnDependencies(all, (ReturnStatementValue) all.get(r));
+						ArrayList<RWOperation> rsDependencies = TraceHelper.getReturnDependencies(all, (ReturnStatementValue) all.get(r));
 
 						for (int w = 0; w < rsDependencies.size(); w++) {
 							// TODO: What if an argument influenced the return value? --> do we need to allow slicing to exit the function?
 							// NOT being run yet
-							computeBackwardSlice(nestedTop, all.get(r), rsDependencies.get(w), all, true /* or false ????*/);
+							computeBackwardSlice(nestedTop, all.get(r), rsDependencies.get(w).getVariable(), all, true /* or false ????*/);
 						}
 					}
 				}

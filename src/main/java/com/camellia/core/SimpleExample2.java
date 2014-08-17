@@ -325,7 +325,7 @@ public class SimpleExample2 {
 					if (nextOp.getLineNo() == next.getLineNo() && nextOp.getVariable().equals(next.getVariable()) && (nextOp instanceof VariableRead || nextOp instanceof PropertyRead)) {
 						// Relevant [READ] found! --> nextOp
 
-						computeBackwardSlice(null, nextOp, nextOp.getVariable(), all, true, ((VariableRead) nextOp).getDefiningFunction());
+						computeBackwardSlice(null, nextOp, nextOp.getVariable(), all, true, ((VariableRead) nextOp).getDefiningFunction(), nextOp);
 
 
 
@@ -483,12 +483,15 @@ public class SimpleExample2 {
 	}
 
 
-	private void computeBackwardSlice(RWOperation top, RWOperation bottom, String name, ArrayList<RWOperation> all, boolean contained, String definingFunction) {
+	private void computeBackwardSlice(RWOperation top, RWOperation bottom, String name, ArrayList<RWOperation> all, boolean contained, String definingFunction, RWOperation beginRead) {
 		int i = (top == null ? 0 : all.indexOf(top));
 		RWOperation next = null;
 		RWOperation nestedTop, nestedBottom;
 		boolean found = false;
-
+	    // Partial slice
+		ArrayList<RWOperation> partialSlice = new ArrayList<RWOperation>();
+		System.out.println(beginRead);
+		partialSlice.add(beginRead);
 
 		if (name.equals("ss_cur")) {
 			System.out.println(bottom.getOrder());
@@ -509,7 +512,9 @@ public class SimpleExample2 {
 				} else if (!definingFunction.equals("global") && TraceHelper.isReadAsynchronous(j, definingFunction, all)) {
 					// Jump to last instance of defining function and look for writes there.
 					int bottomOfLastFn = TraceHelper.getEndOfLastFnInstance(j, definingFunction, all);
-					computeBackwardSlice(null, all.get(bottomOfLastFn-1), name, all, true, definingFunction);
+	                   writePartialSliceToDisk(partialSlice);
+	                   highlightLine(beginRead, new ArrayList<RWOperation>());
+					computeBackwardSlice(null, all.get(bottomOfLastFn-1), name, all, true, definingFunction, beginRead);
 					return;
 				} else {
 
@@ -542,7 +547,7 @@ public class SimpleExample2 {
 
 									if (all.get(q).getChildren().size() > 0) {
 										// If the function call does change the object via reference, highlight the origin of the call:
-										highlightLine(all.get(p));
+										highlightLine(all.get(p), partialSlice);
 
 										for (int o = q; o <= all.indexOf(nestedBottom); o++) {
 											if (all.get(o).getSliceStatus() == true) {
@@ -552,7 +557,7 @@ public class SimpleExample2 {
 												all.get(o).setParent(null);
 
 												// Add line to slice
-												highlightLine(all.get(o));
+												highlightLine(all.get(o), partialSlice);
 
 
 												if (all.get(o) instanceof VariableWrite) {
@@ -565,7 +570,8 @@ public class SimpleExample2 {
 														e.printStackTrace();
 													}
 													for (int r = 0; r < deps.size(); r++) {
-														computeBackwardSlice(null, deps.get(r), deps.get(r).getVariable(), all, true, ((VariableRead) deps.get(r)).getDefiningFunction());
+													    highlightLine(deps.get(r), partialSlice);
+														computeBackwardSlice(null, deps.get(r), deps.get(r).getVariable(), all, true, ((VariableRead) deps.get(r)).getDefiningFunction(), deps.get(r));
 													}
 												}
 											}
@@ -591,7 +597,7 @@ public class SimpleExample2 {
 					&& next.getVariable().indexOf(name) == 0) {		
 
 				// Add line to slice
-				highlightLine(next);
+				highlightLine(next, partialSlice);
 
 				// Need to backwards slice both the dependencies on the call line (arguments) AND the return statement from the function
 
@@ -604,7 +610,8 @@ public class SimpleExample2 {
 					e.printStackTrace();
 				}
 				for (int z = 0; z < deps.size(); z++) {
-					computeBackwardSlice(null, all.get(all.indexOf(deps.get(z))-1), deps.get(z).getVariable(), all, true, ((VariableRead) deps.get(z)).getDefiningFunction());
+				    highlightLine(deps.get(z), partialSlice);
+					computeBackwardSlice(null, all.get(all.indexOf(deps.get(z))-1), deps.get(z).getVariable(), all, true, ((VariableRead) deps.get(z)).getDefiningFunction(), deps.get(z));
 				}
 
 
@@ -616,12 +623,13 @@ public class SimpleExample2 {
 						nestedTop = TraceHelper.getBeginningOfFunction((ReturnStatementValue) all.get(r), all);
 
 						// TODO: implement TraceHelper.getReturnDependencies
-						ArrayList<String> rsDependencies = TraceHelper.getReturnDependencies(all, (ReturnStatementValue) all.get(r));
+						ArrayList<RWOperation> rsDependencies = TraceHelper.getReturnDependencies(all, (ReturnStatementValue) all.get(r));
 
 						for (int w = 0; w < rsDependencies.size(); w++) {
 							// TODO: What if an argument influenced the return value? --> do we need to allow slicing to exit the function?
 							// NOT being run yet
-							computeBackwardSlice(nestedTop, all.get(r), rsDependencies.get(w), all, true, "global");
+			                highlightLine(rsDependencies.get(w), partialSlice);
+							computeBackwardSlice(nestedTop, all.get(r), rsDependencies.get(w).getVariable(), all, true, "global", rsDependencies.get(w));
 						}
 					}
 				}
@@ -632,7 +640,7 @@ public class SimpleExample2 {
 				if (next instanceof ArgumentWrite) {
 					if (all.indexOf(next) == 0) {
 						// Specialer case, argument read was not included (iterative instrumentaiton not run long enough)
-						highlightLine(next);
+						highlightLine(next, partialSlice);
 					} else {
 						// Special case linking arguments from call to declaration
 						for (int q = all.indexOf(next)-1; q >= 0; q--) {
@@ -643,13 +651,13 @@ public class SimpleExample2 {
 
 
 								// Add line to slice
-								highlightLine(next);
-								highlightLine(all.get(q));
+								highlightLine(next, partialSlice);
+								highlightLine(all.get(q), partialSlice);
 
 								// Allowed to look through the parent/calling function for argument slice
 								// GOOD TO GO
 
-								computeBackwardSlice(null, all.get(q-1), all.get(q).getVariable(), all, true, ((VariableRead) all.get(q)).getDefiningFunction());
+								computeBackwardSlice(null, all.get(q-1), all.get(q).getVariable(), all, true, ((VariableRead) all.get(q)).getDefiningFunction(), all.get(q));
 
 
 								// Break from looking from Argument read
@@ -661,8 +669,8 @@ public class SimpleExample2 {
 							// The argument write was found (assignment of the variable as an arugment)...
 							// But the passing of the value into the function was not found in trace...
 							// Most probably the call was not instrumented (not found). Best effort, give up
-							highlightLine(next);
-
+							highlightLine(next, partialSlice);
+							writePartialSliceToDisk(partialSlice);
 							return;
 						}
 					}
@@ -678,19 +686,25 @@ public class SimpleExample2 {
 
 					for (int z = 0; z < deps.size(); z++) {
 						if (deps.get(z).getVariable().split("\\.").length > 1) {
+	                          highlightLine(deps.get(z), partialSlice);
+
 							computeBackwardSlice(null,
 									all.get(all.indexOf(deps.get(z))-1),
 									deps.get(z).getVariable().split("\\.")[0],
 									all,
 									true,
-									((VariableRead) deps.get(z)).getDefiningFunction());
+									((VariableRead) deps.get(z)).getDefiningFunction()
+									, deps.get(z));
 						} else {
+                            highlightLine(deps.get(z), partialSlice);
+
 							computeBackwardSlice(null,
 									all.get(all.indexOf(deps.get(z))-1),
 									deps.get(z).getVariable(),
 									all,
 									true,
-									((VariableRead) deps.get(z)).getDefiningFunction());
+									((VariableRead) deps.get(z)).getDefiningFunction(), 
+									deps.get(z));
 						}
 					}
 
@@ -703,7 +717,7 @@ public class SimpleExample2 {
 						// Add the augment assign line to the slice and continue looking for previous assign (non-augment)
 
 						// Add line to slice
-						highlightLine(next);
+						highlightLine(next, partialSlice);
 
 						int parentIfId = ControlMapper.getIfId(next.getLineNo(), next.getFile());
 						if (parentIfId != -1) {
@@ -718,14 +732,15 @@ public class SimpleExample2 {
 								nextCtrl = ctrlIt.next();
 
 								// Add control/branches to slice
-								highlightLine(nextCtrl);
+								highlightLine(nextCtrl, partialSlice);
 
 								computeBackwardSlice(null,
 										nextCtrl,
 										nextCtrl.getVariable(),
 										all,
 										true,
-										((VariableRead) nextCtrl).getDefiningFunction());
+										((VariableRead) nextCtrl).getDefiningFunction(),
+										nextCtrl);
 
 							}
 						}
@@ -751,14 +766,15 @@ public class SimpleExample2 {
 							nextCtrl = ctrlIt.next();
 
 							// Add control/branches to slice
-							highlightLine(nextCtrl);
+							highlightLine(nextCtrl, partialSlice);
 
 							computeBackwardSlice(null,
 									nextCtrl,
 									nextCtrl.getVariable(),
 									all,
 									true,
-									((VariableRead) nextCtrl).getDefiningFunction());
+									((VariableRead) nextCtrl).getDefiningFunction(), 
+									nextCtrl);
 
 						}
 					}
@@ -768,7 +784,7 @@ public class SimpleExample2 {
 				// If the line is not part of the slice...add it
 				if (found) {
 					// Add line to slice
-					highlightLine(next);
+					highlightLine(next, partialSlice);
 					break;
 				}
 				/** 3.2 (OLD): Basic slicing **/
@@ -784,13 +800,15 @@ public class SimpleExample2 {
 					e.printStackTrace();
 				}
 				for (int z = 0; z < deps.size(); z++) {
-					computeBackwardSlice(null, all.get(all.indexOf(deps.get(z))-1), deps.get(z).getVariable(), all, true, ((VariableRead) deps.get(z)).getDefiningFunction());
+					computeBackwardSlice(null, all.get(all.indexOf(deps.get(z))-1), deps.get(z).getVariable(), all, true, ((VariableRead) deps.get(z)).getDefiningFunction(), deps.get(z));
+	                // Add reads related to the write..to the slice
+	                highlightLine(deps.get(z), partialSlice);
 				}
 
 
 
 				// Add line to slice
-				highlightLine(next);
+				highlightLine(next, partialSlice);
 
 
 				/** 4 (FOUR) : Alias Detection/analysis  **/
@@ -839,7 +857,7 @@ public class SimpleExample2 {
 									all.get(o).omitFromSlice();
 
 									// Add linet to slice
-									highlightLine(all.get(o));
+									highlightLine(all.get(o), partialSlice);
 
 									if (all.get(o) instanceof VariableWrite) {
 										// NEW, TEST THIS
@@ -851,8 +869,10 @@ public class SimpleExample2 {
 											e.printStackTrace();
 										}
 										for (int r = 0; r < deps.size(); r++) {
+				                            highlightLine(deps.get(r), partialSlice);
+
 											// CANT be computing slice from bottom
-											computeBackwardSlice(null, all.get(all.indexOf(deps.get(r))-1), deps.get(r).getVariable(), all, true, ((VariableRead) deps.get(r)).getDefiningFunction());
+											computeBackwardSlice(null, all.get(all.indexOf(deps.get(r))-1), deps.get(r).getVariable(), all, true, ((VariableRead) deps.get(r)).getDefiningFunction(), deps.get(r));
 										}
 									}
 								}
@@ -878,13 +898,15 @@ public class SimpleExample2 {
 					VariableRead baseRead = (VariableRead) all.get(propIndex);
 
 					if (baseRead.getValue().equals("[object XMLHttpRequest]") && (((PropertyRead) next).getProperty().equals("open")  ||   ((PropertyRead) next).getProperty().equals("send"))) {
-						highlightLine(next);
+						highlightLine(next, partialSlice);
 						ArrayList<RWOperation> deps = TraceHelper.getDataDependenciesLoose(all, next);
 
 
 
 						for (int r = 0; r < deps.size(); r++) {
-							computeBackwardSlice(null, deps.get(r), deps.get(r).getVariable(), all, true, ((VariableRead) deps.get(r)).getDefiningFunction());
+		                      highlightLine(deps.get(r), partialSlice);
+
+							computeBackwardSlice(null, deps.get(r), deps.get(r).getVariable(), all, true, ((VariableRead) deps.get(r)).getDefiningFunction(), deps.get(r));
 						}
 					}
 				} catch (Exception e) {
@@ -893,7 +915,7 @@ public class SimpleExample2 {
 				}
 			}
 		}
-
+		writePartialSliceToDisk(partialSlice);
 	}
 
 	private void computeForwardSlice(RWOperation top, RWOperation bottom, String name, ArrayList<RWOperation> all) {
@@ -906,9 +928,38 @@ public class SimpleExample2 {
 
 
 	}
+	
+	private void writePartialSliceToDisk (ArrayList<RWOperation> p) {
+        mapper2.setVisibilityChecker(VisibilityChecker.Std.defaultInstance().withFieldVisibility(
+                Visibility.ANY));
+        mapper2.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
+        mapper2.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        // to allow coercion of JSON empty String ("") to null Object value:
+        mapper2.enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT);
+        mapper2.enable(SerializationFeature.INDENT_OUTPUT);
+
+        try {
+            mapper2.writeValue(new File("src/main/webapp/lines/"+p.get(0).getOrder()+".json"),
+                    p);
+        } catch (JsonGenerationException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (JsonMappingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (NullPointerException e) {
+            System.out.println(p);
+            System.out.println(p.size());
+        }
+	}
 
 
-	private void highlightLine(RWOperation o) {
+	private void highlightLine(RWOperation o, ArrayList<RWOperation> p) {
+	    p.add(o);
+	    
 		if (o.getOrder() >= WebDriverWrapper.getCutCounter()
 				&& WebDriverWrapper.getCutCounter() > 0) {
 			return;

@@ -90,7 +90,6 @@ public class SlideShowTest {
 
 	/** Clematest jUnit wrappers **/
 	private static void assertTrue(Boolean condition, int lineNumber){
-		System.out.println("[assertTrue]: ");
 		long assertionCutoff = (Long) (((JavascriptExecutor) driver).executeScript(
 				"return traceCounter++;"/**/));
 		assertionCutoff += JSExecutionTracer.getPageLoadBuffer();
@@ -113,7 +112,6 @@ public class SlideShowTest {
 
 		long timeStamp = (Long) (((JavascriptExecutor) driver).executeScript(
 				"return Date.now();"/**/));
-		System.out.println("[assertEquals]: " + assertionCutoff);
 
 		try {
 		   // org.junit.Assert.assertEquals(s1, s1);

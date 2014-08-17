@@ -260,14 +260,14 @@ homeButton.setAttribute("title", "Home");
 homeButton.style.height = "20px";
 homeButton.onclick = reloadPage;
 
-var fullScreen = document.createElement("input");
-fullScreen.setAttribute("type", "image");
-fullScreen.src = "images/fullscreen2.gif";
-fullScreen.setAttribute("value", "fullScreen");
-fullScreen.setAttribute("name", "fullScreen");
-fullScreen.setAttribute("title", "expand current episode");
-fullScreen.style.height = "20px";
-fullScreen.addEventListener('click', function () {
+var fullScreen1 = document.createElement("input");
+fullScreen1.setAttribute("type", "image");
+fullScreen1.src = "images/fullscreen2.gif";
+fullScreen1.setAttribute("value", "fullScreen");
+fullScreen1.setAttribute("name", "fullScreen");
+fullScreen1.setAttribute("title", "expand current episode");
+fullScreen1.style.height = "20px";
+fullScreen1.addEventListener('click', function () {
     expandCurrentEpisode(currentEpisode);
 });
 
@@ -556,7 +556,7 @@ for (var i = 0, n = cells.length; i < n; i++) {
         return function () {
                                       allEpisodes[i].assertionFlag = true;
                                       allEpisodes[i].assertionOutcome = false;
-            menuAnchor4.appendChild(fullScreen);
+            menuAnchor4.appendChild(fullScreen1);
             if (zoomLevel1[i] == false) {
                 zoomLevel1[i] = true;
                 currentEpisode = i;
@@ -788,7 +788,7 @@ for (var i = 0, n = cells.length; i < n; i++) {
 
     el.addEventListener('click', (function (i, el) {
         return function () {
-            menuAnchor4.appendChild(fullScreen);
+            menuAnchor4.appendChild(fullScreen1);
             if (zoomLevel1[i] == false) {
                 zoomLevel1[i] = true;
                 currentEpisode = i;

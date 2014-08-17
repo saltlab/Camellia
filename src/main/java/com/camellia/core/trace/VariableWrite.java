@@ -6,6 +6,7 @@ public class VariableWrite extends RWOperation {
 	private String value;
 	private ArrayList<RWOperation> dataDependencies = new ArrayList<RWOperation>();
 	private String alias;
+	public String type = "Write";
 
 	public String getValue() {
 		return value;

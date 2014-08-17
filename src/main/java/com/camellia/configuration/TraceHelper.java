@@ -318,8 +318,8 @@ public class TraceHelper {
 		return null;
 	}
 
-	public static ArrayList<String> getReturnDependencies(ArrayList<RWOperation> trace, ReturnStatementValue rs) {
-		ArrayList<String> names = new ArrayList<String>();
+	public static ArrayList<RWOperation> getReturnDependencies(ArrayList<RWOperation> trace, ReturnStatementValue rs) {
+		ArrayList<RWOperation> names = new ArrayList<RWOperation>();
 
 		//TODO:
 

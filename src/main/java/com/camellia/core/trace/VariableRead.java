@@ -3,6 +3,7 @@ package com.camellia.core.trace;
 public class VariableRead extends RWOperation {
 	private String value;
 	private String definingFunction;
+	public String type = "Read";
 
 	public String getValue() {
 		return value;
