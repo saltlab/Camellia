@@ -170,12 +170,10 @@
                 allStepsGlobal.push(allSteps);
                 allStepsIndexes.push(stepIndex);
                 
+                step(event, 3);
                 enableButtons();
                 document.getElementById("levelDepth").innerHTML = allStepsGlobal.length;
                 
-                // Un-highlight
-                $('#code_pre').attr("data-line", '0');
-                Prism.highlightElement($('#code_code')[0]);
             }
 
         }
@@ -251,8 +249,6 @@
             $('#switch').unbind("click" );
             $('#switch').click(stepThrough);
         });
-        
-        enableButtons();
 
     }
     $('#switch').click(stepThrough);

@@ -10,6 +10,7 @@ var ss_date = new Array();
 var ss_desc = new Array();
 var ss_loaded = false;
 var ss_smaller = false;
+var manualAllowed = true;
 var ss_awaits = 1;
 
 function dg(x) {
@@ -198,7 +199,9 @@ function alertContents(http_request) {
 }
 
 function ss_prev() {
-	ss_cur++;
+    if (manualAllowed) {
+	    ss_cur++;
+    }
 	ss_update();
 }
 
