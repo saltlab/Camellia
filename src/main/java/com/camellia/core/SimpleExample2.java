@@ -238,14 +238,14 @@ public class SimpleExample2 {
 			/* Auguest 8th, commented out
             driver.get(URL); */
 			//HomePageTest_forSlicer engine = new HomePageTest_forSlicer();
-			MainViewTest_forSlicer engine = new MainViewTest_forSlicer();
-			//SlideShowTest_forSlicer engine = new SlideShowTest_forSlicer();
+			//MainViewTest_forSlicer engine = new MainViewTest_forSlicer();
+			SlideShowTest_forSlicer engine = new SlideShowTest_forSlicer();
 
 			engine.setUp(driver);
 
 			//engine.testHomePage();
-			engine.testMainView();
-			//engine.testSlideShow();
+			//engine.testMainView();
+			engine.testSlideShow();
 
 
 			engine.tearDown();
@@ -325,6 +325,7 @@ public class SimpleExample2 {
 					if (nextOp.getLineNo() == next.getLineNo() && nextOp.getVariable().equals(next.getVariable()) && (nextOp instanceof VariableRead || nextOp instanceof PropertyRead)) {
 						// Relevant [READ] found! --> nextOp
 
+						highlightLine(nextOp, new ArrayList<RWOperation>());
 						computeBackwardSlice(null, nextOp, nextOp.getVariable(), all, true, ((VariableRead) nextOp).getDefiningFunction(), nextOp);
 
 
@@ -353,8 +354,8 @@ public class SimpleExample2 {
 					Helper.checkFolderForFile("src/main/webapp/lines" + theSlice.get(a).getFileName().replace(".js", ".txt"));
 					PrintStream outputVisual = new PrintStream("src/main/webapp/lines" + theSlice.get(a).getFileName().replace(".js", ".txt"));
 					System.setOut(outputVisual);
-					int accessLine = LINE+1;
-					System.out.println(theSlice.get(a).getLinesAsString()+accessLine+",");
+					//int accessLine = LINE+1;
+					System.out.println(theSlice.get(a).getLinesAsString());
 				}
 
 				String allFiles = "";

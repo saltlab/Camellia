@@ -163,6 +163,13 @@ public class DependencyFinder extends AstInstrumenter {
 			handleAssignmentOperator((Assignment) node);
 		} else if (tt == org.mozilla.javascript.Token.CALL) {
 			handleFunctionCall((FunctionCall) node);
+		} else if (tt == org.mozilla.javascript.Token.FUNCTION
+				&& (((FunctionNode) node).getName().equals("mysqlDateTimeToJSDate")
+						|| ((FunctionNode) node).getName().equals("ucfirst")
+						|| ((FunctionNode) node).getName().equals("searchObjects")
+						|| ((FunctionNode) node).getName().equals("getObjectIndexFromId")
+						|| ((FunctionNode) node).getName().equals("compareObjects"))) {
+			return false;
 		} else if (tt == org.mozilla.javascript.Token.FUNCTION) {
 
 			// TODO: If the name we are interested is is an argument in the declaration, skip the node and children
@@ -192,11 +199,11 @@ public class DependencyFinder extends AstInstrumenter {
 							(InfixExpression) ControlMapper.getIf(possibleParentIf).getCondition(),
 							true);
 					System.out.println(infixDeps.size());
-					
+
 					for (int i = 0; i < infixDeps.size(); i++) {
 						System.out.println(infixDeps.get(i).toSource());
 					}
-					
+
 					dataDependencies.addAll(InfixExpressionParser.getOperandDependencies(
 							(InfixExpression) ControlMapper.getIf(possibleParentIf).getCondition(),
 							true));

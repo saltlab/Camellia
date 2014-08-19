@@ -3,31 +3,70 @@
 
 <title>View Computed Slice</title>
     <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script> 
     <script type="text/javascript" src="javascript/jquery.scrollTo.min.js"></script>
     <link type="text/css" rel="stylesheet" href="style/prism.css">
     <script src="javascript/prism.js"></script>
 </head>
 <body style="overflow-x:hidden">
-<h1 id="fileNameGoesHere"></h1>
-<h2><div>Slice variable:</div><code id="sliceVar"></code></h2>
-<b><div>Current variable:</div><code id="currVar"></code>&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;<code id="opType"></code></b>
-<br>
-<button id='prevFile'> Previous </button>
-<button id='nextFile'> Next </button>
-<button id='switch'> Swtich Mode </button>&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;
-<code>Step:</code>
-<button id='stepBegin'> Begin </button>
-<button id='stepBack'> Back </button>
-<code><<</code>&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;
-<code>>></code>
-<button id='stepForward'> Forward </button>
-<button id='stepEnd'> End </button>&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;
-<button id='diveBtn'> Dive! </button>
-<button id='unDiveBtn'> Come up! </button>&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;
 
-<h1 id='levelDetails'></h1>
+    
+    
+    <table style="width:1800px table-layout:fixed" border="1">
+        <tr>
+            <td><h1 id="fileNameGoesHere"></h1>
+            <button id='prevFile'> Previous </button>
+            <button id='nextFile'> Next </button></td>
+            <td> <h2><div>Slice variable:</div><code id="sliceVar"></code></h2></td>
+            <td> <h2 id='currWrapper'><div>Current variable:</div><code id="currVar"></code>&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;<code id="opType"></code></h2></td>
+        </tr>
+        
+        <tr>
+            <td></td>
+            <td align="center"><button id='switch'> Swtich Mode </button></td>
+            <td></td>
+        </tr>
+            <td align="right">
+                <<&ensp;&ensp;&ensp;&ensp;&ensp;
+                <button id='stepBegin'> Begin </button>
+                <button id='stepBack'> Back </button>
+            </td>
+            <td align="center">
+                <button id='diveBtn'> Dive! </button>
+                <button id='unDiveBtn'> Come up! </button>
+            </td>
+            <td align="left">
+                <button id='stepForward'> Forward </button>
+                <button id='stepEnd'> End </button>
+                &ensp;&ensp;&ensp;&ensp;&ensp;>>
+            </td>
+        <tr>
+            <td><b id='levelDetails'></b></td>
+            <td> <div>Level: </div><div id='levelDepth'>0</div></td>
+            <td>
 
-<div>Level: </div><div id='levelDepth'>0</div>
+            </td>
+        </tr>
+        
+        <tr>
+            
+        </tr>
+        
+        <tr>
+            
+        </tr>
+        
+        <tr>
+        </tr>
+    </table>
+    <table style="height:10" border="1">
+        <tr id="progressBar">
+
+        </tr>
+    </table>
+
+
+
 
 <pre id="code_pre" class="line-numbers  language-javascript" data-line="">
 <code id="code_code" class="  language-javascript">
@@ -40,10 +79,10 @@
     var allStepsGlobal = new Array();
     var allStepsIndexes = new Array();
     
-    $( '#code_pre' ).height( 800 ).css({
+    $( '#code_pre' ).height( 588 ).css({
                                overflow: "auto",
                                });
-    //$('#code_pre')._scrollable();
+    $('#code_pre')._scrollable();
 
 
     // Get list of all relevant JavaScript files in slice, display first file/slice piece
@@ -131,6 +170,7 @@
                 allStepsGlobal.push(allSteps);
                 allStepsIndexes.push(stepIndex);
                 
+                enableButtons();
                 document.getElementById("levelDepth").innerHTML = allStepsGlobal.length;
                 
                 // Un-highlight
@@ -179,34 +219,26 @@
         }
         slice.send();
     }
-$('#diveBtn').click(dive);
+    $('#diveBtn').click(dive);
 
-function undive() {
+    function undive() {
+        allStepsGlobal.pop();
+        allStepsIndexes.pop();
+        document.getElementById("levelDepth").innerHTML = allStepsGlobal.length;
+    
+        $( "#levelDetails div:last-child" ).remove();
 
-            allStepsGlobal.pop();
-            allStepsIndexes.pop();
-            document.getElementById("levelDepth").innerHTML = allStepsGlobal.length;
-            
-           // document.getElementById('levelDetails').appendChild(document.createTextNode(" > " + allSteps[0].variable));
-
-
-window.console.log($( "#levelDetails div:last-child" ));
-
-    $( "#levelDetails div:last-child" ).remove();
-
-
-    if (allStepsGlobal.length === 0) {
-        changeFile(null, -1);
-    } else {
-        step(null, -1);
+        if (allStepsGlobal.length === 0) {
+            changeFile(null, -1);
+        } else {
+            step(null, -1);
+        }
+        document.getElementById('sliceVar').innerHTML = allStepsGlobal[allStepsGlobal.length-1][allStepsGlobal[allStepsGlobal.length-1].length -1].variable;
     }
-}
-
-$('#unDiveBtn').click(undive);
+    $('#unDiveBtn').click(undive);
 
 
     function stepThrough(e) {
-        enableButtons();
         allStepsGlobal = new Array();
         allStepsIndexes = new Array();
         
@@ -219,97 +251,118 @@ $('#unDiveBtn').click(undive);
             $('#switch').unbind("click" );
             $('#switch').click(stepThrough);
         });
+        
+        enableButtons();
+
     }
     $('#switch').click(stepThrough);
 
     function step(e, dir) {
         if (dir === 0) {
             allStepsIndexes[allStepsIndexes.length-1] = 0;
-            $('#stepBegin').attr('disabled','disabled');
-            $('#stepBack').attr('disabled','disabled');
-            
-            $('#stepForward').removeAttr('disabled');
-            $('#stepEnd').removeAttr('disabled');
         } else if(dir === 1) {
             if (allStepsIndexes[allStepsIndexes.length-1] > 0) {
                 allStepsIndexes[allStepsIndexes.length-1]--;
-                $('#stepForward').removeAttr('disabled');
-                $('#stepEnd').removeAttr('disabled');
-            } else {
-                $('#stepBegin').attr('disabled','disabled');
-                $('#stepBack').attr('disabled','disabled');
             }
         } else if (dir === 2) {
             if (allStepsIndexes[allStepsIndexes.length-1] < allStepsGlobal[allStepsGlobal.length-1].length - 1) {
                 allStepsIndexes[allStepsIndexes.length-1]++;
-                                   $('#stepBegin').removeAttr('disabled');
-                                   $('#stepBack').removeAttr('disabled');
-            } else {
-                $('#stepForward').attr('disabled','disabled');
-                $('#stepEnd').attr('disabled','disabled');
-
             }
         } else if (dir === 3) {
-            allStepsIndexes[allStepsIndexes.length-1] = allStepsGlobal[allStepsGlobal.length-1].length  - 1;
-            $('#stepForward').attr('disabled','disabled');
-            $('#stepEnd').attr('disabled','disabled');
-                                                       $('#stepBegin').removeAttr('disabled');
-                                                       $('#stepBack').removeAttr('disabled');
+            allStepsIndexes[allStepsIndexes.length-1] = allStepsGlobal[allStepsGlobal.length-1].length - 1;
+        }
+        
+        if (allStepsIndexes[allStepsIndexes.length-1] < allStepsGlobal[allStepsGlobal.length-1].length) {
+            var currentLine = allStepsGlobal[allStepsGlobal.length-1][allStepsIndexes[allStepsIndexes.length-1]].lineNo + 1;
+            window.console.log('stepping to :  ' + currentLine);
+            $('#code_pre').scrollTo((currentLine/38) * 725);
+            currentLine = currentLine + ', ';
+            $('#code_pre').attr("data-line", currentLine+currentLine+currentLine);
+            document.getElementById('currVar').innerHTML = allStepsGlobal[allStepsGlobal.length-1][allStepsIndexes[allStepsIndexes.length-1]].variable;
+            document.getElementById('opType').innerHTML = allStepsGlobal[allStepsGlobal.length-1][allStepsIndexes[allStepsIndexes.length-1]].type;
+$("#currWrapper").effect("highlight", {}, 2000);
+            
+            window.console.log("W");
+
+            if (allStepsGlobal[allStepsGlobal.length-1][allStepsIndexes[allStepsIndexes.length-1]].type === 'Write') {
+                $('#diveBtn').attr('disabled', 'disabled');
+            } else if (allStepsGlobal[allStepsGlobal.length-1][allStepsIndexes[allStepsIndexes.length-1]].type === 'Read') {
+                $('#diveBtn').removeAttr('disabled');
+            }
+            Prism.highlightElement($('#code_code')[0]);
+        } else {
+            allStepsIndexes[allStepsIndexes.length-1] = 0;
+            changeFile();
+        }
+        enableButtons();
+        
+        
+        $('#progressBar').empty();
+        var tt = 0;
+        for (tt = 0; tt < allStepsGlobal[allStepsGlobal.length-1].length; tt++) {
+            var block = $('<td width="50" style="height:20"></td>');
+            if (tt === allStepsIndexes[allStepsIndexes.length-1]) {
+                block.attr('bgcolor', "#FF0000");
+            } else {
+                block.attr('bgcolor', "#3CB215");
+            }
+            block.appendTo( $('#progressBar'));
         }
 
-                     if (allStepsIndexes[allStepsIndexes.length-1] < allStepsGlobal[allStepsGlobal.length-1].length) {
-                        var currentLine = allStepsGlobal[allStepsGlobal.length-1][allStepsIndexes[allStepsIndexes.length-1]].lineNo + 1;
-                        window.console.log('stepping to :  ' + currentLine);
-                        $('#code_pre').scrollTo((currentLine/38) * 725);
-                        currentLine = currentLine + ', ';
-                        $('#code_pre').attr("data-line", currentLine+currentLine+currentLine);
-                        document.getElementById('currVar').innerHTML = allStepsGlobal[allStepsGlobal.length-1][allStepsIndexes[allStepsIndexes.length-1]].variable;
-                        document.getElementById('opType').innerHTML = allStepsGlobal[allStepsGlobal.length-1][allStepsIndexes[allStepsIndexes.length-1]].type;
-                        
-                        
-                        window.console.log("W");
+ 
 
-                        if (allStepsGlobal[allStepsGlobal.length-1][allStepsIndexes[allStepsIndexes.length-1]].type === 'Write') {
-                            window.console.log("T");
-
-                            $('#diveBtn').attr('disabled', 'disabled');
-                        } else if (allStepsGlobal[allStepsGlobal.length-1][allStepsIndexes[allStepsIndexes.length-1]].type === 'Read') {
-                            window.console.log("F");
-
-                            $('#diveBtn').removeAttr('disabled');
-                        } else {
-                            window.console.log(allStepsGlobal[allStepsGlobal.length-1][allStepsIndexes[allStepsIndexes.length-1]].type);
-                        }
-
-                        Prism.highlightElement($('#code_code')[0]);
-                     } else {
-                     allStepsIndexes[allStepsIndexes.length-1] = 0;
-                     changeFile();
-                     }
     }
 
-function enableButtons() {
-$('#stepForward').removeAttr('disabled');
-$('#stepEnd').removeAttr('disabled');
-$('#stepBegin').removeAttr('disabled');
-$('#stepBack').removeAttr('disabled');
-$('#diveBtn').removeAttr('disabled');
-}
-enableButtons();
+    // Function to re-activate buttons
+    function enableButtons() {
+        window.console.log('[enableButtons]: Entering');
+        $('#stepForward').removeAttr('disabled');
+        $('#stepEnd').removeAttr('disabled');
+        $('#stepBegin').removeAttr('disabled');
+        $('#stepBack').removeAttr('disabled');
+        if (allStepsIndexes.length === 0 && allStepsGlobal.length === 0) {
+            window.console.log('[enableButtons]: No slice');
 
+            // Disable navigation buttons if no slice
+            $('#stepForward').attr('disabled', 'disabled');
+            $('#stepEnd').attr('disabled', 'disabled');
+            $('#stepBegin').attr('disabled', 'disabled');
+            $('#stepBack').attr('disabled', 'disabled');
+        } else if (allStepsIndexes[allStepsIndexes.length-1] >= allStepsGlobal[allStepsGlobal.length-1].length - 1) {
+            window.console.log('[enableButtons]: Disabling forward');
+
+            // Disable Forward and End button (since already at end)
+            $('#stepForward').attr('disabled', 'disabled');
+            $('#stepEnd').attr('disabled', 'disabled');
+        } else if (allStepsIndexes[allStepsIndexes.length-1] === 0) {
+            window.console.log('[enableButtons]: Disabling backward');
+
+            // Disable Back and Begin (since already at beginning)
+            $('#stepBegin').attr('disabled', 'disabled');
+            $('#stepBack').attr('disabled', 'disabled');
+        }
+    }
+    $('#diveBtn').removeAttr('disabled');
+    $('#unDiveBtn').removeAttr('disabled');
+    enableButtons();
+
+    // Begin Button
     $('#stepBegin').click(function (e) {
-                step(e, 0);
-        });
+        step(e, 0);
+    });
+    // Back Button
     $('#stepBack').click(function (e) {
-                        step(e, 1);
+        step(e, 1);
     });
-    $('#stepForward').click(function (e) {
-           step(e, 2);
-    });
-    $('#stepEnd').click(function (e) {
-           step(e, 3);
-     });
-                                              
     
+    // Forward Buttonm
+    $('#stepForward').click(function (e) {
+        step(e, 2);
+    });
+    // End Button
+    $('#stepEnd').click(function (e) {
+        step(e, 3);
+    });
+
 </script> 
 </body></html>

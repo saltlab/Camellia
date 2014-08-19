@@ -59,13 +59,6 @@ public class SlideShowTest_before {
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
-		
-		driver.findElement(By.linkText("Previous")).click();		
-		try {
-			assertEquals("3", driver.findElement(By.cssSelector("span#ss_n")).getText());
-		} catch (Error e) {
-			verificationErrors.append(e.toString());
-		}
 	}
 
 	@After
@@ -73,7 +66,6 @@ public class SlideShowTest_before {
 		driver.quit();
 		String verificationErrorString = verificationErrors.toString();
 		if (!"".equals(verificationErrorString)) {
-			System.out.println(verificationErrorString);
 			fail(verificationErrorString);
 		}
 	}

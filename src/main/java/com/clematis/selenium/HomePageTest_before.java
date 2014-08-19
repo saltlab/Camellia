@@ -31,12 +31,6 @@ public class HomePageTest_before {
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
-		driver.findElement(By.partialLinkText("Default Story")).click();
-		try {
-			assertTrue(driver.findElement(By.cssSelector("div.midInfo")).getText().matches("^[\\s\\S]*story[\\s\\S]*$"));
-		} catch (Error e) {
-			verificationErrors.append(e.toString());
-		}
 		driver.findElement(By.linkText("SlideShow")).click();
 		try {
 			assertTrue(driver.getTitle().matches("^SlideShow[\\s\\S]*$"));
@@ -44,6 +38,12 @@ public class HomePageTest_before {
 			verificationErrors.append(e.toString());
 		}
 		driver.findElement(Byy.linkText("Next")).click();
+		try {
+			assertEquals("2", driver.findElement(Byy.cssSelector("span#ss_n")).getText());
+		} catch (Error e) {
+			verificationErrors.append(e.toString());
+		}
+		driver.findElement(Byy.linkText("Previous")).click();
 		try {
 			assertEquals("1", driver.findElement(Byy.cssSelector("span#ss_n")).getText());
 		} catch (Error e) {

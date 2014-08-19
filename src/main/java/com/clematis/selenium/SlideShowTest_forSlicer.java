@@ -60,14 +60,6 @@ public class SlideShowTest_forSlicer {
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
-		
-		driver.findElement(Byy.linkText("Previous")).click();
-		try {
-			assertEquals("3", driver.findElement(Byy.cssSelector("span#ss_n")).getText());
-		} catch (Error e) {
-			verificationErrors.append(e.toString());
-		}
-		
 		Thread.sleep(3000);
 
 	}

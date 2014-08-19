@@ -27,7 +27,6 @@ public class HomePageTest_forSlicer {
 	public void testHomePage() throws Exception {
 		driver.get("http://localhost:8888/");
 		assertTrue(isElementPresent(By.cssSelector("div#Granny")));
-		Thread.sleep(700);
 
 		driver.findElement(By.linkText("Stories")).click();
 		try {
@@ -35,7 +34,6 @@ public class HomePageTest_forSlicer {
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
-		Thread.sleep(700);
 
 		driver.findElement(By.partialLinkText("Default Category")).click();
 		try {
@@ -43,15 +41,6 @@ public class HomePageTest_forSlicer {
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
-		Thread.sleep(700);
-
-		driver.findElement(By.partialLinkText("Default Story")).click();
-		try {
-			assertTrue(driver.findElement(By.cssSelector("div.midInfo")).getText().matches("^[\\s\\S]*story[\\s\\S]*$"));
-		} catch (Error e) {
-			verificationErrors.append(e.toString());
-		}
-		Thread.sleep(700);
 
 		driver.findElement(By.linkText("SlideShow")).click();
 		try {
@@ -60,18 +49,20 @@ public class HomePageTest_forSlicer {
 			verificationErrors.append(e.toString());
 		}
 		
-		Thread.sleep(700);
 		driver.findElement(Byy.linkText("Next")).click();
-		Thread.sleep(700);
+		try {
+			assertEquals("2", driver.findElement(By.cssSelector("span#ss_n")).getText());
+		} catch (Error e) {
+			verificationErrors.append(e.toString());
+		}
+		
+		driver.findElement(Byy.linkText("Previous")).click();
 		try {
 			assertEquals("1", driver.findElement(By.cssSelector("span#ss_n")).getText());
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
-		
 		Thread.sleep(3000);
-
-
 	}
 
 	@After

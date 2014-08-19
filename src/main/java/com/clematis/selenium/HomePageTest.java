@@ -23,8 +23,7 @@ public class HomePageTest {
 	public void testHomePage() throws Exception {
 		driver.get("http://localhost:8888/");
 		assertTrue(isElementPresent(Byy.cssSelector("div#Granny")), 21);
-		Thread.sleep(700);
-
+		
 		driver.findElement(Byy.linkText("Stories")).click();
 		try {
 			assertTrue(driver.getCurrentUrl().matches("^http://localhost:8888/[\\s\\S]mode=stories$"), 24);
@@ -39,13 +38,6 @@ public class HomePageTest {
 			verificationErrors.append(e.toString());
 		}
 
-		driver.findElement(Byy.partialLinkText("Default Story")).click();
-		try {
-			assertTrue(driver.findElement(Byy.cssSelector("div.midInfo")).getText().matches("^[\\s\\S]*story[\\s\\S]*$"), 36);
-		} catch (Error e) {
-			verificationErrors.append(e.toString());
-		}
-
 		driver.findElement(Byy.linkText("SlideShow")).click();
 		try {
 			assertTrue(driver.getTitle().matches("^SlideShow[\\s\\S]*$"), 42);
@@ -54,6 +46,14 @@ public class HomePageTest {
 		}
 		
 		driver.findElement(Byy.linkText("Next")).click();
+
+		try {
+			assertEquals("2", driver.findElement(Byy.cssSelector("span#ss_n")).getText(), 48);
+		} catch (Error e) {
+			verificationErrors.append(e.toString());
+		}
+		
+		driver.findElement(Byy.linkText("Previous")).click();
 
 		try {
 			assertEquals("1", driver.findElement(Byy.cssSelector("span#ss_n")).getText(), 48);
