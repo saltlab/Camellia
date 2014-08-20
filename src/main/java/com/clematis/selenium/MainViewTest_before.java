@@ -18,7 +18,8 @@ public class MainViewTest_before {
 
 	@Test
 	public void testMainView() throws Exception {
-		driver.get("http://localhost:8888/?p=1");
+		String baseUrl = "http://localhost:8888/phormer331/";
+		driver.get(baseUrl+"?p=1");
 		try {
 			assertTrue(isElementPresent(By.cssSelector("div#theImage")));
 		} catch (Error e) {
@@ -51,7 +52,7 @@ public class MainViewTest_before {
 		}
 		driver.findElement(By.xpath("//div[@id='Granny']/div[5]/div[2]/center/a/img")).click();
 		try {
-			assertTrue(driver.getCurrentUrl().matches("^http://localhost:8888/[\\s\\S]p=2$"));
+			assertTrue(driver.getCurrentUrl().matches("^"+baseUrl+"[\\s\\S]p=2$"));
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}

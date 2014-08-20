@@ -237,14 +237,14 @@ public class SimpleExample2 {
 			// Use WebDriver to visit specified URL
 			/* Auguest 8th, commented out
             driver.get(URL); */
-			HomePageTest_forSlicer engine = new HomePageTest_forSlicer();
-			//MainViewTest_forSlicer engine = new MainViewTest_forSlicer();
+			//HomePageTest_forSlicer engine = new HomePageTest_forSlicer();
+			MainViewTest_forSlicer engine = new MainViewTest_forSlicer();
 			//SlideShowTest_forSlicer engine = new SlideShowTest_forSlicer();
 
 			engine.setUp(driver);
 
-			engine.testHomePage();
-			//engine.testMainView();
+			//engine.testHomePage();
+			engine.testMainView();
 			//engine.testSlideShow();
 
 

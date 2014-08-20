@@ -23,16 +23,16 @@ public class MainViewTest {
 	public void testMainView() throws Exception {
 		driver.get("http://localhost:8888/?p=1");
 		try {
-			assertTrue(isElementPresent(Byy.cssSelector("div#theImage")), 23);
+			assertTrue(isElementPresent(Byy.cssSelector("div#theImage")), 24);
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}Thread.sleep(700);
 		driver.findElement(Byy.linkText("Hide  info")).click();
 		// ERROR: Caught exception [ERROR: Unsupported command [getEval | window.document.getElementById("photoBoxes").style.display == "none" | ]]
-		assertTrue(driver.findElement(Byy.id("photoBoxes")).isDisplayed() == false, 29);
+		assertTrue(driver.findElement(Byy.id("photoBoxes")).isDisplayed() == false, 30);
 		driver.findElement(Byy.linkText("Show info")).click();
 		// ERROR: Caught exception [ERROR: Unsupported command [getEval | window.document.getElementById("photoBoxes").style.display == "none" | ]]
-		assertTrue(driver.findElement(Byy.id("photoBoxes")).isDisplayed(), 32);
+		assertTrue(driver.findElement(Byy.id("photoBoxes")).isDisplayed(), 33);
 		// ERROR: Caught exception [ERROR: Unsupported command [getEval | (window.document.getElementById("rateSelect").value % 5) + 1 | ]]
 		WebElement select = driver.findElement(Byy.id("rateSelect"));
 		int rating = Integer.parseInt(select.getAttribute("value"));
@@ -49,7 +49,7 @@ public class MainViewTest {
 		Thread.sleep(900);
 		try {
 			System.out.println(driver.findElement(Byy.cssSelector("span#rateStatus")).getText());
-			assertEquals("Your rating saved!", driver.findElement(Byy.cssSelector("span#rateStatus")).getText(), 48);
+			assertEquals("Your rating saved!", driver.findElement(Byy.cssSelector("span#rateStatus")).getText(), 49);
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}
@@ -57,7 +57,7 @@ public class MainViewTest {
 
 		driver.findElement(Byy.xpath("//div[@id='Granny']/div[5]/div[2]/center/a/img")).click();
 		try {
-			assertTrue(driver.getCurrentUrl().matches("^http://localhost:8888/[\\s\\S]p=2$"), 53);
+			assertTrue(driver.getCurrentUrl().matches("^http://localhost:8888/[\\s\\S]p=2$"), 54);
 		} catch (Error e) {
 			verificationErrors.append(e.toString());
 		}

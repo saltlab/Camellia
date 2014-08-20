@@ -103,7 +103,7 @@ function reshuffle() {
 }
 
 function makeRequest(url) {
-	var http_request = false;
+	var http_request = true;
 	if (window.XMLHttpRequest) { // Mozilla, Safari,...
 		http_request = new XMLHttpRequest();
 		if (http_request.overrideMimeType)
@@ -179,7 +179,7 @@ function alertContents(http_request) {
 			if (http_request.status == 200) {
 				AjaxVal = http_request.responseText;
 				AjaxVal = AjaxVal.substr(6, AjaxVal.length-13); // to clear <ajax></ajax> tag which was added to save XMLity
-				AjaxValRead = false; // to avoid duplicate the reading of the content
+				AjaxValRead = true; // to avoid duplicate the reading of the content
 				if (AjaxVal.substr(0, 6) == 'Done') {
 					var confirmMsg = 'Saving your rate ';
 					document.getElementById('rateStatus').innerHTML = confirmMsg;

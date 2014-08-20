@@ -26,7 +26,7 @@ public class SlideShowTest_before {
 
 	@Test
 	public void testSlideShow() throws Exception {
-		driver.get("http://localhost:8888/?feat=slideshow");
+		driver.get("http://localhost:8888/phormer331/?feat=slideshow");
 		assertTrue(driver.getTitle().matches("^SlideShow[\\s\\S]*$"));
 		try {
 			assertTrue(isElementPresent(By.cssSelector("img#ss_photo")));
