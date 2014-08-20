@@ -1,11 +1,17 @@
 var counter = 0;
 
 function _dynoRead(varName, value, lineNo, fileName, id) {
+    var valueType = Object.prototype.toString.call(value);
+    var actualValue = null;
+    if (valueType === '[object String]' || valueType === "[object Number]") {
+        actualValue = value;
+    }
     // Send info here
     send(JSON.stringify({
              messageType: "VARIABLE_READ",
              lineNo: lineNo,
-             value: Object.prototype.toString.call(value),
+             value: valueType,
+             actualValue: actualValue,
              variable: varName,
              order: counter++,
              file: fileName,
@@ -16,6 +22,11 @@ function _dynoRead(varName, value, lineNo, fileName, id) {
 }
 
 function _dynoReadAsArg(varName, value, functionName, argNumber, lineNo, fileName, id) {
+    var valueType = Object.prototype.toString.call(value);
+    var actualValue = null;
+    if (valueType === '[object String]' || valueType === "[object Number]") {
+        actualValue = value;
+    }
     send(JSON.stringify({
              messageType: "READ_AS_ARGUMENT",
              lineNo: lineNo,
@@ -23,6 +34,7 @@ function _dynoReadAsArg(varName, value, functionName, argNumber, lineNo, fileNam
              variable: varName,
              argumentNumber: argNumber,
              functionName: functionName,
+             actualValue: actualValue,
              file: fileName,
              definingFunction: id,
              order: counter++,
@@ -31,12 +43,17 @@ function _dynoReadAsArg(varName, value, functionName, argNumber, lineNo, fileNam
 }
 
 function _dynoWrite(varName, newValue, readFrom, lineNo, fileName, id) {
-window.console.log("_dynoWrite",  varName, readFrom);
+    var valueType = Object.prototype.toString.call(newValue);
+    var actualValue = null;
+    if (valueType === '[object String]' || valueType === "[object Number]") {
+        actualValue = newValue;
+    }
     // Send info here
     send(JSON.stringify({
              messageType: "VARIABLE_WRITE",
              lineNo: lineNo,
              value: Object.prototype.toString.call(newValue),
+             actualValue: actualValue,
              variable: varName,
              alias: readFrom,
              order: counter++,
@@ -47,12 +64,18 @@ window.console.log("_dynoWrite",  varName, readFrom);
 }
 
 function _dynoWriteAug(varName, newValue, readFrom, lineNo, fileName, id) {
+    var valueType = Object.prototype.toString.call(newValue);
+    var actualValue = null;
+    if (valueType === '[object String]' || valueType === "[object Number]") {
+        actualValue = newValue;
+    }
     // Augmented assginment
     // Send info here
     send(JSON.stringify({
              messageType: "VARIABLE_WRITE_ADDSUB",
              lineNo: lineNo,
              value: Object.prototype.toString.call(newValue),
+             actualValue: actualValue,
              variable: varName,
              alias: readFrom,
              order: counter++,
@@ -63,10 +86,16 @@ function _dynoWriteAug(varName, newValue, readFrom, lineNo, fileName, id) {
 }
 
 function _dynoWriteReturnValue(varName, returnValue, method, lineNo, fileName, id) {
+    var valueType = Object.prototype.toString.call(returnValue);
+    var actualValue = null;
+    if (valueType === '[object String]' || valueType === "[object Number]") {
+        actualValue = returnValue;
+    }
     // Send info here
     send(JSON.stringify({
              messageType: "WRITE_RETURN_VALUE",
              lineNo: lineNo,
+             actualValue: actualValue,
              value: Object.prototype.toString.call(returnValue),
              file: fileName,
              variable: varName,
@@ -79,7 +108,6 @@ function _dynoWriteReturnValue(varName, returnValue, method, lineNo, fileName, i
 }
 
 function _dynoReadProp(baseObject, propAsString, lineNo, fileName, id) {
-window.console.log("_dynoReadProp",  baseObject, propAsString);
     // Send info here
     send(JSON.stringify({
              messageType: "PROPERTY_READ",
@@ -112,6 +140,11 @@ function _dynoFunc(baseObject, propAsString, lineNo, fileName, id) {
 }
 
 function _dynoWriteArg(varName, newValue, functionName, argNum, lineNo, fileName, id) {
+    var valueType = Object.prototype.toString.call(newValue);
+    var actualValue = null;
+    if (valueType === '[object String]' || valueType === "[object Number]") {
+        actualValue = newValue;
+    }
     // Send info here
     send(JSON.stringify({
              messageType: "WRITE_AS_ARGUMENT",
@@ -119,6 +152,7 @@ function _dynoWriteArg(varName, newValue, functionName, argNum, lineNo, fileName
              value: Object.prototype.toString.call(newValue),
              file: fileName,
              variable: varName,
+             actualValue: actualValue,
              functionName: functionName,
              argumentNumber: argNum,
              order: counter++,
@@ -128,11 +162,17 @@ function _dynoWriteArg(varName, newValue, functionName, argNum, lineNo, fileName
 }
 
 function _dynoReturnValue(functionName, returnValue, fileName, lineNo, id) {
+    var valueType = Object.prototype.toString.call(returnValue);
+    var actualValue = null;
+    if (valueType === '[object String]' || valueType === "[object Number]") {
+        actualValue = returnValue;
+    }
     // Send info here
     send(JSON.stringify({
              messageType: "RETURN_VALUE",
              lineNo: lineNo,
              value: Object.prototype.toString.call(returnValue),
+             actualValue: actualValue,
              file: fileName,
              functionName: functionName,
              variable: functionName,
